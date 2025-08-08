@@ -115,7 +115,7 @@ export default function SnapshotClient({ snapshot }: { snapshot: Snapshot }) {
             <CardDescription>
               AI-generated analysis of the signal history from this event.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent className="space-y-6">
             <div>
               <h3 className="font-semibold mb-2 flex items-center gap-2">

@@ -10,16 +10,6 @@ export interface Snapshot {
     }
 }
 
-const genesisEvent: Snapshot = {
-    slug: `genesis-event`,
-    label: 'Genesis Event',
-    description: 'Initial system state snapshot.',
-    data: {
-        logs: '[2024-01-01T00:00:00Z] SYSTEM_INIT: Core services online. Awaiting strategist input.'
-    }
-};
-
-
 export const snapshotRegistry: Snapshot[] = [
     {
         slug: 'telecom-anomaly',
@@ -28,8 +18,7 @@ export const snapshotRegistry: Snapshot[] = [
         data: {
             logs: telecomSignalHistory.logs
         }
-    },
-    genesisEvent
+    }
 ];
 
 export const getSnapshotBySlug = (slug: string): Snapshot | undefined => {
