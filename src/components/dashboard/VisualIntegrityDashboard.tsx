@@ -1,9 +1,8 @@
-
 "use client";
 
 import OverrideMomentum from "./OverrideMomentum";
-import RationaleForecastPanel from "./RationaleForecastPanel";
 import HudEscalationMatrix from "./HudEscalationMatrix";
+import RationaleForecastPanel from "./RationaleForecastPanel";
 
 export default function VisualIntegrityDashboard() {
   return (
@@ -14,5 +13,3 @@ export default function VisualIntegrityDashboard() {
     </div>
   );
 }
-
-    
