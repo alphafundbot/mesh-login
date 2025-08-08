@@ -21,6 +21,10 @@ import {
   type CrossDomainIntelligenceOutput 
 } from "@/ai/flows/cross-domain-intelligence-flow"
 import { Bot, AlertTriangle } from "lucide-react"
+import { db } from "@/lib/firebase"
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { useUser } from "@/hooks/use-user"
+import { canUserPerform, type Action } from "@/lib/roles"
 
 // Generates sample logs for a given domain to simulate fetching real data
 const generateDomainLogs = (domainName: string) => {
@@ -29,7 +33,7 @@ const generateDomainLogs = (domainName: string) => {
     
     let logs = `Action logs for domain: ${domainName}\n`;
     // Add some random errors to make anomalies more likely
-    const errorChance = ["System Core", "Finance & Trading"].includes(domainName) ? 0.5 : 0.2;
+    const errorChance = ["System Core", "Finance & Trading", "Medical & Bio"].includes(domainName) ? 0.6 : 0.2;
     for (let i = 0; i < 5 + Math.floor(Math.random() * 5); i++) {
         let action = actions[Math.floor(Math.random() * actions.length)];
         if (Math.random() < errorChance) {
@@ -68,11 +72,35 @@ const CustomTick = (props: any) => {
   );
 };
 
-
 export default function IntelligenceMap() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<any[]>([]);
   const { toast } = useToast();
+  const { user } = useUser();
+
+  const handleAction = async (action: Action, details: string) => {
+    try {
+      await addDoc(collection(db, "hud_actions"), {
+        action,
+        role: user.role,
+        strategist: "System",
+        timestamp: serverTimestamp(),
+        details,
+      });
+       toast({
+        variant: "destructive",
+        title: "Risk Escalation Protocol Triggered",
+        description: `Multiple domain anomalies detected. Escalating for review.`,
+      });
+    } catch (error) {
+      console.error("Failed to log action:", error);
+      toast({
+        variant: "destructive",
+        title: "Logging Failed",
+        description: `Could not log action: ${action}`,
+      });
+    }
+  };
 
   useEffect(() => {
     const getAnalysis = async () => {
@@ -80,7 +108,7 @@ export default function IntelligenceMap() {
       try {
         const domainLogs: Record<string, string> = {};
         // We will analyze a subset of domains for clarity on the chart
-        const domainsToAnalyze = domainData.filter(d => ["System Core", "Finance & Trading", "Security & Privacy", "Cloud & DevOps", "Telecom & IoT"].includes(d.name));
+        const domainsToAnalyze = domainData.filter(d => ["System Core", "Finance & Trading", "Security & Privacy", "Cloud & DevOps", "Telecom & IoT", "Medical & Bio"]);
         
         for (const domain of domainsToAnalyze) {
           domainLogs[domain.name] = generateDomainLogs(domain.name);
@@ -92,6 +120,12 @@ export default function IntelligenceMap() {
           ...metric,
           isAnomaly: metric.stability < ANOMALY_THRESHOLD || metric.security < ANOMALY_THRESHOLD,
         }));
+        
+        const anomalousDomains = dataWithAnomalies.filter(d => d.isAnomaly);
+        if (anomalousDomains.length >= 2) {
+          const details = `Anomalies detected in: ${anomalousDomains.map(d => d.domain).join(', ')}`;
+          handleAction("Escalate", details);
+        }
 
         setChartData(dataWithAnomalies);
       } catch (error) {
@@ -106,6 +140,7 @@ export default function IntelligenceMap() {
       }
     };
     getAnalysis();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
 
   return (
@@ -116,7 +151,7 @@ export default function IntelligenceMap() {
             Cross-Domain Intelligence Map
         </CardTitle>
         <CardDescription>
-          AI-synthesized view of system mesh health across key domains. Anomalies are highlighted.
+          AI-synthesized view of system mesh health across key domains. Anomalies are highlighted and escalated automatically.
         </CardDescription>
       </CardHeader>
       <CardContent>
