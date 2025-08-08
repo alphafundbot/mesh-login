@@ -35,14 +35,14 @@ export default function DashboardPage() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-3">
-                <RecentActivity />
+                <IntelligenceMap />
             </div>
             <div className="lg:col-span-2">
                 <HudRiskFeed />
             </div>
         </div>
 
-        <IntelligenceMap />
+        <RecentActivity />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {domainData.map((domain) => (

@@ -15,6 +15,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Bot, AlertTriangle, ShieldAlert, History, ShieldX, CheckCircle, CornerDownRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Badge } from "../ui/badge";
 
 interface HudAction {
   id: string;
@@ -24,6 +25,8 @@ interface HudAction {
   details: string;
   timestamp: Date;
 }
+
+type Severity = "Warning" | "Critical" | "Catastrophic";
 
 const ACTION_ICONS: Record<string, React.ElementType> = {
     "Escalate": AlertTriangle,
@@ -45,6 +48,24 @@ const getActionColor = (action: string) => {
         default: return "text-accent";
     }
 }
+
+const parseSeverity = (details: string): Severity | null => {
+    const match = details.match(/Severity: (Warning|Critical|Catastrophic)/);
+    return match ? match[1] as Severity : null;
+};
+
+const getSeverityBadgeVariant = (severity: Severity | null): "destructive" | "secondary" | "default" => {
+    if (!severity) return "default";
+    switch (severity) {
+        case "Catastrophic":
+        case "Critical":
+            return "destructive";
+        case "Warning":
+            return "secondary";
+        default:
+            return "default";
+    }
+};
 
 export default function HudRiskFeed() {
     const [actions, setActions] = useState<HudAction[]>([]);
@@ -108,11 +129,18 @@ export default function HudRiskFeed() {
                     {!loading && actions.map((action) => {
                         const Icon = ACTION_ICONS[action.action] || Bot;
                         const color = getActionColor(action.action);
+                        const severity = parseSeverity(action.details);
+
                         return (
                             <div key={action.id} className="flex items-start gap-4">
                                 <Icon className={cn("h-5 w-5 mt-0.5 shrink-0", color)} />
                                 <div className="text-sm">
-                                    <p><span className="font-semibold">{action.strategist}</span> ({action.role}) initiated <span className={cn("font-semibold", color)}>{action.action}</span></p>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <p><span className="font-semibold">{action.strategist}</span> ({action.role}) initiated <span className={cn("font-semibold", color)}>{action.action}</span></p>
+                                        {severity && (
+                                            <Badge variant={getSeverityBadgeVariant(severity)}>{severity}</Badge>
+                                        )}
+                                    </div>
                                     <p className="text-xs text-muted-foreground mt-1 italic">
                                       {parseDetailsForDisplay(action.action, action.details)}
                                     </p>
