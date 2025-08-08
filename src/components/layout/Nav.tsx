@@ -15,6 +15,7 @@ import {
   Eye,
   Brain,
   Wifi,
+  Settings,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -23,6 +24,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { snapshotRegistry } from "@/lib/snapshots";
 
@@ -34,7 +36,11 @@ const navItems = [
   { href: "/memory-map", label: "Memory Map", icon: Brain },
   { href: "/analysis-archive", label: "Analysis Archive", icon: Archive },
   { href: "/forecast-archive", label: "Forecast Archive", icon: Eye },
-  { href: "/status", label: "API Status", icon: Wifi },
+];
+
+const systemItems = [
+    { href: "/status", label: "API Status", icon: Wifi },
+    { href: "/admin", label: "System Admin", icon: Settings },
 ];
 
 export default function Nav() {
@@ -83,6 +89,20 @@ export default function Nav() {
               </SidebarMenuSubItem>
           </SidebarMenuSub>
         </SidebarMenuItem>
+        <SidebarSeparator className="my-2" />
+        {systemItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+                <Link href={item.href}>
+                    <SidebarMenuButton
+                        isActive={pathname === item.href}
+                        tooltip={{ children: item.label }}
+                    >
+                        <item.icon />
+                        <span>{item.label}</span>
+                    </SidebarMenuButton>
+                </Link>
+            </SidebarMenuItem>
+        ))}
     </SidebarMenu>
   );
 }
