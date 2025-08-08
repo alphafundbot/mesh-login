@@ -398,20 +398,20 @@ type TimeFilter = "24h" | "7d" | "all";
 
 const RecommendationConfidence = ({ rec }: { rec: Recommendation }) => {
     const confidenceMap = {
-        high: { icon: Sparkles, color: "text-accent" },
-        medium: { icon: TrendingUp, color: "text-primary" },
-        low: { icon: HelpCircle, color: "text-muted-foreground" },
+        high: { icon: Sparkles, color: "text-green-400", bgColor: "bg-green-500/10" },
+        medium: { icon: TrendingUp, color: "text-yellow-400", bgColor: "bg-yellow-500/10" },
+        low: { icon: HelpCircle, color: "text-muted-foreground", bgColor: "bg-muted/30" },
     };
-    const { icon: Icon, color } = confidenceMap[rec.confidence];
+    const { icon: Icon, color, bgColor } = confidenceMap[rec.confidence];
 
     return (
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className={cn("flex items-center gap-1", color)}>
-                        <Icon className="h-4 w-4" />
-                        <span className="text-xs font-semibold capitalize">{rec.confidence}</span>
-                    </div>
+                     <Badge variant="outline" className={cn("gap-1.5 capitalize", color, bgColor)}>
+                        <Icon className="h-3 w-3" />
+                        {rec.confidence}
+                    </Badge>
                 </TooltipTrigger>
                 {rec.basedOn && rec.basedOn.length > 0 && (
                      <TooltipContent>
@@ -558,6 +558,14 @@ export default function HistoryClient() {
     </Tabs>
   );
 
+  const sortedRecommendations = useMemo(() => {
+    if (!analysisResult) return [];
+    const confidenceOrder = ['high', 'medium', 'low'];
+    return [...analysisResult.recommendations].sort((a, b) => {
+        return confidenceOrder.indexOf(a.confidence) - confidenceOrder.indexOf(b.confidence);
+    });
+  }, [analysisResult]);
+
   return (
     <div className="space-y-6">
         <div className="flex justify-start">
@@ -693,8 +701,8 @@ export default function HistoryClient() {
              <div className="border-t pt-4">
               <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
               <div className="space-y-4">
-                {analysisResult.recommendations.map((rec) => (
-                    <div key={rec.recommendationId} className="flex items-start justify-between p-2 rounded-md hover:bg-muted/30">
+                {sortedRecommendations.map((rec) => (
+                    <div key={rec.recommendationId} className="flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30">
                         <div className="flex-1 pr-4 space-y-2">
                            <p className="text-muted-foreground">{rec.text}</p>
                            <RecommendationConfidence rec={rec} />
