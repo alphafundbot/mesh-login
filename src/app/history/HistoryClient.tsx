@@ -191,155 +191,29 @@ function ClusterDelta({ currentScore, previousScore }: { currentScore: number; p
     );
 }
 
-function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLogs: ActionLog[] }) {
-    const [rationaleDialog, setRationaleDialog] = useState<RationaleDialogContent>(null);
-    const [loadingRationales, setLoadingRationales] = useState(false);
-    const [taggedRationales, setTaggedRationales] = useState<TaggedRationale[]>([]);
-    const { toast } = useToast();
-    const searchParams = useSearchParams();
-
-    const openRationaleModal = useCallback((title: string, description: React.ReactNode, rationales: TaggedRationale[]) => {
-        setLoadingRationales(true);
-        setTaggedRationales([]); // Clear previous
-        setRationaleDialog({ title, description, rationales: [] }); // Open dialog immediately with loading state
-    
-        // Simulate fetching tags, but use the provided rationales
-        const processRationales = async () => {
-            try {
-                // In a real scenario, we might re-tag or fetch more data here.
-                // For now, we assume the passed rationales have their tags already.
-                const processed = await Promise.all(rationales.map(async (r) => {
-                    if (r.tags.length > 0) return r;
-                    const { tags } = await tagRationale({ rationale: r.rationale });
-                    return { ...r, tags };
-                }));
-
-                setTaggedRationales(processed);
-                setRationaleDialog({ title, description, rationales: processed });
-            } catch (error) {
-                 console.error("Failed to process rationales:", error);
-                 toast({
-                    variant: "destructive",
-                    title: "Processing Failed",
-                    description: "Could not process rationales for viewing."
-                });
-                setRationaleDialog(null);
-            } finally {
-                setLoadingRationales(false);
-            }
-        };
-        processRationales();
-
-    }, [toast]);
-
-
-    const handleCellClick = useCallback(async (domain: string, severity: Severity) => {
-        const relevantLogs = logs.filter(log => {
-            const d = parseDetails(log.details);
-            return d.isOverride && d.severity === severity && d.domains?.includes(domain)
-        });
-
-        if (relevantLogs.length === 0) return;
-        
-        const untaggedRationales = relevantLogs.map(log => {
-            const d = parseDetails(log.details);
-            return { rationale: d.rationale, tags: [], severity: d.severity!, domains: d.domains || [] };
-        });
-
-        const title = `Override Rationales for ${domain}`;
-        const description = <>Severity Level: <Badge variant={severity === "Critical" || severity === "Catastrophic" ? "destructive" : "secondary"}>{severity}</Badge></>;
-        
-        openRationaleModal(title, description, untaggedRationales);
-        
-    }, [logs, openRationaleModal]);
-
-     const handleClusterClick = useCallback((cluster: ClusterInfo) => {
-        const title = `Rationale Cluster: "${cluster.tag}"`;
-        const description = <>Showing {cluster.items.length} rationales related to this cluster.</>;
-        openRationaleModal(title, description, cluster.items);
-    }, [openRationaleModal]);
-
-    
-    useEffect(() => {
-        const autoStart = searchParams.get('autostart');
-        const domain = searchParams.get('domain');
-        const severity = searchParams.get('severity') as Severity;
-
-        if (autoStart === 'true' && domain && severity && logs.length > 0) {
-            handleCellClick(domain, severity);
-        }
-    }, [searchParams, logs, handleCellClick]);
-
-    const heatmapData = useMemo(() => {
-        const data: Record<string, Record<Severity, number>> = {};
-        let maxOverrides = 0;
-
-        logs.forEach(log => {
-            const { isOverride, domains, severity } = parseDetails(log.details);
-            if (isOverride && domains && severity) {
-                domains.forEach(domain => {
-                    if (!data[domain]) {
-                        data[domain] = { "Warning": 0, "Critical": 0, "Catastrophic": 0 };
-                    }
-                    data[domain][severity]++;
-                    if (data[domain][severity] > maxOverrides) {
-                        maxOverrides = data[domain][severity];
-                    }
-                });
-            }
-        });
-        return { data, maxOverrides };
-    }, [logs]);
-
-    const allTaggedRationales = useMemo(() => {
-        return logs
-          .map((l) => ({ ...l, parsed: parseDetails(l.details) }))
-          .filter(
-            (l) =>
-              l.parsed.isOverride &&
-              l.parsed.rationale &&
-              l.parsed.severity &&
-              l.parsed.domains
-          )
-          .map((l) => {
-            return {
-              rationale: l.parsed.rationale,
-              tags: [],
-              severity: l.parsed.severity!,
-              domains: l.parsed.domains!,
-            };
-          });
-    }, [logs]);
-    
-    const [globalClusters, setGlobalClusters] = useState<ClusterMap>(new Map());
-    useEffect(() => {
-        const tagAndCluster = async () => {
-            if (allTaggedRationales.length === 0) {
-                setGlobalClusters(new Map());
-                return;
-            };
-            const tagged = await Promise.all(allTaggedRationales.map(async r => {
-                const { tags } = await tagRationale({ rationale: r.rationale });
-                return {...r, tags};
-            }));
-            setGlobalClusters(calculateClusters(tagged));
-        }
-        tagAndCluster();
-    }, [allTaggedRationales]);
-
-    const sortedGlobalClusters = useMemo(() => Array.from(globalClusters.values()).sort((a, b) => b.riskScore - a.riskScore), [globalClusters]);
-
-
+function RationaleDialog({ 
+    content, 
+    onOpenChange, 
+    taggedRationales, 
+    loading, 
+    previousLogs 
+}: { 
+    content: RationaleDialogContent, 
+    onOpenChange: (open: boolean) => void,
+    taggedRationales: TaggedRationale[],
+    loading: boolean,
+    previousLogs: ActionLog[]
+}) {
     const dialogClusters = useMemo(() => {
-        if (!rationaleDialog || taggedRationales.length === 0) return new Map();
+        if (!content || taggedRationales.length === 0) return new Map();
         return calculateClusters(taggedRationales);
-    }, [rationaleDialog, taggedRationales]);
-    
-    const previousDialogClusters = useMemo(() => {
-        if (!rationaleDialog || !rationaleDialog.title.includes("Override Rationales for")) return new Map();
+    }, [content, taggedRationales]);
 
-        const domain = rationaleDialog.title.replace("Override Rationales for ", "");
-        const severityMatch = (rationaleDialog.description as React.ReactElement)?.props.children[1];
+    const previousDialogClusters = useMemo(() => {
+        if (!content || !content.title.includes("Override Rationales for")) return new Map();
+
+        const domain = content.title.replace("Override Rationales for ", "");
+        const severityMatch = (content.description as React.ReactElement)?.props.children[1];
         const severity = severityMatch ? (severityMatch.props.children as Severity) : null;
 
         if(!domain || !severity) return new Map();
@@ -394,105 +268,27 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
         
         return alignedPrevClusters;
 
-    }, [previousLogs, rationaleDialog, dialogClusters]);
-
-    const { data, maxOverrides } = heatmapData;
-    const domains = Object.keys(data).sort();
-    const severities: Severity[] = ["Warning", "Critical", "Catastrophic"];
-
-    if (domains.length === 0) {
-        return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Override Frequency Heatmap</CardTitle>
-                    <CardDescription>No override data available for the selected time window.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground text-center py-4">Overrides will be analyzed here once they are logged.</p>
-                </CardContent>
-            </Card>
-        )
-    }
+    }, [previousLogs, content, dialogClusters]);
 
     return (
-      <>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="md:col-span-2">
-                <CardHeader>
-                    <CardTitle>Override Frequency Heatmap</CardTitle>
-                    <CardDescription>Analysis of strategist overrides across domains and severity levels. Click a cell to inspect rationale clusters.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Domain</TableHead>
-                                {severities.map(s => <TableHead key={s} className="text-center">{s}</TableHead>)}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {domains.map(domain => (
-                                <TableRow key={domain}>
-                                    <TableCell className="font-medium">{domain}</TableCell>
-                                    {severities.map(severity => {
-                                        const count = data[domain]?.[severity] ?? 0;
-                                        return (
-                                            <TableCell 
-                                                key={severity} 
-                                                className={cn("text-center", count > 0 ? "cursor-pointer hover:bg-muted/50" : "")}
-                                                onClick={() => count > 0 && handleCellClick(domain, severity)}
-                                            >
-                                                <div className={cn("w-full h-8 flex items-center justify-center rounded-md", getHeatmapColor(count, maxOverrides))}>
-                                                    {count}
-                                                </div>
-                                            </TableCell>
-                                        )
-                                    })}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Top Rationale Clusters</CardTitle>
-                    <CardDescription>Dominant themes in strategist overrides in the current time window.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    {sortedGlobalClusters.length > 0 ? sortedGlobalClusters.slice(0, 5).map(cluster => (
-                        <div key={cluster.tag} className="p-2 rounded-md bg-muted/30 hover:bg-muted/50 cursor-pointer" onClick={() => handleClusterClick(cluster)}>
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-semibold capitalize text-sm">{cluster.tag}</h4>
-                                <Badge variant={cluster.riskScore > 10 ? "destructive" : "secondary"}>Risk: {cluster.riskScore}</Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground">{cluster.items.length} overrides in {Object.keys(cluster.domains).length} domains</p>
-                        </div>
-                    )) : (
-                        <p className="text-muted-foreground text-center py-4 text-sm">No clusters to display.</p>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
-        
-        <Dialog open={!!rationaleDialog} onOpenChange={(open) => { if (!open) setRationaleDialog(null); }}>
+        <Dialog open={!!content} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-4xl">
                 <DialogHeader>
-                    <DialogTitle>{rationaleDialog?.title}</DialogTitle>
+                    <DialogTitle>{content?.title}</DialogTitle>
                     <DialogDescription>
-                       {rationaleDialog?.description}
+                       {content?.description}
                     </DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="max-h-[70vh] pr-4">
                     <div className="space-y-4">
-                        {loadingRationales && (
+                        {loading && (
                             <div className="space-y-4">
                                 <Skeleton className="h-12 w-full" />
                                 <Skeleton className="h-12 w-full" />
                                 <Skeleton className="h-12 w-full" />
                             </div>
                         )}
-                        {!loadingRationales && dialogClusters.size > 0 && (
+                        {!loading && dialogClusters.size > 0 && (
                              <Accordion type="multiple" className="w-full">
                                 {Array.from(dialogClusters.entries()).sort((a,b) => b[1].riskScore - a[1].riskScore).map(([tag, { items, severities, domains, riskScore }]) => {
                                    const sortedDomains = Object.entries(domains).sort((a, b) => b[1].count - a[1].count);
@@ -552,14 +348,94 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
                                 })}
                             </Accordion>
                         )}
-                         {!loadingRationales && dialogClusters.size === 0 && (
+                         {!loading && dialogClusters.size === 0 && (
                             <p className="text-muted-foreground text-center py-4">No rationale clusters found for this selection.</p>
                          )}
                     </div>
                 </ScrollArea>
             </DialogContent>
         </Dialog>
-      </>
+    )
+}
+
+function OverrideHeatmap({ logs, onCellClick, onClusterClick }: { logs: ActionLog[], onCellClick: (domain: string, severity: Severity) => void, onClusterClick: (cluster: ClusterInfo) => void }) {
+    const heatmapData = useMemo(() => {
+        const data: Record<string, Record<Severity, number>> = {};
+        let maxOverrides = 0;
+
+        logs.forEach(log => {
+            const { isOverride, domains, severity } = parseDetails(log.details);
+            if (isOverride && domains && severity) {
+                domains.forEach(domain => {
+                    if (!data[domain]) {
+                        data[domain] = { "Warning": 0, "Critical": 0, "Catastrophic": 0 };
+                    }
+                    data[domain][severity]++;
+                    if (data[domain][severity] > maxOverrides) {
+                        maxOverrides = data[domain][severity];
+                    }
+                });
+            }
+        });
+        return { data, maxOverrides };
+    }, [logs]);
+
+    const { data, maxOverrides } = heatmapData;
+    const domains = Object.keys(data).sort();
+    const severities: Severity[] = ["Warning", "Critical", "Catastrophic"];
+
+    if (domains.length === 0) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Override Frequency Heatmap</CardTitle>
+                    <CardDescription>No override data available for the selected time window.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground text-center py-4">Overrides will be analyzed here once they are logged.</p>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Override Frequency Heatmap</CardTitle>
+                <CardDescription>Analysis of strategist overrides across domains and severity levels. Click a cell to inspect rationale clusters.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Domain</TableHead>
+                            {severities.map(s => <TableHead key={s} className="text-center">{s}</TableHead>)}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {domains.map(domain => (
+                            <TableRow key={domain}>
+                                <TableCell className="font-medium">{domain}</TableCell>
+                                {severities.map(severity => {
+                                    const count = data[domain]?.[severity] ?? 0;
+                                    return (
+                                        <TableCell 
+                                            key={severity} 
+                                            className={cn("text-center", count > 0 ? "cursor-pointer hover:bg-muted/50" : "")}
+                                            onClick={() => count > 0 && onCellClick(domain, severity)}
+                                        >
+                                            <div className={cn("w-full h-8 flex items-center justify-center rounded-md", getHeatmapColor(count, maxOverrides))}>
+                                                {count}
+                                            </div>
+                                        </TableCell>
+                                    )
+                                })}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
     );
 }
 
@@ -620,6 +496,12 @@ export default function HistoryClient() {
   const { toast } = useToast();
   const { user } = useUser();
   const searchParams = useSearchParams();
+
+  // State for Rationale Modal
+  const [rationaleDialog, setRationaleDialog] = useState<RationaleDialogContent>(null);
+  const [loadingRationales, setLoadingRationales] = useState(false);
+  const [taggedRationales, setTaggedRationales] = useState<TaggedRationale[]>([]);
+
 
   useEffect(() => {
     const drilldownTime = searchParams.get('time');
@@ -685,6 +567,111 @@ export default function HistoryClient() {
 
     return { filteredLogs: currentLogs, previousPeriodLogs: previousLogs };
   }, [allLogs, timeFilter]);
+
+  const openRationaleModal = useCallback((title: string, description: React.ReactNode, rationales: TaggedRationale[]) => {
+        setLoadingRationales(true);
+        setTaggedRationales([]); // Clear previous
+        setRationaleDialog({ title, description, rationales: [] }); // Open dialog immediately with loading state
+    
+        const processRationales = async () => {
+            try {
+                const processed = await Promise.all(rationales.map(async (r) => {
+                    if (r.tags.length > 0) return r;
+                    const { tags } = await tagRationale({ rationale: r.rationale });
+                    return { ...r, tags };
+                }));
+
+                setTaggedRationales(processed);
+                setRationaleDialog({ title, description, rationales: processed });
+            } catch (error) {
+                 console.error("Failed to process rationales:", error);
+                 toast({
+                    variant: "destructive",
+                    title: "Processing Failed",
+                    description: "Could not process rationales for viewing."
+                });
+                setRationaleDialog(null);
+            } finally {
+                setLoadingRationales(false);
+            }
+        };
+        processRationales();
+
+    }, [toast]);
+
+    const handleHeatmapCellClick = useCallback(async (domain: string, severity: Severity) => {
+        const relevantLogs = filteredLogs.filter(log => {
+            const d = parseDetails(log.details);
+            return d.isOverride && d.severity === severity && d.domains?.includes(domain)
+        });
+
+        if (relevantLogs.length === 0) return;
+        
+        const untaggedRationales = relevantLogs.map(log => {
+            const d = parseDetails(log.details);
+            return { rationale: d.rationale, tags: [], severity: d.severity!, domains: d.domains || [] };
+        });
+
+        const title = `Override Rationales for ${domain}`;
+        const description = <>Severity Level: <Badge variant={severity === "Critical" || severity === "Catastrophic" ? "destructive" : "secondary"}>{severity}</Badge></>;
+        
+        openRationaleModal(title, description, untaggedRationales);
+        
+    }, [filteredLogs, openRationaleModal]);
+
+     const handleClusterClick = useCallback((cluster: ClusterInfo) => {
+        const title = `Rationale Cluster: "${cluster.tag}"`;
+        const description = <>Showing {cluster.items.length} rationales related to this cluster.</>;
+        openRationaleModal(title, description, cluster.items);
+    }, [openRationaleModal]);
+    
+    useEffect(() => {
+        const autoStart = searchParams.get('autostart');
+        const domain = searchParams.get('domain');
+        const severity = searchParams.get('severity') as Severity;
+
+        if (autoStart === 'true' && domain && severity && filteredLogs.length > 0) {
+            handleHeatmapCellClick(domain, severity);
+        }
+    }, [searchParams, filteredLogs, handleHeatmapCellClick]);
+    
+    const allTaggedRationales = useMemo(() => {
+        return filteredLogs
+          .map((l) => ({ ...l, parsed: parseDetails(l.details) }))
+          .filter(
+            (l) =>
+              l.parsed.isOverride &&
+              l.parsed.rationale &&
+              l.parsed.severity &&
+              l.parsed.domains
+          )
+          .map((l) => {
+            return {
+              rationale: l.parsed.rationale,
+              tags: [],
+              severity: l.parsed.severity!,
+              domains: l.parsed.domains!,
+            };
+          });
+    }, [filteredLogs]);
+    
+    const [globalClusters, setGlobalClusters] = useState<ClusterMap>(new Map());
+    useEffect(() => {
+        const tagAndCluster = async () => {
+            if (allTaggedRationales.length === 0) {
+                setGlobalClusters(new Map());
+                return;
+            };
+            const tagged = await Promise.all(allTaggedRationales.map(async r => {
+                const { tags } = await tagRationale({ rationale: r.rationale });
+                return {...r, tags};
+            }));
+            setGlobalClusters(calculateClusters(tagged));
+        }
+        tagAndCluster();
+    }, [allTaggedRationales]);
+
+    const sortedGlobalClusters = useMemo(() => Array.from(globalClusters.values()).sort((a, b) => b.riskScore - a.riskScore), [globalClusters]);
 
   const handleAnalysis = async () => {
     setLoadingAnalysis(true);
@@ -789,7 +776,30 @@ export default function HistoryClient() {
 
         {viewMode === 'logs' && (
             <>
-                <OverrideHeatmap logs={filteredLogs} previousLogs={previousPeriodLogs} />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-2">
+                        <OverrideHeatmap logs={filteredLogs} onCellClick={handleHeatmapCellClick} onClusterClick={handleClusterClick} />
+                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Top Rationale Clusters</CardTitle>
+                            <CardDescription>Dominant themes in strategist overrides in the current time window.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {sortedGlobalClusters.length > 0 ? sortedGlobalClusters.slice(0, 5).map(cluster => (
+                                <div key={cluster.tag} className="p-2 rounded-md bg-muted/30 hover:bg-muted/50 cursor-pointer" onClick={() => handleClusterClick(cluster)}>
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-semibold capitalize text-sm">{cluster.tag}</h4>
+                                        <Badge variant={cluster.riskScore > 10 ? "destructive" : "secondary"}>Risk: {cluster.riskScore}</Badge>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{cluster.items.length} overrides in {Object.keys(cluster.domains).length} domains</p>
+                                </div>
+                            )) : (
+                                <p className="text-muted-foreground text-center py-4 text-sm">No clusters to display.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
@@ -978,6 +988,15 @@ export default function HistoryClient() {
         {viewMode === 'feedback' && (
             <FeedbackDashboard />
         )}
+        <RationaleDialog 
+            content={rationaleDialog}
+            onOpenChange={(open) => { if (!open) setRationaleDialog(null); }}
+            taggedRationales={taggedRationales}
+            loading={loadingRationales}
+            previousLogs={previousPeriodLogs}
+        />
     </div>
   );
 }
+
+    
