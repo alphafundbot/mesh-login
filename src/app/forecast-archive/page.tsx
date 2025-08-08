@@ -1,9 +1,7 @@
-
 import AppLayout from "@/components/layout/AppLayout";
 import ForecastArchiveClient from "./ForecastArchiveClient";
-import { Suspense } from "react";
 
-function ArchiveContent() {
+export default function ForecastArchivePage() {
     return (
         <AppLayout>
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -16,13 +14,5 @@ function ArchiveContent() {
                 <ForecastArchiveClient />
             </div>
         </AppLayout>
-    )
-}
-
-export default function ForecastArchivePage() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <ArchiveContent />
-        </Suspense>
     )
 }
