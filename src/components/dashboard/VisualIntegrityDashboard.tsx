@@ -2,14 +2,14 @@
 
 import OverrideMomentum from "./OverrideMomentum";
 import HudEscalationMatrix from "./HudEscalationMatrix";
-import RationaleForecastPanel from "./RationaleForecastPanel";
+import ThreatForecast from "./ThreatForecast";
 
 export default function VisualIntegrityDashboard() {
   return (
     <div className="grid grid-cols-1 gap-6 auto-rows-max">
       <HudEscalationMatrix />
       <OverrideMomentum />
-      <RationaleForecastPanel />
+      <ThreatForecast />
     </div>
   );
 }
