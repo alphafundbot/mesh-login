@@ -18,7 +18,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle, X } from "lucide-react";
+import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle, X, Tags } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -68,14 +69,21 @@ const getHeatmapColor = (count: number, max: number) => {
     return "bg-yellow-500/20";
 };
 
+type TaggedRationale = {
+    rationale: string;
+    tags: string[];
+}
+
 type RationaleDialogContent = {
     domain: string;
     severity: Severity;
-    rationales: string[];
+    rationales: TaggedRationale[];
 } | null;
 
 function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
     const [rationaleDialog, setRationaleDialog] = useState<RationaleDialogContent>(null);
+    const [loadingRationales, setLoadingRationales] = useState(false);
+    const { toast } = useToast();
 
     const heatmapData = useMemo(() => {
         const data: Record<string, Record<Severity, number>> = {};
@@ -98,15 +106,37 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
         return { data, maxOverrides };
     }, [logs]);
 
-    const handleCellClick = (domain: string, severity: Severity) => {
-        const relevantLogs = logs.filter(log => {
-            const d = parseDetails(log.details);
-            return d.isOverride && d.severity === severity && d.domains?.includes(domain)
-        });
-        const rationales = relevantLogs.map(log => parseDetails(log.details).rationale);
-        
-        if (rationales.length > 0) {
-            setRationaleDialog({ domain, severity, rationales });
+    const handleCellClick = async (domain: string, severity: Severity) => {
+        setLoadingRationales(true);
+        setRationaleDialog({ domain, severity, rationales: [] }); // Open dialog with loading state
+        try {
+            const relevantLogs = logs.filter(log => {
+                const d = parseDetails(log.details);
+                return d.isOverride && d.severity === severity && d.domains?.includes(domain)
+            });
+            const rationales = relevantLogs.map(log => parseDetails(log.details).rationale);
+
+            if (rationales.length === 0) {
+                setRationaleDialog(null);
+                return;
+            }
+            
+            const taggedRationales = await Promise.all(rationales.map(async (rationale) => {
+                const { tags } = await tagRationale({ rationale });
+                return { rationale, tags };
+            }));
+
+            setRationaleDialog({ domain, severity, rationales: taggedRationales });
+        } catch (error) {
+            console.error("Failed to tag rationales:", error);
+            toast({
+                variant: "destructive",
+                title: "Tagging Failed",
+                description: "Could not get AI tags for rationales. Please try again."
+            })
+            setRationaleDialog(null);
+        } finally {
+            setLoadingRationales(false);
         }
     }
 
@@ -178,10 +208,25 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                 </DialogHeader>
                 <ScrollArea className="max-h-[50vh] pr-4">
                     <div className="space-y-4">
-                        {rationaleDialog?.rationales.map((rationale, index) => (
-                            <blockquote key={index} className="mt-6 border-l-2 pl-6 italic text-muted-foreground">
-                                "{rationale}"
+                        {loadingRationales && (
+                            <div className="space-y-4">
+                                <Skeleton className="h-12 w-full" />
+                                <Skeleton className="h-12 w-full" />
+                                <Skeleton className="h-12 w-full" />
+                            </div>
+                        )}
+                        {!loadingRationales && rationaleDialog?.rationales.map((item, index) => (
+                           <div key={index} className="space-y-2">
+                             <blockquote className="border-l-2 pl-6 italic text-muted-foreground">
+                                "{item.rationale}"
                             </blockquote>
+                            <div className="flex gap-2 items-center pl-6">
+                                <Tags className="h-4 w-4 text-muted-foreground" />
+                                {item.tags.map(tag => (
+                                    <Badge key={tag} variant="outline" className="font-normal">{tag}</Badge>
+                                ))}
+                            </div>
+                           </div>
                         ))}
                     </div>
                 </ScrollArea>
