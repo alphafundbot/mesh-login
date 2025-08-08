@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot, Timestamp, where, getDocs, limit } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, Timestamp, where, getDocs, limit, doc, updateDoc } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import {
   Table,
@@ -706,9 +706,17 @@ export default function HistoryClient() {
                 setLoadingReplay(false);
                 return;
             }
+            
+            const forecastDoc = querySnapshot.docs[0];
+            const forecastData = forecastDoc.data();
+            const originalForecast = forecastData.forecast as RationaleForecastOutput;
 
-            const forecastDoc = querySnapshot.docs[0].data();
-            const originalForecast = forecastDoc.forecast as RationaleForecastOutput;
+            // If commentary already exists, display it. Otherwise, generate and save it.
+            if (forecastData.commentary) {
+                setReplayCommentary(forecastData.commentary);
+                setLoadingReplay(false);
+                return;
+            }
 
             const logsString = filteredLogs
                 .map(log => `[${log.timestamp.toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
@@ -718,6 +726,10 @@ export default function HistoryClient() {
                 originalForecast: originalForecast,
                 actualLogs: logsString,
             });
+            
+            // Persist the newly generated commentary
+            const forecastDocRef = doc(db, "forecast_analysis", forecastDoc.id);
+            await updateDoc(forecastDocRef, { commentary: commentary });
 
             setReplayCommentary(commentary);
 
@@ -873,7 +885,7 @@ export default function HistoryClient() {
                         <CardTitle>Action History</CardTitle>
                         <CardDescription>A persistent log of all strategist actions in the selected time window.</CardDescription>
                     </div>
-                    <Button onClick={handleAnalysis} disabled={loading || loadingAnalysis}>
+                    <Button onClick={handleAnalysis} disabled={loading || loadingAnalysis || filteredLogs.length === 0}>
                         {loadingAnalysis ? "Analyzing..." : "Analyze with AI"}
                     </Button>
                     </CardHeader>
