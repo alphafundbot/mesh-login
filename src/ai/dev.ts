@@ -10,3 +10,4 @@ import '@/ai/flows/suppression-forecast-flow.ts';
 import '@/ai/flows/snapshot-diff-flow.ts';
 import '@/ai/flows/rationale-forecast-flow.ts';
 import '@/ai/flows/replay-commentary-flow.ts';
+import '@/ai/flows/health-check-flow.ts';

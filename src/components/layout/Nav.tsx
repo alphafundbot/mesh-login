@@ -14,6 +14,7 @@ import {
   Archive,
   Eye,
   Brain,
+  Wifi,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/memory-map", label: "Memory Map", icon: Brain },
   { href: "/analysis-archive", label: "Analysis Archive", icon: Archive },
   { href: "/forecast-archive", label: "Forecast Archive", icon: Eye },
+  { href: "/status", label: "API Status", icon: Wifi },
 ];
 
 export default function Nav() {
@@ -44,14 +46,11 @@ export default function Nav() {
         <SidebarMenuItem key={item.href}>
           <Link href={item.href}>
             <SidebarMenuButton
-              asChild
               isActive={pathname === item.href}
               tooltip={{ children: item.label }}
             >
-              <>
-                <item.icon />
-                <span>{item.label}</span>
-              </>
+              <item.icon />
+              <span>{item.label}</span>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
@@ -68,16 +67,17 @@ export default function Nav() {
             {snapshotRegistry.map((item) => (
               <SidebarMenuSubItem key={item.slug}>
                 <Link href={`/snapshots/${item.slug}`}>
-                    <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/${item.slug}`}>
-                        <>{item.label}</>
+                    <SidebarMenuSubButton isActive={pathname === `/snapshots/${item.slug}`}>
+                        {item.label}
                     </SidebarMenuSubButton>
                 </Link>
               </SidebarMenuSubItem>
             ))}
              <SidebarMenuSubItem>
                 <Link href="/snapshots/diff">
-                    <SidebarMenuSubButton asChild isActive={pathname === '/snapshots/diff'}>
-                        <><GitCompareArrows className="mr-2 h-4 w-4" />Diff Snapshots</>
+                    <SidebarMenuSubButton isActive={pathname === '/snapshots/diff'}>
+                        <GitCompareArrows className="mr-2 h-4 w-4" />
+                        Diff Snapshots
                     </SidebarMenuSubButton>
                 </Link>
               </SidebarMenuSubItem>
