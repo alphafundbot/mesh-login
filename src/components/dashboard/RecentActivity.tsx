@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Bot, AlertTriangle, CornerDownRight, RefreshCw, ShieldQuestion } from "lucide-react";
+import { Bot, AlertTriangle, CornerDownRight, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   auditTrailAISummarization,
@@ -17,10 +17,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, getDocs, setDoc, doc } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { canUserPerform, type Action } from "@/lib/roles";
-import { Badge } from "../ui/badge";
 
 const generateSampleLogs = (isStressTest: boolean = false) => {
   const users = ['admin', 'strategist', 'guest'];
@@ -43,7 +42,6 @@ const generateSampleLogs = (isStressTest: boolean = false) => {
     const module = modules[Math.floor(Math.random() * modules.length)];
     const timestamp = new Date(Date.now() - (logCount - i) * 1000).toISOString();
     
-    // Make some logs more severe
     if (i % 2 === 0) {
         logs += `[${timestamp}] UNAUTHORIZED_ACCESS: user=external_ip, module=${module}, severity=Critical\n`;
     } else {
@@ -60,12 +58,18 @@ export default function RecentActivity() {
   const { toast } = useToast();
   const { user } = useUser();
 
-  const fetchActivity = async (logs: string) => {
+  const fetchAndCacheSummary = useCallback(async (logs: string, logId: string) => {
     setLoading(true);
-    setResult(null);
     try {
       const output = await auditTrailAISummarization({ auditLogs: logs });
       setResult(output);
+      // Cache the new summary
+      await setDoc(doc(db, "audit_log_cache", logId), {
+        summary: output.summary,
+        unusualActivities: output.unusualActivities,
+        originalLogId: logId,
+        timestamp: serverTimestamp(),
+      });
     } catch (error) {
       console.error("AI summarization failed:", error);
       toast({
@@ -76,33 +80,53 @@ export default function RecentActivity() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+  
 
   useEffect(() => {
     const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(1));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const latestLog = snapshot.docs[0].data();
-        fetchActivity(latestLog.logs);
-      } else {
+    const unsubscribe = onSnapshot(q, async (logSnapshot) => {
+      if (logSnapshot.empty) {
+        // If no logs, generate initial one
         const initialLogs = generateSampleLogs();
-        addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+        const docRef = await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+        fetchAndCacheSummary(initialLogs, docRef.id);
+        return;
       }
+      
+      const latestLogDoc = logSnapshot.docs[0];
+      const latestLogId = latestLogDoc.id;
+      const latestLogData = latestLogDoc.data();
+
+      // Check for a cached summary first
+      const cacheQuery = query(collection(db, "audit_log_cache"), where("originalLogId", "==", latestLogId), limit(1));
+      const cacheSnapshot = await getDocs(cacheQuery);
+
+      if (!cacheSnapshot.empty) {
+        const cachedData = cacheSnapshot.docs[0].data() as AuditTrailAISummarizationOutput;
+        setResult(cachedData);
+        setLoading(false);
+      } else {
+        // If no cache, fetch a new summary and cache it.
+        fetchAndCacheSummary(latestLogData.logs, latestLogId);
+      }
+
     }, (error) => {
       console.error("Firestore snapshot error:", error);
       setLoading(false);
     });
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchAndCacheSummary, toast]);
+
 
   const handleRefresh = async (isStressTest: boolean) => {
     setLoading(true);
+    setResult(null);
     const newLogs = generateSampleLogs(isStressTest);
     try {
+      // Add new log, the listener will then pick it up, see no cache, and generate a new summary.
       await addDoc(collection(db, "audit_logs"), { logs: newLogs, timestamp: serverTimestamp() });
-      // The onSnapshot listener will automatically trigger fetchActivity
     } catch (error) {
       console.error("Error adding new log:", error);
       toast({
@@ -217,3 +241,5 @@ export default function RecentActivity() {
     </Card>
   );
 }
+
+    
