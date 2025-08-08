@@ -76,6 +76,7 @@ export default function RationaleForecastPanel() {
         .map(l => ({ rationale: l.parsed.rationale!, tags: [], severity: l.parsed.severity!, domains: l.parsed.domains! }));
 
       if (allRationales.length === 0) {
+        setResult(null);
         setLoading(false);
         return;
       }

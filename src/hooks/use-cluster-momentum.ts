@@ -64,82 +64,35 @@ type ClusterInfo = {
     riskScore: number;
 };
 
-type ClusterMap = Map<string, ClusterInfo>;
-
-
-const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
-    const clusters: ClusterMap = new Map();
-
-    rationales.forEach(item => {
-        item.tags.forEach(tag => {
-            if (!clusters.has(tag)) {
-                clusters.set(tag, { 
-                    tag: tag,
-                    items: [], 
-                    severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 },
-                    domains: {},
-                    riskScore: 0
-                });
-            }
-            const cluster = clusters.get(tag)!;
-            cluster.items.push(item);
-            cluster.severities[item.severity]++;
-            item.domains.forEach(domain => {
-                if (!cluster.domains[domain]) {
-                    cluster.domains[domain] = { count: 0, severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 } };
-                }
-                cluster.domains[domain].count++;
-                cluster.domains[domain].severities[item.severity]++;
-            });
-        })
-    });
-
-    clusters.forEach(cluster => {
-        let score = 0;
-        score += cluster.severities.Warning * RISK_WEIGHTS.Warning;
-        score += cluster.severities.Critical * RISK_WEIGHTS.Critical;
-        score += cluster.severities.Catastrophic * RISK_WEIGHTS.Catastrophic;
-        cluster.riskScore = score;
-    });
-
-    return clusters;
-};
-
-
 export function useClusterMomentum(cluster: ClusterInfo | undefined, previousLogs: ActionLog[]): {
   riskDelta: number;
   previousScore: number;
 } {
     const momentum = useMemo(() => {
         if (!cluster || !previousLogs || previousLogs.length === 0) {
-            return { riskDelta: 0, previousScore: 0 };
+            return { riskDelta: cluster?.riskScore || 0, previousScore: 0 };
         }
 
-        const tagKeywords = cluster.tag.split(' ');
+        const tagKeywords = cluster.tag.toLowerCase().split(' ');
         
-        const matchingPrevRationales: TaggedRationale[] = previousLogs
+        const previousRationales = previousLogs
             .map(log => ({ ...parseDetails(log.details), log }))
             .filter(d => 
                 d.isOverride && 
                 d.rationale && 
-                d.severity && 
-                d.domains &&
-                tagKeywords.every(kw => d.rationale.toLowerCase().includes(kw.toLowerCase()))
-            )
-            .map(d => ({
-                rationale: d.rationale!,
-                severity: d.severity!,
-                domains: d.domains!,
-                tags: [cluster.tag] // Assign the current tag for clustering
-            }));
+                d.severity
+            );
 
-        if (matchingPrevRationales.length === 0) {
-            return { riskDelta: 0, previousScore: 0 };
-        }
+        let previousScore = 0;
+        
+        previousRationales.forEach(r => {
+            const rationaleText = r.rationale.toLowerCase();
+            // Check if all keywords for the cluster tag are present in the rationale
+            if (tagKeywords.every(kw => rationaleText.includes(kw))) {
+                 previousScore += RISK_WEIGHTS[r.severity!];
+            }
+        });
 
-        const tempClusterMap = calculateClusters(matchingPrevRationales);
-        const previousClusterInfo = tempClusterMap.get(cluster.tag);
-        const previousScore = previousClusterInfo?.riskScore ?? 0;
         const riskDelta = cluster.riskScore - previousScore;
 
         return { riskDelta, previousScore };
