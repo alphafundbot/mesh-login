@@ -4,12 +4,14 @@
  */
 import { config } from 'dotenv';
 
-// Load variables from .env.local, which is not checked into source control.
-// This is the primary way to provide secret keys to the application.
+// Load variables based on environment.
+// .env.remote for production-like environments (e.g., Firebase App Hosting)
+// .env.local for local development, not checked into source control.
+// .env for non-secret defaults, checked into source control.
+if (process.env.NODE_ENV === 'production') {
+    config({ path: '.env.remote' });
+}
 config({ path: '.env.local' });
-
-// Also load variables from .env, which *is* checked into source control.
-// This is used for non-secret configuration and as a template for .env.local.
 config({ path: '.env' });
 
 /**
@@ -27,16 +29,15 @@ function getEnv(variableName: string, fallbackValue?: string): string {
     if (fallbackValue !== undefined) {
         return fallbackValue;
     }
-    // In a production environment, you would want to throw an error here.
-    // For this demo, we'll log a warning and proceed.
-    console.warn(`
+    // For critical variables, we should fail fast if they're not set.
+    throw new Error(`
         ================================================================================
-        Warning: Environment variable ${variableName} is not set.
-        Please create a .env.local file and add the following line:
+        FATAL ERROR: Environment variable ${variableName} is not set.
+        Please create a .env.local (for local dev) or .env.remote (for deployed env)
+        file and add the following line:
         ${variableName}=YOUR_SECRET_KEY
         ================================================================================
     `);
-    return '';
 }
 
 export interface FirebaseConfig {
