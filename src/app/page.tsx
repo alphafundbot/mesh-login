@@ -79,6 +79,43 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div>
+                      <h3 className="font-semibold text-muted-foreground mb-2">Situational Insights</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                          <Card>
+                            <CardHeader className="p-4">
+                                <CardTitle className="text-sm font-medium">Uptime</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 pt-0">
+                                <p className="text-2xl font-bold text-green-400">99.98%</p>
+                            </CardContent>
+                          </Card>
+                           <Card>
+                            <CardHeader className="p-4">
+                                <CardTitle className="text-sm font-medium">Overrides (24h)</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 pt-0">
+                                <p className="text-2xl font-bold">12</p>
+                            </CardContent>
+                          </Card>
+                           <Card>
+                            <CardHeader className="p-4">
+                                <CardTitle className="text-sm font-medium">Volatility</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 pt-0">
+                                <p className="text-2xl font-bold text-yellow-400">Medium</p>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardHeader className="p-4">
+                                <CardTitle className="text-sm font-medium">Forecast Accuracy</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 pt-0">
+                                <p className="text-2xl font-bold">87%</p>
+                            </CardContent>
+                          </Card>
+                      </div>
+                    </div>
+                    <div>
                       <h3 className="font-semibold text-muted-foreground mb-2">Modules</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {domain.modules.map((module) => (
