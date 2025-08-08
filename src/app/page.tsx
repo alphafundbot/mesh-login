@@ -3,12 +3,21 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { domainData } from "@/lib/domains";
 import AppLayout from "@/components/layout/AppLayout";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import RoleSelector from "@/components/dashboard/RoleSelector";
+import { cn } from "@/lib/utils";
+
+const getStatusColor = (status: string) => {
+  if (status.includes("Optimal")) return "bg-green-500";
+  if (status.includes("Warning")) return "bg-yellow-500";
+  if (status.includes("Error")) return "bg-red-500";
+  return "bg-gray-500";
+};
 
 export default function DashboardPage() {
   return (
@@ -27,16 +36,27 @@ export default function DashboardPage() {
           {domainData.map((domain) => (
             <Card
               key={domain.name}
-              className="bg-card border-border hover:border-accent transition-colors duration-300"
+              className="bg-card border-border hover:border-accent transition-colors duration-300 flex flex-col"
             >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-medium text-primary-foreground">
-                  {domain.name}
-                </CardTitle>
+              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                <div className="flex-1">
+                  <CardTitle className="text-lg font-medium text-primary-foreground">
+                    {domain.name}
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-2 pt-2 text-xs">
+                     <span
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          getStatusColor(domain.status)
+                        )}
+                      />
+                    <span>{domain.status}</span>
+                  </CardDescription>
+                </div>
                 <domain.icon className="h-6 w-6 text-accent" />
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
+              <CardContent className="flex-grow flex flex-col justify-end">
+                <div className="flex flex-wrap gap-2 mt-4">
                   {domain.modules.map((module) => (
                     <Badge
                       key={module}

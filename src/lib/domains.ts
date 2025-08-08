@@ -15,12 +15,14 @@ type Domain = {
   name: string;
   icon: LucideIcon;
   modules: string[];
+  status: string;
 };
 
 export const domainData: Domain[] = [
   {
     name: "🧠 System Core",
     icon: BrainCircuit,
+    status: "All systems optimal.",
     modules: [
       "System Configurator",
       "Signal Router",
@@ -32,6 +34,7 @@ export const domainData: Domain[] = [
   {
     name: "📊 Finance & Trading",
     icon: Activity,
+    status: "Warning: High volatility detected.",
     modules: [
       "Financial Orchestration",
       "Virtual Debit Suite",
@@ -58,6 +61,7 @@ export const domainData: Domain[] = [
   {
     name: "☁️ Cloud & DevOps",
     icon: Cloud,
+    status: "Optimal. CI/CD pipeline stable.",
     modules: [
       "Cloud Hub",
       "CI/CD Manager",
@@ -74,6 +78,7 @@ export const domainData: Domain[] = [
   {
     name: "📡 Telecom & IoT",
     icon: Signal,
+    status: "Warning: Mesh latency increasing.",
     modules: [
       "MVNO Panel",
       "Signal Visualizer",
@@ -89,6 +94,7 @@ export const domainData: Domain[] = [
   {
     name: "🏥 Medical & Bio",
     icon: HeartPulse,
+    status: "Error: Compliance matrix desynced.",
     modules: [
       "Compliance Matrix",
       "Medical Vault",
@@ -103,6 +109,7 @@ export const domainData: Domain[] = [
   {
     name: "⚖️ Legal & Identity",
     icon: Scale,
+    status: "Optimal. All roles compliant.",
     modules: [
       "Jurisdictional Router",
       "Wellness Dashboard",
@@ -122,6 +129,7 @@ export const domainData: Domain[] = [
   {
     name: "🎨 UI & Experience",
     icon: Palette,
+    status: "Optimal. UX feedback positive.",
     modules: [
       "Dashboard Designer",
       "Modular UI",
@@ -138,6 +146,7 @@ export const domainData: Domain[] = [
   {
     name: "🔐 Security & Privacy",
     icon: Shield,
+    status: "Warning: Unusual port scan detected.",
     modules: [
       "Vault Console",
       "Encryption Studio",
@@ -154,6 +163,7 @@ export const domainData: Domain[] = [
   {
     name: "🌍 Planetary & Eco",
     icon: Globe,
+    status: "Optimal. Energy consumption nominal.",
     modules: [
       "Solar Router",
       "Gravity Engine",
