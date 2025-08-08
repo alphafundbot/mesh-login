@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -342,43 +343,54 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
 
     return (
       <>
-        <Card>
-            <CardHeader>
-                <CardTitle>Override Frequency Heatmap & Cluster Analysis</CardTitle>
-                <CardDescription>Analysis of strategist overrides across domains and severity levels. Click a cell to inspect rationale clusters.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Domain</TableHead>
-                            {severities.map(s => <TableHead key={s} className="text-center">{s}</TableHead>)}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {domains.map(domain => (
-                            <TableRow key={domain}>
-                                <TableCell className="font-medium">{domain}</TableCell>
-                                {severities.map(severity => {
-                                    const count = data[domain]?.[severity] ?? 0;
-                                    return (
-                                        <TableCell 
-                                            key={severity} 
-                                            className={cn("text-center", count > 0 ? "cursor-pointer hover:bg-muted/50" : "")}
-                                            onClick={() => count > 0 && handleCellClick(domain, severity)}
-                                        >
-                                            <div className={cn("w-full h-8 flex items-center justify-center rounded-md", getHeatmapColor(count, maxOverrides))}>
-                                                {count}
-                                            </div>
-                                        </TableCell>
-                                    )
-                                })}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-2">
+                <CardHeader>
+                    <CardTitle>Override Frequency Heatmap</CardTitle>
+                    <CardDescription>Analysis of strategist overrides across domains and severity levels. Click a cell to inspect rationale clusters.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Domain</TableHead>
+                                {severities.map(s => <TableHead key={s} className="text-center">{s}</TableHead>)}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                        </TableHeader>
+                        <TableBody>
+                            {domains.map(domain => (
+                                <TableRow key={domain}>
+                                    <TableCell className="font-medium">{domain}</TableCell>
+                                    {severities.map(severity => {
+                                        const count = data[domain]?.[severity] ?? 0;
+                                        return (
+                                            <TableCell 
+                                                key={severity} 
+                                                className={cn("text-center", count > 0 ? "cursor-pointer hover:bg-muted/50" : "")}
+                                                onClick={() => count > 0 && handleCellClick(domain, severity)}
+                                            >
+                                                <div className={cn("w-full h-8 flex items-center justify-center rounded-md", getHeatmapColor(count, maxOverrides))}>
+                                                    {count}
+                                                </div>
+                                            </TableCell>
+                                        )
+                                    })}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Top Rationale Clusters</CardTitle>
+                    <CardDescription>Dominant themes in strategist overrides in the current time window.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                   <p className="text-muted-foreground text-center py-4">Cluster analysis view coming soon.</p>
+                </CardContent>
+            </Card>
+        </div>
         
         <Dialog open={!!rationaleDialog} onOpenChange={(open) => { if (!open) setRationaleDialog(null); }}>
             <DialogContent className="max-w-4xl">
