@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -52,7 +51,7 @@ export default function ModuleClient({ domain, moduleName }: { domain: Domain, m
             <CardTitle>Strategist Actions</CardTitle>
             <CardDescription>Perform module-specific actions and overrides.</CardDescription>
         </CardHeader>
-        <CardContent className="flex gap-2">
+        <CardContent className="flex flex-wrap gap-2">
             <Button disabled>Action 1</Button>
             <Button disabled variant="secondary">Action 2</Button>
             <Button disabled variant="destructive">Emergency Override</Button>
