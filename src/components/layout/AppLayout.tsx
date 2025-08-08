@@ -15,7 +15,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <Button variant="ghost" className="h-10 w-full justify-start px-2 text-lg font-bold tracking-tighter">
-            Stratagem.ai
+            <SidebarTrigger className="mr-2" />
+            <span className="group-data-[collapsible=icon]:hidden">Stratagem.ai</span>
           </Button>
         </SidebarHeader>
         <SidebarContent>
