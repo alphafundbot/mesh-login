@@ -17,6 +17,22 @@ interface ForecastAnalysis {
     strategicNotes?: string;
 }
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="p-2 bg-card border border-border rounded-lg shadow-lg">
+        <p className="label text-sm text-foreground">{`${label}`}</p>
+        <p className="intro text-primary font-semibold">{`Accuracy: ${(data.accuracy).toFixed(2)}%`}</p>
+        {data.notes && <p className="desc text-muted-foreground text-xs mt-1 max-w-xs">{data.notes}</p>}
+      </div>
+    );
+  }
+
+  return null;
+};
+
+
 export default function ForecastMemoryMap() {
     const [analyses, setAnalyses] = useState<ForecastAnalysis[]>([]);
     const [loading, setLoading] = useState(true);
@@ -95,9 +111,7 @@ export default function ForecastMemoryMap() {
                         <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                         <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
                         <Tooltip
-                            contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
-                            labelStyle={{ color: "hsl(var(--foreground))" }}
-                            formatter={(value: number, name: string, props) => [`${value}%`, "Accuracy"]}
+                            content={<CustomTooltip />}
                         />
                         <Legend />
                         <Line type="monotone" dataKey="accuracy" stroke="hsl(var(--accent))" strokeWidth={2} activeDot={{ r: 8 }} />
