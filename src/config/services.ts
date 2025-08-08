@@ -5,14 +5,17 @@
 import { config } from 'dotenv';
 
 // Load variables based on environment.
-// .env.remote for production-like environments (e.g., Firebase App Hosting)
-// .env.local for local development, not checked into source control.
-// .env for non-secret defaults, checked into source control.
+// The order of loading is important. Variables from files loaded later
+// will not override variables already set from files loaded earlier.
+// .env.local: For local development. This file is not checked into source control. HIGHEST PRIORITY.
+// .env.remote: For production-like environments (e.g., Firebase App Hosting).
+// .env: For non-secret defaults, checked into source control.
+config({ path: '.env.local' });
 if (process.env.NODE_ENV === 'production') {
     config({ path: '.env.remote' });
 }
-config({ path: '.env.local' });
 config({ path: '.env' });
+
 
 /**
  * Returns the value of an environment variable.
