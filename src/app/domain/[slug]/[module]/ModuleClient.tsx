@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from 'next/link';
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Lock } from "lucide-react";
 
 type Domain = {
   name: string;
@@ -15,7 +15,10 @@ type Domain = {
   status: string;
 };
 
+const SENSITIVE_MODULES = ["Consent Ledger", "Medical Vault", "SIM Vault", "Identity Vault", "Secret Vault", "Biometric Router"];
+
 export default function ModuleClient({ domain, moduleName }: { domain: Domain, moduleName: string }) {
+  const isSensitive = SENSITIVE_MODULES.includes(moduleName);
 
   return (
     <div className="space-y-6">
@@ -52,6 +55,12 @@ export default function ModuleClient({ domain, moduleName }: { domain: Domain, m
             <Button disabled>Action 1</Button>
             <Button disabled variant="secondary">Action 2</Button>
             <Button disabled variant="destructive">Emergency Override</Button>
+            {isSensitive && (
+                <Button disabled variant="destructive">
+                    <Lock className="mr-2 h-4 w-4" />
+                    Lock Module
+                </Button>
+            )}
         </CardContent>
       </Card>
 
