@@ -8,14 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { BrainCircuit } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ComposedChart } from 'recharts';
 
 interface ForecastAnalysis {
     id: string;
     timestamp: Date;
     accuracyScore?: number;
+    volatilityScore?: number;
     strategicNotes?: string;
-    divergenceMap?: { rationaleTag: string; predicted: string; actual: string; impact: string }[];
 }
 
 const CustomTooltip = React.memo(({ active, payload, label }: any) => {
@@ -25,6 +25,7 @@ const CustomTooltip = React.memo(({ active, payload, label }: any) => {
       <div className="p-2 bg-card border border-border rounded-lg shadow-lg max-w-xs">
         <p className="label text-sm text-foreground font-semibold">{`${label}`}</p>
         {data.accuracy && <p className="intro text-primary font-semibold">{`Accuracy: ${(data.accuracy).toFixed(2)}%`}</p>}
+        {data.volatility !== undefined && <p className="intro text-yellow-400 font-semibold">{`Volatility: ${data.volatility}`}</p>}
         {data.notes && <p className="desc text-muted-foreground text-xs mt-1">{data.notes}</p>}
       </div>
     );
@@ -48,8 +49,8 @@ export default function ForecastMemoryMap() {
                     id: doc.id,
                     timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
                     accuracyScore: data.commentary?.accuracyScore,
+                    volatilityScore: data.volatilityScore,
                     strategicNotes: data.commentary?.strategicNotes,
-                    divergenceMap: data.commentary?.divergenceMap || [],
                 };
             }).filter(a => a.accuracyScore !== undefined);
             setAnalyses(fetchedAnalyses);
@@ -69,21 +70,12 @@ export default function ForecastMemoryMap() {
     
     const chartData = useMemo(() => {
         return analyses.map(a => {
-            const divergence = a.divergenceMap?.length ?? 0;
-            const volatility = Math.min(100, (divergence / 5) * 100); // Simple volatility score
             const accuracy = a.accuracyScore ? parseFloat((a.accuracyScore * 100).toFixed(2)) : null;
-            
-            let volatilityRange: [number | null, number | null] = [null, null];
-            if (accuracy !== null) {
-                const halfVol = volatility / 3;
-                volatilityRange = [Math.max(0, accuracy - halfVol), Math.min(100, accuracy + halfVol)];
-            }
-
             return {
                 name: a.timestamp.toLocaleDateString(),
                 accuracy,
+                volatility: a.volatilityScore,
                 notes: a.strategicNotes,
-                volatilityRange
             }
         });
     }, [analyses]);
@@ -114,38 +106,31 @@ export default function ForecastMemoryMap() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><BrainCircuit className="h-6 w-6 text-accent" />Forecast Memory Map</CardTitle>
-                <CardDescription>Tracking rationale accuracy, volatility, and strategist divergence over time.</CardDescription>
+                <CardDescription>Tracking rationale accuracy and volatility over time. Run the Volatility Indexer in Admin for full data.</CardDescription>
             </CardHeader>
             <CardContent className="h-[500px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
+                    <ComposedChart
                         data={chartData}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                        <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                        <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={12} domain={[0, 100]} />
                         <Tooltip
                             content={<CustomTooltip />}
                         />
                         <Legend wrapperStyle={{paddingTop: '20px'}}/>
                         <defs>
                             <linearGradient id="volatilityGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
-                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.4}/>
+                                <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
-                        <Line type="monotone" dataKey="accuracy" stroke="hsl(var(--accent))" strokeWidth={2} activeDot={{ r: 8 }} dot={{ r: 4 }} name="Forecast Accuracy" />
-                        <Area
-                          type="monotone"
-                          dataKey="volatilityRange"
-                          stroke="hsl(var(--primary))"
-                          fill="url(#volatilityGradient)"
-                          strokeWidth={1}
-                          name="Volatility Range"
-                          strokeDasharray="5 5"
-                        />
-                    </AreaChart>
+                        <Line yAxisId="left" type="monotone" dataKey="accuracy" stroke="hsl(var(--accent))" strokeWidth={2} activeDot={{ r: 8 }} dot={{ r: 4 }} name="Forecast Accuracy" />
+                         <Area yAxisId="right" type="monotone" dataKey="volatility" fill="url(#volatilityGradient)" stroke="hsl(var(--chart-1))" name="Volatility Index" />
+                    </ComposedChart>
                 </ResponsiveContainer>
             </CardContent>
         </Card>
