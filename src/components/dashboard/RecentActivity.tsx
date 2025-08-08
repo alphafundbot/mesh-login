@@ -7,7 +7,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Bot, AlertTriangle, CornerDownRight, RefreshCw, ShieldQuestion } from "lucide-react";
 import { Button } from "../ui/button";
@@ -23,17 +22,35 @@ import { useUser } from "@/hooks/use-user";
 import { canUserPerform, type Action } from "@/lib/roles";
 import { Badge } from "../ui/badge";
 
-// Sample data to simulate a live log feed for the dashboard
-const generateSampleLogs = () => {
+const generateSampleLogs = (isStressTest: boolean = false) => {
   const users = ['admin', 'strategist', 'guest'];
-  const modules = ['VaultOperations', 'SignalRouter', 'Finance', 'EcoMesh'];
-  const actions = ['CONFIG_UPDATE', 'UNAUTHORIZED_ACCESS', 'API_CALL', 'LOGIN_SUCCESS', 'PORT_SCAN'];
-  const randomAction = actions[Math.floor(Math.random() * actions.length)];
-  const randomUser = users[Math.floor(Math.random() * users.length)];
-  const randomModule = modules[Math.floor(Math.random() * modules.length)];
-  const timestamp = new Date().toISOString();
+  const modules = ['VaultOperations', 'SignalRouter', 'Finance', 'EcoMesh', 'SystemCore', 'MedicalVault'];
+  const actions = ['CONFIG_UPDATE', 'UNAUTHORIZED_ACCESS', 'API_CALL', 'LOGIN_SUCCESS', 'PORT_SCAN', 'API_ERROR', 'ROLLBACK'];
+  
+  if (!isStressTest) {
+    const randomAction = actions[Math.floor(Math.random() * actions.length)];
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    const randomModule = modules[Math.floor(Math.random() * modules.length)];
+    const timestamp = new Date().toISOString();
+    return `[${timestamp}] ${randomAction}: user=${randomUser}, module=${randomModule}`;
+  }
 
-  return `[${timestamp}] ${randomAction}: user=${randomUser}, module=${randomModule}`;
+  let logs = "";
+  const logCount = 5 + Math.floor(Math.random() * 5); // Generate 5-9 logs for a stress test
+  for (let i = 0; i < logCount; i++) {
+    const action = Math.random() > 0.4 ? actions[Math.floor(Math.random() * actions.length)] : 'API_ERROR';
+    const user = users[Math.floor(Math.random() * users.length)];
+    const module = modules[Math.floor(Math.random() * modules.length)];
+    const timestamp = new Date(Date.now() - (logCount - i) * 1000).toISOString();
+    
+    // Make some logs more severe
+    if (i % 2 === 0) {
+        logs += `[${timestamp}] UNAUTHORIZED_ACCESS: user=external_ip, module=${module}, severity=Critical\n`;
+    } else {
+        logs += `[${timestamp}] ${action}: user=${user}, module=${module}\n`;
+    }
+  }
+  return logs;
 };
 
 
@@ -80,9 +97,9 @@ export default function RecentActivity() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleRefresh = async () => {
+  const handleRefresh = async (isStressTest: boolean) => {
     setLoading(true);
-    const newLogs = generateSampleLogs();
+    const newLogs = generateSampleLogs(isStressTest);
     try {
       await addDoc(collection(db, "audit_logs"), { logs: newLogs, timestamp: serverTimestamp() });
       // The onSnapshot listener will automatically trigger fetchActivity
@@ -149,9 +166,13 @@ export default function RecentActivity() {
             <ShieldQuestion className="h-4 w-4"/>
             Role: {user.role}
           </Badge>
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={() => handleRefresh(false)} disabled={loading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Simulate Event
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => handleRefresh(true)} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Stress Test
           </Button>
         </div>
       </CardHeader>

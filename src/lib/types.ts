@@ -56,19 +56,19 @@ export interface Recommendation {
 
 
 export const parseDetails = (details: string): ParsedDetails => {
-    const isOverride = details.includes("Override: true");
-    const rationaleMatch = details.match(/Rationale: "([^"]*)"/);
+    const isOverride = details.includes("Override: true") || details.includes("STRATEGIST_OVERRIDE");
+    const rationaleMatch = details.match(/rationale: "([^"]*)"/i);
     const rationale = rationaleMatch ? rationaleMatch[1] : "";
 
     let action = "";
-    const actionMatch = details.match(/Action: ([A-Za-z_]+)/);
-    if (actionMatch) {
-      action = actionMatch[1].replace(/_/g, " ");
+    const actionMatch = details.match(/action: "([^"]*)"/i);
+     if (actionMatch) {
+      action = actionMatch[1];
     } else if (details.startsWith("Event: Strategist Override Initiated")) {
       action = "Override Initiated";
     }
 
-    const severityMatch = details.match(/Severity: (Warning|Critical|Catastrophic)/);
+    const severityMatch = details.match(/Severity: (Warning|Critical|Catastrophic)/i);
     let severity = severityMatch ? (severityMatch[1] as Severity) : undefined;
     if (!severity) {
         const eventSeverityMatch = details.match(/Acknowledged (Warning|Critical|Catastrophic) event/);
@@ -78,7 +78,15 @@ export const parseDetails = (details: string): ParsedDetails => {
     }
     
     const domainsMatch = details.match(/involving (.*?)\./);
-    const domains = domainsMatch ? domainsMatch[1].split(', ') : undefined;
+    let domains = domainsMatch ? domainsMatch[1].split(', ') : undefined;
+    
+    if(!domains) {
+        const domainsMatch2 = details.match(/domains (.*?)\s/);
+        if (domainsMatch2) {
+             domains = domainsMatch2[1].split(', ');
+        }
+    }
+
 
     return { isOverride, rationale, action, severity, domains };
 }
