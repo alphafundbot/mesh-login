@@ -120,14 +120,7 @@ const signalIntelligenceFlow = ai.defineFlow(
     outputSchema: AnalyzeSignalHistoryOutputSchema,
   },
   async input => {
-    const {output} = await ai.generate({
-        prompt: await prompt.render(input),
-        model: 'googleai/gemini-1.5-flash',
-        tools: [getFeedbackSummary],
-        output: {
-            schema: AnalyzeSignalHistoryOutputSchema,
-        }
-    });
+    const {output} = await prompt(input);
     
     if (!output) {
         throw new Error("Failed to get a response from the AI.");
@@ -165,3 +158,4 @@ export const submitFeedback = ai.defineFlow(
         });
     }
 );
+
