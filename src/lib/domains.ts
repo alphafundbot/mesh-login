@@ -83,7 +83,7 @@ export const domainData: Domain[] = [
     name: "📡 Telecom & IoT",
     slug: "telecom-iot",
     icon: Signal,
-    status: "Warning: Mesh latency increasing.",
+    status: "Investigating latency...",
     modules: [
       "MVNO Panel",
       "Signal Visualizer",
