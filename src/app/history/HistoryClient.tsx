@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, Timestamp, where, getDocs, limit } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import {
   Table,
@@ -20,7 +20,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput, type Recommendation, submitFeedback } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown, Sparkles, HelpCircle, TrendingUp } from "lucide-react";
+import { generateReplayCommentary, type ReplayCommentaryOutput } from "@/ai/flows/replay-commentary-flow";
+import type { RationaleForecastOutput } from "@/ai/flows/rationale-forecast-flow";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown, Sparkles, HelpCircle, TrendingUp, GitCompareArrows, ChevronsRight, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -431,6 +433,39 @@ const RecommendationConfidence = ({ rec }: { rec: Recommendation }) => {
     )
 }
 
+function ReplayCommentaryDisplay({ commentary }: { commentary: ReplayCommentaryOutput }) {
+    const accuracyColor = commentary.accuracyScore > 0.7 ? "text-green-400" : commentary.accuracyScore > 0.4 ? "text-yellow-400" : "text-red-400";
+    return (
+        <Card>
+            <CardHeader>
+                 <CardTitle className="flex items-center gap-2 text-accent">
+                    <Bot className="h-6 w-6" /> Replay Commentary
+                 </CardTitle>
+                 <CardDescription>AI-generated analysis comparing the forecast to actual events.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div>
+                    <h3 className="font-semibold mb-2 flex items-center gap-2"><FileText className="h-5 w-5" />Strategic Notes</h3>
+                    <p className="text-muted-foreground whitespace-pre-wrap">{commentary.strategicNotes}</p>
+                    <div className="mt-2">
+                        <Badge variant="outline" className={accuracyColor}>Accuracy Score: {(commentary.accuracyScore * 100).toFixed(0)}%</Badge>
+                    </div>
+                </div>
+                 <div className="border-t pt-4">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2"><GitCompareArrows className="h-5 w-5" />Divergence Map</h3>
+                    <ul className="list-disc pl-5 text-muted-foreground space-y-2">
+                        {commentary.divergenceMap.map((item, index) => (
+                           <li key={index}>
+                               <strong className="text-foreground">{item.rationaleTag}</strong>: Predicted "{item.predicted}", but saw "{item.actual}". <span className="text-primary/80">Impact: {item.impact}</span>
+                           </li>
+                        ))}
+                    </ul>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
 
 export default function HistoryClient() {
   const [allLogs, setAllLogs] = useState<ActionLog[]>([]);
@@ -453,6 +488,10 @@ export default function HistoryClient() {
   const [rationaleDialog, setRationaleDialog] = useState<RationaleDialogContent>(null);
   const [loadingRationales, setLoadingRationales] = useState(false);
   const [taggedRationales, setTaggedRationales] = useState<TaggedRationale[]>([]);
+
+  // State for Replay Commentary
+  const [replayCommentary, setReplayCommentary] = useState<ReplayCommentaryOutput | null>(null);
+  const [loadingReplay, setLoadingReplay] = useState(false);
 
 
   useEffect(() => {
@@ -513,7 +552,7 @@ export default function HistoryClient() {
     
     currentLogs = allLogs.filter(log => {
         const logTime = log.timestamp.getTime();
-        return startTime - logTime < filterMilliseconds;
+        return startTime - logTime < filterMilliseconds && startTime - logTime >= 0;
     });
     previousLogs = allLogs.filter(log => {
       const logTime = log.timestamp.getTime();
@@ -642,6 +681,60 @@ export default function HistoryClient() {
         }
     }, [searchParams, filteredLogs, handleHeatmapCellClick, handleClusterClick, globalClusters]);
 
+
+  useEffect(() => {
+    const startTimeParam = searchParams.get('startTime');
+    if (!startTimeParam || filteredLogs.length === 0) {
+      setReplayCommentary(null);
+      return;
+    }
+
+    const fetchCommentary = async () => {
+        setLoadingReplay(true);
+        setReplayCommentary(null);
+        try {
+            const forecastTimestamp = new Date(startTimeParam);
+            const q = query(
+                collection(db, "forecast_analysis"),
+                where("timestamp", "==", Timestamp.fromDate(forecastTimestamp)),
+                limit(1)
+            );
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                toast({ title: "Forecast not found", description: "Could not find the original forecast to generate commentary." });
+                setLoadingReplay(false);
+                return;
+            }
+
+            const forecastDoc = querySnapshot.docs[0].data();
+            const originalForecast = forecastDoc.forecast as RationaleForecastOutput;
+
+            const logsString = filteredLogs
+                .map(log => `[${log.timestamp.toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
+                .join("\n");
+
+            const commentary = await generateReplayCommentary({
+                originalForecast: originalForecast,
+                actualLogs: logsString,
+            });
+
+            setReplayCommentary(commentary);
+
+        } catch (error) {
+            console.error("Failed to generate replay commentary:", error);
+            toast({
+                variant: "destructive",
+                title: "Commentary Failed",
+                description: "Could not generate AI replay commentary for this forecast.",
+            });
+        } finally {
+            setLoadingReplay(false);
+        }
+    }
+    fetchCommentary();
+  }, [searchParams, filteredLogs, toast]);
+
   const handleAnalysis = async () => {
     setLoadingAnalysis(true);
     setAnalysisResult(null);
@@ -743,6 +836,9 @@ export default function HistoryClient() {
           {renderTimeFilterTabs()}
           {renderViewModeTabs()}
         </div>
+
+        {loadingReplay && <Card><CardContent className="p-4"><Skeleton className="h-48 w-full" /></CardContent></Card>}
+        {replayCommentary && <ReplayCommentaryDisplay commentary={replayCommentary} />}
 
         {viewMode === 'logs' && (
             <>
