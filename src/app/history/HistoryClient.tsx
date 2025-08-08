@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle, X, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, SignalHigh, SignalLow, SignalMedium } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle, X, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, SignalHigh, SignalLow, SignalMedium, BarChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -127,6 +127,7 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
             items: TaggedRationale[];
             severities: Record<Severity, number>;
             domains: Record<string, DomainMetrics>;
+            riskScore: number;
         };
 
         const clusters = new Map<string, ClusterInfo>();
@@ -137,7 +138,8 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                     clusters.set(tag, { 
                         items: [], 
                         severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 },
-                        domains: {}
+                        domains: {},
+                        riskScore: 0
                     });
                 }
                 const cluster = clusters.get(tag)!;
@@ -151,7 +153,24 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                     cluster.domains[domain].severities[item.severity]++;
                 });
             })
-        })
+        });
+
+        // Calculate risk score for each cluster
+        const RISK_WEIGHTS: Record<Severity, number> = {
+            "Warning": 1,
+            "Critical": 5,
+            "Catastrophic": 10
+        };
+
+        clusters.forEach(cluster => {
+            let score = 0;
+            score += cluster.severities.Warning * RISK_WEIGHTS.Warning;
+            score += cluster.severities.Critical * RISK_WEIGHTS.Critical;
+            score += cluster.severities.Catastrophic * RISK_WEIGHTS.Catastrophic;
+            cluster.riskScore = score;
+        });
+
+
         return clusters;
     }, [rationaleDialog?.rationales]);
 
@@ -266,7 +285,7 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                         )}
                         {!loadingRationales && rationaleClusters && (
                              <Accordion type="multiple" className="w-full">
-                                {Array.from(rationaleClusters.entries()).sort((a,b) => b[1].items.length - a[1].items.length).map(([tag, { items, severities, domains }]) => {
+                                {Array.from(rationaleClusters.entries()).sort((a,b) => b[1].riskScore - a[1].riskScore).map(([tag, { items, severities, domains, riskScore }]) => {
                                    const sortedDomains = Object.entries(domains).sort((a, b) => b[1].count - a[1].count);
                                     return (
                                         <AccordionItem key={tag} value={tag}>
@@ -275,9 +294,10 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                                                     <Tags className="h-4 w-4 text-muted-foreground" />
                                                     <span className="capitalize font-semibold">{tag}</span>
                                                     <Badge variant="outline">{items.length} total</Badge>
-                                                    {severities.Warning > 0 && <Badge variant="secondary" className="gap-1 bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" /> {severities.Warning} Warning</Badge>}
-                                                    {severities.Critical > 0 && <Badge variant="destructive" className="gap-1 bg-orange-600"><ShieldAlert className="h-3 w-3" /> {severities.Critical} Critical</Badge>}
-                                                    {severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 bg-red-800"><ShieldX className="h-3 w-3" /> {severities.Catastrophic} Catastrophic</Badge>}
+                                                    <Badge variant={riskScore > 20 ? "destructive" : riskScore > 10 ? "secondary" : "default"} className="gap-1 bg-primary/20 text-primary-foreground"><BarChart className="h-3 w-3" /> Risk: {riskScore}</Badge>
+                                                    {severities.Warning > 0 && <Badge variant="secondary" className="gap-1 bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" /> {severities.Warning} W</Badge>}
+                                                    {severities.Critical > 0 && <Badge variant="destructive" className="gap-1 bg-orange-600"><ShieldAlert className="h-3 w-3" /> {severities.Critical} C</Badge>}
+                                                    {severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 bg-red-800"><ShieldX className="h-3 w-3" /> {severities.Catastrophic} Ct</Badge>}
                                                 </div>
                                             </AccordionTrigger>
                                             <AccordionContent>
