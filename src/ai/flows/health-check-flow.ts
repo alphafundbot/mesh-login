@@ -27,13 +27,10 @@ export async function checkApiHealth(): Promise<HealthCheckOutput> {
       }
     });
     
-    if (output && typeof output === 'string') {
-        return { status: 'OK', message: `API responded successfully. The AI says: "${output}"` };
-    }
-    
-    const textResponse = output as {text: string};
-    if (textResponse?.text) {
-        return { status: 'OK', message: `API responded successfully. The AI says: "${textResponse.text}"` };
+    const textResponse = output?.text;
+
+    if (textResponse) {
+        return { status: 'OK', message: `API responded successfully. The AI says: "${textResponse}"` };
     }
     
     // Fallback in case of unexpected successful response structure
