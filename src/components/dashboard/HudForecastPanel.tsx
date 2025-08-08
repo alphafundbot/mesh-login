@@ -60,7 +60,7 @@ export default function HudForecastPanel() {
   const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
     if (typeof window === "undefined") return 0.5;
     const saved = localStorage.getItem("forecastConfidenceThreshold");
-    return saved !== null ? parseFloat(saved) : 0.5;
+    return saved !== null ? parseFloat(saved) : 0;
   });
   const { toast } = useToast();
 
@@ -137,17 +137,17 @@ export default function HudForecastPanel() {
     }
     
     const filteredForecasts = result.forecasts.filter(f => f.predictedOverrideRate >= confidenceThreshold);
-    const sortedForecasts = filteredForecasts.sort((a,b) => b.predictedOverrideRate - a.predictedOverrideRate);
+    const sortedForecasts = (result.forecasts || []).sort((a,b) => b.predictedOverrideRate - a.predictedOverrideRate);
 
     if (sortedForecasts.length === 0) {
-        return <p className="text-muted-foreground text-center py-4">No forecasts meet the current confidence threshold of {confidenceThreshold.toFixed(2)}.</p>;
+        return <p className="text-muted-foreground text-center py-4">No suppression forecasts available at this time.</p>;
     }
 
 
     return (
         <div className="space-y-3">
             {sortedForecasts.slice(0, 3).map((forecast) => (
-                <div key={forecast.domain} className="p-3 rounded-md bg-muted/30">
+                <div key={forecast.domain} className={cn("p-3 rounded-md bg-muted/30", forecast.predictedOverrideRate < confidenceThreshold && "opacity-50")}>
                     <div className="flex justify-between items-start">
                         <p className="font-semibold text-foreground">{forecast.domain}</p>
                          <Badge variant="outline" className={cn("gap-1.5", getRiskColor(forecast.predictedOverrideRate))}>
@@ -191,7 +191,7 @@ export default function HudForecastPanel() {
                             />
                             <span className="text-sm font-mono w-10 text-center">{confidenceThreshold.toFixed(2)}</span>
                         </div>
-                         <p className="text-xs text-muted-foreground">Only show forecasts with a predicted override rate above this value.</p>
+                         <p className="text-xs text-muted-foreground">Forecasts below this certainty will be dimmed.</p>
                     </div>
                 </PopoverContent>
             </Popover>
@@ -206,5 +206,3 @@ export default function HudForecastPanel() {
     </Card>
   );
 }
-
-    
