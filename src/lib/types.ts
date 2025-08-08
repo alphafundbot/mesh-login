@@ -85,19 +85,17 @@ export const parseDetails = (details: string): ParsedDetails => {
   }
 
   let domains: string[] | undefined;
-  const domainsMatch = details.match(/involving (.*?)\./i);
-  if (domainsMatch) {
-    domains = domainsMatch[1].split(', ').map(d => d.trim());
+  // Regex to find domains after "on", "involving", or "for"
+  const domainsMatch = details.match(/(?:on|involving|for) ([\w\s,&\-()]+?)(?::|,| with| due| for)/i);
+  
+  if (domainsMatch && domainsMatch[1]) {
+    domains = domainsMatch[1].split(',').map(d => d.trim().replace(/\.$/, ''));
   } else {
-    const onDomainsMatch = details.match(/on (.*?):/i);
-    if (onDomainsMatch) {
-      domains = onDomainsMatch[1].split(', ').map(d => d.trim());
-    } else {
-      const forDomainsMatch = details.match(/for (.*?)\s/i);
-      if(forDomainsMatch) {
-          domains = forDomainsMatch[1].split(', ').map(d => d.trim());
-      }
-    }
+    // Fallback for simple "on <Domain>:"
+    const onDomainMatch = details.match(/on (.*?):/);
+     if (onDomainMatch) {
+       domains = onDomainMatch[1].split(', ').map(d => d.trim());
+     }
   }
   
   // A special case for STRATEGIST_RESPONSE
