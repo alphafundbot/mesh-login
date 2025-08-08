@@ -330,7 +330,7 @@ export default function VisualIntegrityDashboard() {
                         7-Day Risk Delta
                     </p>
                     <span className={cn("font-bold font-mono", escalationData.riskDelta > 0 ? "text-destructive" : escalationData.riskDelta < 0 ? "text-green-400" : "text-muted-foreground")}>
-                       {escalationData.riskDelta >= 0 && "+"}{escalationData.riskDelta}
+                       {escalationData.riskDelta >= 0 && "+"}{escalationData.riskDelta.toFixed(0)}
                     </span>
                 </div>
                 {escalationData.topDomainCount > 0 && (

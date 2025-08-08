@@ -12,8 +12,8 @@ export interface ActionLog {
 
 export interface ParsedDetails {
     isOverride: boolean;
-    rationale: string;
-    action: string;
+    rationale?: string;
+    action?: string;
     severity?: Severity;
     domains?: string[];
 }
@@ -62,14 +62,16 @@ export const parseDetails = (details: string): ParsedDetails => {
     details.startsWith("Action: ");
 
   const rationaleMatch = details.match(/Rationale: "([^"]*)"/i);
-  const rationale = rationaleMatch ? rationaleMatch[1] : "";
+  const rationale = rationaleMatch ? rationaleMatch[1] : undefined;
 
-  let action = "";
+  let action: string | undefined = "";
   const actionMatch = details.match(/Action: ([^ ]*)/i);
   if (actionMatch) {
     action = actionMatch[1].replace(/\"/g, '');
   } else if (details.startsWith("Event: Strategist Override Initiated")) {
     action = "Override Initiated";
+  } else {
+    action = undefined;
   }
 
   const severityMatch = details.match(/Severity: (Warning|Critical|Catastrophic)/i);

@@ -121,7 +121,7 @@ function DialogClusterItem({ cluster, previousLogs }: { cluster: ClusterInfo, pr
                     <Tags className="h-4 w-4 text-muted-foreground" />
                     <span className="capitalize font-semibold">{tag}</span>
                     <Badge variant="outline">{items.length} total</Badge>
-                    <Badge variant={riskScore > 10 ? "destructive" : riskScore > 5 ? "secondary" : "default"} className="gap-1 bg-primary/20 text-primary-foreground"><BarChart className="h-3 w-3" /> Risk: {riskScore}</Badge>
+                    <Badge variant={riskScore > 10 ? "destructive" : riskScore > 5 ? "secondary" : "default"} className="gap-1 bg-primary/20 text-primary-foreground"><BarChart className="h-3 w-3" /> Risk: {riskScore.toFixed(0)}</Badge>
                     <ClusterDelta currentScore={riskScore} previousScore={previousScore} />
                     {severities.Warning > 0 && <Badge variant="secondary" className="gap-1 bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" /> {severities.Warning} W</Badge>}
                     {severities.Critical > 0 && <Badge variant="destructive" className="gap-1 bg-orange-600"><ShieldAlert className="h-3 w-3" /> {severities.Critical} C</Badge>}
@@ -352,7 +352,7 @@ function GlobalClusterPanel({ clusters, previousLogs, onClusterClick }: { cluste
                     >
                         <div className="flex items-start justify-between">
                              <h4 className="font-semibold capitalize">{cluster.tag}</h4>
-                             <Badge variant={cluster.riskScore > 10 ? "destructive" : cluster.riskScore > 5 ? "secondary" : "default"} className="gap-1"><BarChart className="h-3 w-3" /> Risk: {cluster.riskScore}</Badge>
+                             <Badge variant={cluster.riskScore > 10 ? "destructive" : cluster.riskScore > 5 ? "secondary" : "default"} className="gap-1"><BarChart className="h-3 w-3" /> Risk: {cluster.riskScore.toFixed(0)}</Badge>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                              {cluster.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{cluster.severities.Warning}</Badge>}
@@ -579,7 +579,7 @@ export default function HistoryClient() {
         
         const untaggedRationales = relevantLogs.map(log => {
             const d = parseDetails(log.details);
-            return { rationale: d.rationale, tags: [], severity: d.severity!, domains: d.domains || [] };
+            return { rationale: d.rationale!, tags: [], severity: d.severity!, domains: d.domains! };
         });
 
         const title = `Override Rationales for ${domain}`;
