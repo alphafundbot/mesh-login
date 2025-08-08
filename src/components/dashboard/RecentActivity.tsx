@@ -16,26 +16,33 @@ import {
 } from "@/ai/flows/audit-trail-ai";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
 
 // Sample data to simulate a live log feed for the dashboard
-const sampleLogs = `
-[2025-08-07T20:10:01Z] CONFIG_UPDATE: user=admin, module=VaultOperations
-[2025-08-07T20:10:03Z] PORT_SCAN: source=127.0.0.1, ports=3000-3010
-[2025-08-07T20:10:05Z] UNAUTHORIZED_ACCESS: user=guest, module=SignalRouter
-[2025-08-07T20:11:15Z] API_CALL: service=Finance, endpoint=/api/v1/ledger, status=200
-[2025-08-07T20:12:00Z] LOGIN_SUCCESS: user=strategist, ip=192.168.1.100
-`;
+const generateSampleLogs = () => {
+  const users = ['admin', 'strategist', 'guest'];
+  const modules = ['VaultOperations', 'SignalRouter', 'Finance', 'EcoMesh'];
+  const actions = ['CONFIG_UPDATE', 'UNAUTHORIZED_ACCESS', 'API_CALL', 'LOGIN_SUCCESS', 'PORT_SCAN'];
+  const randomAction = actions[Math.floor(Math.random() * actions.length)];
+  const randomUser = users[Math.floor(Math.random() * users.length)];
+  const randomModule = modules[Math.floor(Math.random() * modules.length)];
+  const timestamp = new Date().toISOString();
+
+  return `[${timestamp}] ${randomAction}: user=${randomUser}, module=${randomModule}`;
+};
+
 
 export default function RecentActivity() {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<AuditTrailAISummarizationOutput | null>(null);
   const { toast } = useToast();
 
-  const fetchActivity = async () => {
+  const fetchActivity = async (logs: string) => {
     setLoading(true);
     setResult(null);
     try {
-      const output = await auditTrailAISummarization({ auditLogs: sampleLogs });
+      const output = await auditTrailAISummarization({ auditLogs: logs });
       setResult(output);
     } catch (error) {
       console.error("AI summarization failed:", error);
@@ -50,14 +57,57 @@ export default function RecentActivity() {
   };
 
   useEffect(() => {
-    fetchActivity();
+    const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(1));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const latestLog = snapshot.docs[0].data();
+        fetchActivity(latestLog.logs);
+      } else {
+        // Handle case with no logs yet, maybe show a waiting message or seed one
+        const initialLogs = generateSampleLogs();
+        addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const handleAction = (action: string) => {
+  const handleRefresh = async () => {
+    setLoading(true);
+    const newLogs = generateSampleLogs();
+    try {
+      await addDoc(collection(db, "audit_logs"), { logs: newLogs, timestamp: serverTimestamp() });
+      // The onSnapshot listener will automatically trigger fetchActivity
+    } catch (error) {
+      console.error("Error adding new log:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not trigger new activity.",
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleAction = async (action: string) => {
     toast({
       title: "Action Initiated",
       description: `${action} protocol has been initiated.`,
     });
+    try {
+      await addDoc(collection(db, "hud_actions"), {
+        action,
+        timestamp: serverTimestamp(),
+        details: result ? JSON.stringify(result) : "No details available"
+      });
+    } catch (error) {
+      console.error("Failed to log action:", error);
+      toast({
+        variant: "destructive",
+        title: "Logging Failed",
+        description: `Could not log action: ${action}`,
+      });
+    }
   };
 
   return (
@@ -68,9 +118,9 @@ export default function RecentActivity() {
             <Bot className="h-6 w-6 text-accent" />
             <CardTitle>Recent Activity (AI Summary)</CardTitle>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchActivity} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            Simulate New Event
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
