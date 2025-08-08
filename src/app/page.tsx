@@ -39,7 +39,7 @@ export default function DashboardPage() {
             <div className="lg:col-span-3">
                 <IntelligenceMap />
             </div>
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
                 <VisualIntegrityDashboard />
             </div>
         </div>
