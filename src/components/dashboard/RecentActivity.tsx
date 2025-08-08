@@ -17,7 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, getDocs, setDoc, doc, where } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { canUserPerform, type Action } from "@/lib/roles";
 
@@ -53,79 +53,73 @@ const generateSampleLogs = (isStressTest: boolean = false) => {
 
 
 export default function RecentActivity() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadingLogs, setLoadingLogs] = useState(true);
   const [result, setResult] = useState<AuditTrailAISummarizationOutput | null>(null);
+  const [latestLog, setLatestLog] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useUser();
-
-  const fetchAndCacheSummary = useCallback(async (logs: string, logId: string) => {
-    setLoading(true);
-    try {
-      const output = await auditTrailAISummarization({ auditLogs: logs });
-      setResult(output);
-      // Cache the new summary
-      await setDoc(doc(db, "audit_log_cache", logId), {
-        summary: output.summary,
-        unusualActivities: output.unusualActivities,
-        originalLogId: logId,
-        timestamp: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error("AI summarization failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch AI summary for recent activity.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
   
 
   useEffect(() => {
     const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(1));
     const unsubscribe = onSnapshot(q, async (logSnapshot) => {
+      setLoadingLogs(true);
       if (logSnapshot.empty) {
         // If no logs, generate initial one
         const initialLogs = generateSampleLogs();
-        const docRef = await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
-        fetchAndCacheSummary(initialLogs, docRef.id);
-        return;
-      }
-      
-      const latestLogDoc = logSnapshot.docs[0];
-      const latestLogId = latestLogDoc.id;
-      const latestLogData = latestLogDoc.data();
-
-      // Check for a cached summary first
-      const cacheQuery = query(collection(db, "audit_log_cache"), where("originalLogId", "==", latestLogId), limit(1));
-      const cacheSnapshot = await getDocs(cacheQuery);
-
-      if (!cacheSnapshot.empty) {
-        const cachedData = cacheSnapshot.docs[0].data() as AuditTrailAISummarizationOutput;
-        setResult(cachedData);
-        setLoading(false);
+        await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+        setLatestLog(initialLogs);
       } else {
-        // If no cache, fetch a new summary and cache it.
-        fetchAndCacheSummary(latestLogData.logs, latestLogId);
+         const latestLogDoc = logSnapshot.docs[0];
+         const latestLogData = latestLogDoc.data();
+         setLatestLog(latestLogData.logs);
       }
-
+      setResult(null); // Clear previous analysis when new logs arrive
+      setLoadingLogs(false);
     }, (error) => {
       console.error("Firestore snapshot error:", error);
       setLoading(false);
+      setLoadingLogs(false);
     });
 
     return () => unsubscribe();
-  }, [fetchAndCacheSummary, toast]);
+  }, [toast]);
+
+  const handleAnalysis = async () => {
+    if (!latestLog) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No logs available to analyze.",
+      });
+      return;
+    }
+    setLoading(true);
+    setResult(null);
+    try {
+      const output = await auditTrailAISummarization({ auditLogs: latestLog });
+      setResult(output);
+    } catch (e) {
+      const error = e as Error;
+      console.error("AI summarization failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Analysis Error",
+        description: error.message || "Failed to fetch AI summary for recent activity.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const handleRefresh = async (isStressTest: boolean) => {
-    setLoading(true);
+    setLoadingLogs(true);
     setResult(null);
     const newLogs = generateSampleLogs(isStressTest);
     try {
-      // Add new log, the listener will then pick it up, see no cache, and generate a new summary.
+      // Add new log, the listener will then pick it up
       await addDoc(collection(db, "audit_logs"), { logs: newLogs, timestamp: serverTimestamp() });
     } catch (error) {
       console.error("Error adding new log:", error);
@@ -134,7 +128,7 @@ export default function RecentActivity() {
         title: "Error",
         description: "Could not trigger new activity.",
       });
-      setLoading(false);
+      setLoadingLogs(false);
     }
   };
 
@@ -183,59 +177,61 @@ export default function RecentActivity() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           <Bot className="h-6 w-6 text-accent" />
-          <CardTitle>Recent Activity (AI Summary)</CardTitle>
+          <CardTitle>Recent Activity Log</CardTitle>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleRefresh(false)} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <Button variant="outline" size="sm" onClick={() => handleRefresh(false)} disabled={loadingLogs}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loadingLogs ? 'animate-spin' : ''}`} />
             Simulate Event
           </Button>
-          <Button variant="destructive" size="sm" onClick={() => handleRefresh(true)} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <Button variant="destructive" size="sm" onClick={() => handleRefresh(true)} disabled={loadingLogs}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loadingLogs ? 'animate-spin' : ''}`} />
             Stress Test
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {loading && (
-            <>
-            <div>
-              <h3 className="font-semibold mb-2">Summary:</h3>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-              </div>
-            </div>
-            <div className="border-t border-border pt-4">
-                <h3 className="font-semibold mb-2 flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
-                Unusual Activity Detected:
-              </h3>
-              <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-              </div>
-            </div>
-          </>
+        {loadingLogs ? (
+          <Skeleton className="h-24 w-full" />
+        ) : (
+          <div>
+            <pre className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-lg overflow-x-auto">
+                <code>{latestLog}</code>
+            </pre>
+            <Button onClick={handleAnalysis} disabled={loading} className="mt-4">
+                {loading ? "Analyzing..." : "Analyze with AI"}
+            </Button>
+          </div>
         )}
 
+        {loading && (
+           <div className="border-t border-border pt-4">
+             <h3 className="font-semibold mb-2 flex items-center gap-2 text-destructive">
+               <AlertTriangle className="h-5 w-5" />
+               AI Analysis:
+             </h3>
+             <div className="space-y-2">
+                 <Skeleton className="h-4 w-full" />
+                 <Skeleton className="h-4 w-full" />
+             </div>
+           </div>
+        )}
+
+
         {result && !loading && (
-          <>
-            <div>
-              <h3 className="font-semibold mb-2">Summary:</h3>
-              <p className="text-muted-foreground">{result.summary}</p>
-            </div>
-            <div className="border-t border-border pt-4">
-              <h3 className="font-semibold mb-2 flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
-                Unusual Activity Detected:
-              </h3>
-              <p className="text-muted-foreground whitespace-pre-wrap">
-                {result.unusualActivities}
-              </p>
-              {renderActionButtons()}
-            </div>
-          </>
+          <div className="border-t border-border pt-4">
+            <h3 className="font-semibold mb-2">AI Summary:</h3>
+            <p className="text-muted-foreground">{result.summary}</p>
+            
+            <h3 className="font-semibold mt-4 mb-2 flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Unusual Activity Detected:
+            </h3>
+            <p className="text-muted-foreground whitespace-pre-wrap">
+              {result.unusualActivities}
+            </p>
+            {renderActionButtons()}
+          </div>
         )}
       </CardContent>
     </Card>

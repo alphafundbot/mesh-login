@@ -9,7 +9,6 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const AuditTrailAISummarizationInputSchema = z.object({
@@ -25,21 +24,6 @@ const AuditTrailAISummarizationOutputSchema = z.object({
 });
 export type AuditTrailAISummarizationOutput = z.infer<typeof AuditTrailAISummarizationOutputSchema>;
 
-export async function auditTrailAISummarization(input: AuditTrailAISummarizationInput): Promise<AuditTrailAISummarizationOutput> {
-  return auditTrailAISummarizationFlow(input);
-}
-
-const prompt = ai.definePrompt({
-  name: 'auditTrailAISummarizationPrompt',
-  input: {schema: AuditTrailAISummarizationInputSchema},
-  output: {schema: AuditTrailAISummarizationOutputSchema},
-  model: googleAI.model('gemini-1.5-flash'),
-  prompt: `You are a security analyst specializing in identifying unusual activity patterns.
-
-You will use the provided audit logs to identify and summarize the security events, and any unusual activity patterns.
-
-Audit Logs: {{{auditLogs}}}`,
-});
 
 const auditTrailAISummarizationFlow = ai.defineFlow(
   {
@@ -47,8 +31,26 @@ const auditTrailAISummarizationFlow = ai.defineFlow(
     inputSchema: AuditTrailAISummarizationInputSchema,
     outputSchema: AuditTrailAISummarizationOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input) => {
+    const {output} = await ai.generate({
+      model: 'googleai/gemini-1.5-flash',
+      prompt: `You are a security analyst specializing in identifying unusual activity patterns.
+
+You will use the provided audit logs to identify and summarize the security events, and any unusual activity patterns.
+
+Audit Logs: {{{auditLogs}}}`,
+      input: {
+        auditLogs: input.auditLogs
+      },
+      output: {
+        schema: AuditTrailAISummarizationOutputSchema
+      }
+    });
     return output!;
   }
 );
+
+
+export async function auditTrailAISummarization(input: AuditTrailAISummarizationInput): Promise<AuditTrailAISummarizationOutput> {
+  return auditTrailAISummarizationFlow(input);
+}
