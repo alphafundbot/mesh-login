@@ -100,7 +100,7 @@ export default function ForecastMemoryMap() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><BrainCircuit className="h-6 w-6 text-accent" />Forecast Memory Map</CardTitle>
                     <CardDescription>No forecast analysis data available yet.</CardDescription>
-                </CardHeader>
+                </Header>
                 <CardContent>
                     <p className="text-muted-foreground text-center py-4">Run some forecasts and replays to build the memory map.</p>
                 </CardContent>
