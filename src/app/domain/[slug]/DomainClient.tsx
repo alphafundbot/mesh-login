@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 
 type Domain = {
   name: string;
@@ -90,8 +92,20 @@ export default function DomainClient({ domain }: { domain: Domain }) {
     null
   );
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
+  const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    const saved = localStorage.getItem("domainConfidenceThreshold");
+    return saved !== null ? parseFloat(saved) : 0;
+  });
+
   const { toast } = useToast();
   const { user } = useUser();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("domainConfidenceThreshold", String(confidenceThreshold));
+    }
+  }, [confidenceThreshold]);
 
   useEffect(() => {
     const getAnalysis = async () => {
@@ -145,6 +159,14 @@ export default function DomainClient({ domain }: { domain: Domain }) {
         });
     }
   };
+
+  const sortedRecommendations = useMemo(() => {
+    if (!result) return [];
+    
+    const filtered = result.recommendations.filter(rec => rec.confidence >= confidenceThreshold);
+
+    return [...filtered].sort((a, b) => b.confidence - a.confidence);
+  }, [result, confidenceThreshold]);
 
   if (loading) {
     return (
@@ -215,10 +237,27 @@ export default function DomainClient({ domain }: { domain: Domain }) {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-accent"><Lightbulb className="h-5 w-5" />Tactical Recommendations</CardTitle>
+            <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-accent"><Lightbulb className="h-5 w-5" />Tactical Recommendations</CardTitle>
+                <div className="flex items-center space-x-4 w-1/2 max-w-sm">
+                    <Label htmlFor="confidence-slider" className="text-sm whitespace-nowrap">Min Confidence</Label>
+                    <div className="flex-grow flex items-center gap-2">
+                        <Slider
+                            id="confidence-slider"
+                            min={0}
+                            max={1}
+                            step={0.01}
+                            value={[confidenceThreshold]}
+                            onValueChange={(value) => setConfidenceThreshold(value[0])}
+                            className="flex-grow"
+                        />
+                         <span className="text-sm font-mono w-10 text-center">{confidenceThreshold.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
         </CardHeader>
         <CardContent className="space-y-4">
-            {result.recommendations.sort((a,b) => b.confidence - a.confidence).map(rec => (
+            {sortedRecommendations.length > 0 ? sortedRecommendations.map(rec => (
                 <div key={rec.recommendationId} className="flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30">
                     <div className="flex-1 pr-4 space-y-2">
                         <p className="text-muted-foreground">{rec.text}</p>
@@ -245,7 +284,9 @@ export default function DomainClient({ domain }: { domain: Domain }) {
                         </Button>
                     </div>
                 </div>
-            ))}
+            )) : (
+                 <p className="text-muted-foreground text-center py-4">No recommendations meet the current confidence threshold.</p>
+            )}
         </CardContent>
       </Card>
     </div>
