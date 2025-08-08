@@ -23,6 +23,12 @@ import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle,
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface ActionLog {
   id: string;
@@ -105,6 +111,20 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
         });
         return { data, maxOverrides };
     }, [logs]);
+
+    const rationaleClusters = useMemo(() => {
+        if (!rationaleDialog?.rationales) return null;
+        const clusters = new Map<string, TaggedRationale[]>();
+        rationaleDialog.rationales.forEach(item => {
+            item.tags.forEach(tag => {
+                if (!clusters.has(tag)) {
+                    clusters.set(tag, []);
+                }
+                clusters.get(tag)!.push(item);
+            })
+        })
+        return clusters;
+    }, [rationaleDialog?.rationales]);
 
     const handleCellClick = async (domain: string, severity: Severity) => {
         setLoadingRationales(true);
@@ -215,19 +235,32 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                                 <Skeleton className="h-12 w-full" />
                             </div>
                         )}
-                        {!loadingRationales && rationaleDialog?.rationales.map((item, index) => (
-                           <div key={index} className="space-y-2">
-                             <blockquote className="border-l-2 pl-6 italic text-muted-foreground">
-                                "{item.rationale}"
-                            </blockquote>
-                            <div className="flex gap-2 items-center pl-6">
-                                <Tags className="h-4 w-4 text-muted-foreground" />
-                                {item.tags.map(tag => (
-                                    <Badge key={tag} variant="outline" className="font-normal">{tag}</Badge>
+                        {!loadingRationales && rationaleClusters && (
+                            <Accordion type="multiple" className="w-full">
+                                {Array.from(rationaleClusters.entries()).map(([tag, items]) => (
+                                    <AccordionItem key={tag} value={tag}>
+                                        <AccordionTrigger>
+                                            <div className="flex items-center gap-2">
+                                                <Tags className="h-4 w-4 text-muted-foreground" />
+                                                <span className="capitalize">{tag}</span>
+                                                <Badge variant="outline">{items.length}</Badge>
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent>
+                                            <div className="space-y-4 pl-4">
+                                                {items.map((item, index) => (
+                                                    <div key={index}>
+                                                        <blockquote className="border-l-2 pl-4 italic text-muted-foreground">
+                                                            "{item.rationale}"
+                                                        </blockquote>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
                                 ))}
-                            </div>
-                           </div>
-                        ))}
+                            </Accordion>
+                        )}
                     </div>
                 </ScrollArea>
             </DialogContent>
