@@ -486,7 +486,7 @@ export default function HistoryClient() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("7d");
-  const [viewMode, setViewMode] = useState<ViewMode>("logs" | "feedback");
+  const [viewMode, setViewMode] = useState<ViewMode>("logs" as ViewMode);
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
   const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
     if (typeof window === "undefined") return 0;
