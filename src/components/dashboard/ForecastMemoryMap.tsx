@@ -117,7 +117,7 @@ export default function ForecastMemoryMap() {
             </CardHeader>
             <CardContent className="h-[500px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
+                    <AreaChart
                         data={chartData}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
@@ -127,10 +127,10 @@ export default function ForecastMemoryMap() {
                         <Tooltip
                             content={<CustomTooltip />}
                         />
-                        <Legend />
+                        <Legend wrapperStyle={{paddingTop: '20px'}}/>
                         <defs>
                             <linearGradient id="volatilityGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
                                 <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
@@ -140,10 +140,11 @@ export default function ForecastMemoryMap() {
                           dataKey="volatilityRange"
                           stroke="hsl(var(--primary))"
                           fill="url(#volatilityGradient)"
-                          strokeWidth={0}
+                          strokeWidth={1}
                           name="Volatility Range"
+                          strokeDasharray="5 5"
                         />
-                    </LineChart>
+                    </AreaChart>
                 </ResponsiveContainer>
             </CardContent>
         </Card>
