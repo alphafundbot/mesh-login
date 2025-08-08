@@ -64,15 +64,26 @@ interface ParsedDetails {
 const parseDetails = (details: string): ParsedDetails => {
     const isOverride = details.includes("Override: true");
     const rationaleMatch = details.match(/Rationale: "([^"]*)"/);
-    const rationale = rationaleMatch ? rationaleMatch[1] : details;
+    const rationale = rationaleMatch ? rationaleMatch[1] : "";
 
+    let action = "";
     const actionMatch = details.match(/Action: ([A-Za-z_]+)/);
-    const action = actionMatch ? actionMatch[1].replace(/_/g, " ") : "";
+    if (actionMatch) {
+      action = actionMatch[1].replace(/_/g, " ");
+    } else if (details.startsWith("Event: Strategist Override Initiated")) {
+      action = "Override Initiated";
+    }
 
     const severityMatch = details.match(/Severity: (Warning|Critical|Catastrophic)/);
-    const severity = severityMatch ? (severityMatch[1] as Severity) : undefined;
+    let severity = severityMatch ? (severityMatch[1] as Severity) : undefined;
+    if (!severity) {
+        const eventSeverityMatch = details.match(/Acknowledged (Warning|Critical|Catastrophic) event/);
+        if (eventSeverityMatch) {
+            severity = eventSeverityMatch[1] as Severity;
+        }
+    }
     
-    const domainsMatch = details.match(/involving (.*?)\. Action:/);
+    const domainsMatch = details.match(/involving (.*?)\./);
     const domains = domainsMatch ? domainsMatch[1].split(', ') : undefined;
 
     return { isOverride, rationale, action, severity, domains };
