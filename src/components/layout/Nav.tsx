@@ -9,11 +9,15 @@ import {
   ShieldCheck,
   History,
   Palette,
+  Camera,
 } from "lucide-react";
 import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 
 const navItems = [
@@ -22,6 +26,10 @@ const navItems = [
   { href: "/validator", label: "Config Validator", icon: Binary },
   { href: "/history", label: "Signal Memory", icon: History },
 ];
+
+const snapshotItems = [
+    { href: "/snapshots/telecom-anomaly", label: "Telecom Anomaly 2025-08-08"},
+]
 
 export default function Nav() {
   const pathname = usePathname();
@@ -44,6 +52,26 @@ export default function Nav() {
           </Link>
         </SidebarMenuItem>
       ))}
+       <SidebarMenuItem>
+          <SidebarMenuButton
+            tooltip={{ children: "Snapshots" }}
+            isActive={pathname.startsWith('/snapshots')}
+          >
+            <Camera />
+            <span>Snapshots</span>
+          </SidebarMenuButton>
+          <SidebarMenuSub>
+            {snapshotItems.map((item) => (
+              <SidebarMenuSubItem key={item.href}>
+                <Link href={item.href} passHref legacyBehavior>
+                    <SidebarMenuSubButton asChild isActive={pathname === item.href}>
+                        <a>{item.label}</a>
+                    </SidebarMenuSubButton>
+                </Link>
+              </SidebarMenuSubItem>
+            ))}
+          </SidebarMenuSub>
+        </SidebarMenuItem>
     </SidebarMenu>
   );
 }
