@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import IntelligenceMap from "@/components/dashboard/IntelligenceMap";
 import HudEscalationMatrix from "@/components/dashboard/HudEscalationMatrix";
 import HudForecastPanel from "@/components/dashboard/HudForecastPanel";
+import { slugify } from "@/lib/utils";
 
 const getStatusColor = (status: string) => {
   if (status.includes("Optimal")) return "bg-green-500";
@@ -51,16 +52,17 @@ export default function DashboardPage() {
           <h2 className="text-2xl font-bold tracking-tight text-primary-foreground mb-4">Domains</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {domainData.map((domain) => (
-              <Link href={`/domain/${domain.slug}`} key={domain.slug}>
                 <Card
-                  key={domain.name}
-                  className="bg-card border-border hover:border-accent transition-colors duration-300 flex flex-col h-full"
+                  key={domain.slug}
+                  className="bg-card border-border flex flex-col h-full"
                 >
                   <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                     <div className="flex-1">
-                      <CardTitle className="text-lg font-medium text-primary-foreground">
-                        {domain.name}
-                      </CardTitle>
+                      <Link href={`/domain/${domain.slug}`} key={domain.slug}>
+                        <CardTitle className="text-lg font-medium text-primary-foreground hover:text-accent transition-colors">
+                          {domain.name}
+                        </CardTitle>
+                      </Link>
                       <CardDescription className="flex items-center gap-2 pt-2 text-xs">
                          <span
                             className={cn(
@@ -76,18 +78,18 @@ export default function DashboardPage() {
                   <CardContent className="flex-grow flex flex-col justify-end">
                     <div className="flex flex-wrap gap-2 mt-4">
                       {domain.modules.map((module) => (
-                        <Badge
-                          key={module}
-                          variant="secondary"
-                          className="font-normal"
-                        >
-                          {module}
-                        </Badge>
+                        <Link key={module} href={`/domain/${domain.slug}/${slugify(module)}`} passHref>
+                           <Badge
+                              variant="secondary"
+                              className="font-normal hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+                            >
+                              {module}
+                            </Badge>
+                        </Link>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
-              </Link>
             ))}
           </div>
         </div>
@@ -95,3 +97,4 @@ export default function DashboardPage() {
     </AppLayout>
   );
 }
+
