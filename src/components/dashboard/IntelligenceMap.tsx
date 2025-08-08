@@ -215,9 +215,9 @@ export default function IntelligenceMap() {
           setEscalation(details);
           handleLogAction(
             "AUTO_ESCALATE",
-            `Severity: ${severity}, Domains: ${anomalousDomains
+            `Severity: ${severity}. Anomalies detected in ${anomalousDomains
               .map((d) => d.domain)
-              .join(", ")}`
+              .join(", ")}.`
           );
         }
 
@@ -250,7 +250,7 @@ export default function IntelligenceMap() {
     const defaultRationale = SEVERITY_RATIONALE_TEMPLATES[escalation.severity];
     const isOverridden = rationale !== defaultRationale;
 
-    const details = `Strategist response to ${escalation.severity} escalation involving ${escalation.anomalousDomains.map(d => d.domain).join(', ')}. Action: ${escalation.action}. Rationale: "${rationale || "Not provided."}" Override: ${isOverridden}`;
+    const details = `Response to ${escalation.severity} event for ${escalation.anomalousDomains.map(d => d.domain).join(', ')}. Rationale: "${rationale || "Not provided."}" Override: ${isOverridden}`;
     
     handleLogAction("STRATEGIST_RESPONSE", details);
     toast({
@@ -263,7 +263,7 @@ export default function IntelligenceMap() {
 
   const handleDismiss = () => {
     if (!escalation) return;
-    const details = `Strategist dismissed ${escalation.severity} escalation involving ${escalation.anomalousDomains.map(d => d.domain).join(', ')}`;
+    const details = `Dismissed ${escalation.severity} escalation for ${escalation.anomalousDomains.map(d => d.domain).join(', ')}`;
     handleLogAction("DISMISS", details);
     setEscalation(null);
     setRationale("");
