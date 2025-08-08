@@ -4,40 +4,26 @@
  */
 import { config } from 'dotenv';
 
-// Load variables based on environment.
-// The order of loading is important. Variables from files loaded later
-// will not override variables already set from files loaded earlier.
-// .env.local: For local development. This file is not checked into source control. HIGHEST PRIORITY.
-// .env.remote: For production-like environments (e.g., Firebase App Hosting).
-// .env: For non-secret defaults, checked into source control.
-config({ path: '.env.local' });
-if (process.env.NODE_ENV === 'production') {
-    config({ path: '.env.remote' });
-}
-config({ path: '.env' });
+// Load variables from the single source of truth: .env
+config();
 
 
 /**
  * Returns the value of an environment variable.
- * Throws an error if the variable is not set, unless a fallback is provided.
+ * Throws an error if the variable is not set.
  * @param variableName The name of the environment variable.
- * @param fallbackValue An optional value to return if the environment variable is not found.
- * @returns The value of the environment variable or the fallback.
+ * @returns The value of the environment variable.
  */
-function getEnv(variableName: string, fallbackValue?: string): string {
+function getEnv(variableName: string): string {
     const value = process.env[variableName];
     if (value !== undefined && value.trim() !== '') {
         return value;
     }
-    if (fallbackValue !== undefined) {
-        return fallbackValue;
-    }
     // For critical variables, we should fail fast if they're not set.
     throw new Error(`
         ================================================================================
-        FATAL ERROR: Environment variable ${variableName} is not set.
-        Please create a .env.local (for local dev) or .env.remote (for deployed env)
-        file and add the following line:
+        FATAL ERROR: Environment variable ${variableName} is not set in your .env file.
+        Please ensure your .env file contains the following line:
         ${variableName}=YOUR_SECRET_KEY
         ================================================================================
     `);
@@ -62,7 +48,7 @@ export interface ServicesConfig {
 
 // These are public-facing keys and are safe to be checked into source control.
 const firebaseConfigValues: FirebaseConfig = {
-    apiKey: "YOUR_FIREBASE_API_KEY",
+    apiKey: "AIzaSyA_STrAgEmMaI-xi7q8_FIREBASE_WEB_API_KEY",
     authDomain: "stratagemai-xi7q8.firebaseapp.com",
     projectId: "stratagemai-xi7q8",
     storageBucket: "stratagemai-xi7q8.appspot.com",
@@ -73,8 +59,7 @@ const firebaseConfigValues: FirebaseConfig = {
 export const servicesConfig: ServicesConfig = {
     firebase: firebaseConfigValues,
     gcp: {
-        // This will load the GEMINI_API_KEY from your .env.local file (priority) or .env file.
-        // It is critical that you create a .env.local file for your private keys.
+        // This will load the GEMINI_API_KEY from your .env file.
         geminiApiKey: getEnv('GEMINI_API_KEY'),
     }
 };
