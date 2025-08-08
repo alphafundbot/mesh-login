@@ -469,7 +469,9 @@ export default function IntelligenceMap() {
                 />
                  <DialogFooter>
                   <Button variant="outline" onClick={() => setEscalation({...escalation, action: undefined })}>Back</Button>
-                  <Button onClick={handleRationaleSubmit}>Submit Action</Button>
+                  <DialogClose asChild>
+                    <Button onClick={handleRationaleSubmit}>Submit Action</Button>
+                  </DialogClose>
                 </DialogFooter>
               </div>
             ) : (

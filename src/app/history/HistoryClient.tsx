@@ -502,6 +502,9 @@ export default function HistoryClient() {
     let currentLogs: ActionLog[];
     let previousLogs: ActionLog[];
 
+    const startTimeParam = searchParams.get('startTime');
+    const startTime = startTimeParam ? new Date(startTimeParam).getTime() : now;
+
     if (timeFilter === "all") {
       return { filteredLogs: allLogs, previousPeriodLogs: [] };
     }
@@ -510,15 +513,15 @@ export default function HistoryClient() {
     
     currentLogs = allLogs.filter(log => {
         const logTime = log.timestamp.getTime();
-        return now - logTime < filterMilliseconds;
+        return startTime - logTime < filterMilliseconds;
     });
     previousLogs = allLogs.filter(log => {
       const logTime = log.timestamp.getTime();
-      return (now - logTime >= filterMilliseconds) && (now - logTime < 2 * filterMilliseconds);
+      return (startTime - logTime >= filterMilliseconds) && (startTime - logTime < 2 * filterMilliseconds);
     });
 
     return { filteredLogs: currentLogs, previousPeriodLogs: previousLogs };
-  }, [allLogs, timeFilter]);
+  }, [allLogs, timeFilter, searchParams]);
 
   const openRationaleModal = useCallback((title: string, description: React.ReactNode, rationales: TaggedRationale[]) => {
         setLoadingRationales(true);

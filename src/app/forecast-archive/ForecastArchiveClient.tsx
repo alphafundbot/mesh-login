@@ -23,6 +23,8 @@ import type { RationaleForecastOutput } from "@/ai/flows/rationale-forecast-flow
 import { Bot, Lightbulb, ArrowUp, ArrowDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 interface ArchivedForecast {
     id: string;
@@ -34,6 +36,7 @@ export default function ForecastArchiveClient() {
     const [analyses, setAnalyses] = useState<ArchivedForecast[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"));
@@ -60,6 +63,16 @@ export default function ForecastArchiveClient() {
 
         return () => unsubscribe();
     }, [toast]);
+
+    const handleReplay = (timestamp: Date) => {
+        const params = new URLSearchParams({
+            time: "7d",
+            // We set the start time to the forecast creation time to view the period that was forecasted
+            startTime: timestamp.toISOString(),
+        });
+        router.push(`/history?${params.toString()}`);
+    };
+
 
     if (loading) {
         return (
@@ -120,6 +133,9 @@ export default function ForecastArchiveClient() {
                                     <p className="text-xs text-muted-foreground mt-1">{forecast.justification}</p>
                                 </div>
                             ))}
+                            <div className="flex justify-end pt-2">
+                                <Button onClick={() => handleReplay(item.timestamp)}>Replay & Compare</Button>
+                            </div>
                         </div>
                     </AccordionContent>
                 </AccordionItem>
