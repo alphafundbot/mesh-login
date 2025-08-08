@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle, X, Tags } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle, X, Tags, ShieldAlert, ShieldX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -78,6 +78,7 @@ const getHeatmapColor = (count: number, max: number) => {
 type TaggedRationale = {
     rationale: string;
     tags: string[];
+    severity: Severity;
 }
 
 type RationaleDialogContent = {
@@ -114,13 +115,17 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
 
     const rationaleClusters = useMemo(() => {
         if (!rationaleDialog?.rationales) return null;
-        const clusters = new Map<string, TaggedRationale[]>();
+        
+        const clusters = new Map<string, { items: TaggedRationale[], severities: Record<Severity, number> }>();
+        
         rationaleDialog.rationales.forEach(item => {
             item.tags.forEach(tag => {
                 if (!clusters.has(tag)) {
-                    clusters.set(tag, []);
+                    clusters.set(tag, { items: [], severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 }});
                 }
-                clusters.get(tag)!.push(item);
+                const cluster = clusters.get(tag)!;
+                cluster.items.push(item);
+                cluster.severities[item.severity]++;
             })
         })
         return clusters;
@@ -134,16 +139,16 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                 const d = parseDetails(log.details);
                 return d.isOverride && d.severity === severity && d.domains?.includes(domain)
             });
-            const rationales = relevantLogs.map(log => parseDetails(log.details).rationale);
 
-            if (rationales.length === 0) {
+            if (relevantLogs.length === 0) {
                 setRationaleDialog(null);
                 return;
             }
             
-            const taggedRationales = await Promise.all(rationales.map(async (rationale) => {
-                const { tags } = await tagRationale({ rationale });
-                return { rationale, tags };
+            const taggedRationales = await Promise.all(relevantLogs.map(async (log) => {
+                const details = parseDetails(log.details);
+                const { tags } = await tagRationale({ rationale: details.rationale });
+                return { rationale: details.rationale, tags, severity: details.severity! };
             }));
 
             setRationaleDialog({ domain, severity, rationales: taggedRationales });
@@ -236,14 +241,16 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                             </div>
                         )}
                         {!loadingRationales && rationaleClusters && (
-                            <Accordion type="multiple" className="w-full">
-                                {Array.from(rationaleClusters.entries()).map(([tag, items]) => (
+                             <Accordion type="multiple" className="w-full">
+                                {Array.from(rationaleClusters.entries()).map(([tag, { items, severities }]) => (
                                     <AccordionItem key={tag} value={tag}>
                                         <AccordionTrigger>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
                                                 <Tags className="h-4 w-4 text-muted-foreground" />
-                                                <span className="capitalize">{tag}</span>
-                                                <Badge variant="outline">{items.length}</Badge>
+                                                <span className="capitalize font-semibold">{tag}</span>
+                                                <Badge variant="outline">{items.length} total</Badge>
+                                                {severities.Critical > 0 && <Badge variant="destructive" className="gap-1"><ShieldAlert className="h-3 w-3" /> {severities.Critical} Critical</Badge>}
+                                                {severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 bg-red-800"><ShieldX className="h-3 w-3" /> {severities.Catastrophic} Catastrophic</Badge>}
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent>
