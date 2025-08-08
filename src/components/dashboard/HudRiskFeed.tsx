@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -67,6 +68,7 @@ const getSeverityBadgeVariant = (severity: Severity | null): "destructive" | "se
     }
 };
 
+// This component is being replaced by HudEscalationMatrix, but we will keep the file for now.
 export default function HudRiskFeed() {
     const [actions, setActions] = useState<HudAction[]>([]);
     const [loading, setLoading] = useState(true);

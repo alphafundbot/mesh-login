@@ -14,7 +14,7 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import RoleSelector from "@/components/dashboard/RoleSelector";
 import { cn } from "@/lib/utils";
 import IntelligenceMap from "@/components/dashboard/IntelligenceMap";
-import HudRiskFeed from "@/components/dashboard/HudRiskFeed";
+import HudEscalationMatrix from "@/components/dashboard/HudEscalationMatrix";
 
 const getStatusColor = (status: string) => {
   if (status.includes("Optimal")) return "bg-green-500";
@@ -39,7 +39,7 @@ export default function DashboardPage() {
                 <IntelligenceMap />
             </div>
             <div className="lg:col-span-2">
-                <HudRiskFeed />
+                <HudEscalationMatrix />
             </div>
         </div>
 
