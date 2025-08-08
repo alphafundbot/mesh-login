@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
-import { Bot, BrainCircuit, Lightbulb } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle } from "lucide-react";
 
 interface ActionLog {
   id: string;
@@ -26,6 +27,17 @@ interface ActionLog {
   strategist: string;
   details: string;
   timestamp: Date;
+}
+
+const parseDetails = (details: string) => {
+    const isOverride = details.includes("Override: true");
+    const rationaleMatch = details.match(/Rationale: "([^"]*)"/);
+    const rationale = rationaleMatch ? rationaleMatch[1] : details;
+
+    const actionMatch = details.match(/Action: ([A-Za-z_]+)/);
+    const action = actionMatch ? actionMatch[1].replace(/_/g, " ") : "";
+    
+    return { isOverride, rationale, action };
 }
 
 export default function HistoryClient() {
@@ -111,7 +123,7 @@ export default function HistoryClient() {
                 <TableHead>Role</TableHead>
                 <TableHead>Strategist</TableHead>
                 <TableHead>Timestamp</TableHead>
-                <TableHead>Details</TableHead>
+                <TableHead className="w-[50%]">Details & Rationale</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -126,17 +138,38 @@ export default function HistoryClient() {
                   </TableRow>
                 ))
               ) : logs.length > 0 ? (
-                logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>
-                      <Badge variant="secondary">{log.action}</Badge>
-                    </TableCell>
-                    <TableCell>{log.role}</TableCell>
-                    <TableCell>{log.strategist}</TableCell>
-                    <TableCell>{log.timestamp.toLocaleString()}</TableCell>
-                    <TableCell className="font-mono text-xs">{log.details}</TableCell>
-                  </TableRow>
-                ))
+                logs.map((log) => {
+                  const { isOverride, rationale, action } = parseDetails(log.details);
+                  return (
+                    <TableRow key={log.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                         <Badge variant="secondary">{log.action}</Badge>
+                         {isOverride && (
+                           <Badge variant="destructive" className="flex items-center gap-1">
+                             <AlertTriangle className="h-3 w-3" /> Override
+                           </Badge>
+                         )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{log.role}</TableCell>
+                      <TableCell>{log.strategist}</TableCell>
+                      <TableCell>{log.timestamp.toLocaleString()}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                          {log.action === "STRATEGIST_RESPONSE" ? (
+                            <div className="flex items-start gap-2">
+                                <MessageSquareQuote className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                <span>
+                                    Responded with <strong>{action}</strong>: <em>"{rationale}"</em>
+                                </span>
+                            </div>
+                          ) : (
+                            log.details
+                          )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center">
