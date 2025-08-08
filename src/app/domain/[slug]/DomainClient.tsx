@@ -124,7 +124,7 @@ export default function DomainClient({ domain }: { domain: Domain }) {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><GitCommit className="h-5 w-5" />Configuration Pattern Analysis</CardTitle>
+            <CardTitle className="flex items-center gap-2"><BrainCircuit className="h-5 w-5" />Detected Patterns</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Skeleton className="h-4 w-full" />
@@ -165,7 +165,7 @@ export default function DomainClient({ domain }: { domain: Domain }) {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-accent"><GitCommit className="h-5 w-5" />Configuration Pattern Analysis</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-accent"><BrainCircuit className="h-5 w-5" />Detected Patterns</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="list-disc pl-5 text-muted-foreground space-y-1">
