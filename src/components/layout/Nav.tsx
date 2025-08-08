@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -65,18 +66,20 @@ export default function Nav() {
           <SidebarMenuSub>
             {snapshotRegistry.map((item) => (
               <SidebarMenuSubItem key={item.slug}>
-                <Link href={`/snapshots/${item.slug}`}>
-                    <SidebarMenuSubButton isActive={pathname === `/snapshots/${item.slug}`}>
-                        {item.label}
+                <Link href={`/snapshots/${item.slug}`} passHref legacyBehavior>
+                    <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/${item.slug}`}>
+                        <a>{item.label}</a>
                     </SidebarMenuSubButton>
                 </Link>
               </SidebarMenuSubItem>
             ))}
              <SidebarMenuSubItem>
-                <Link href="/snapshots/diff">
-                    <SidebarMenuSubButton isActive={pathname === '/snapshots/diff'}>
-                        <GitCompareArrows className="mr-2 h-4 w-4" />
-                        Diff Snapshots
+                <Link href="/snapshots/diff" passHref legacyBehavior>
+                    <SidebarMenuSubButton asChild isActive={pathname === '/snapshots/diff'}>
+                        <a>
+                            <GitCompareArrows className="mr-2 h-4 w-4" />
+                            Diff Snapshots
+                        </a>
                     </SidebarMenuSubButton>
                 </Link>
               </SidebarMenuSubItem>
