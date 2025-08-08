@@ -1,20 +1,19 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { BrainCircuit } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-// This is a simplified type for the initial scaffolding.
-// It will be expanded as we build out the visualization.
+
 interface ForecastAnalysis {
     id: string;
     timestamp: Date;
-    // Add other relevant fields from your forecast_analysis documents here
     accuracyScore?: number;
     strategicNotes?: string;
 }
@@ -25,7 +24,7 @@ export default function ForecastMemoryMap() {
     const { toast } = useToast();
 
     useEffect(() => {
-        const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"));
+        const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const fetchedAnalyses = snapshot.docs.map((doc) => {
                 const data = doc.data();
@@ -35,7 +34,7 @@ export default function ForecastMemoryMap() {
                     accuracyScore: data.commentary?.accuracyScore,
                     strategicNotes: data.commentary?.strategicNotes,
                 };
-            });
+            }).filter(a => a.accuracyScore !== undefined);
             setAnalyses(fetchedAnalyses);
             setLoading(false);
         }, (error) => {
@@ -50,13 +49,19 @@ export default function ForecastMemoryMap() {
 
         return () => unsubscribe();
     }, [toast]);
+    
+    const chartData = useMemo(() => {
+        return analyses.map(a => ({
+            name: a.timestamp.toLocaleDateString(),
+            accuracy: a.accuracyScore ? parseFloat((a.accuracyScore * 100).toFixed(2)) : null,
+            notes: a.strategicNotes
+        }));
+    }, [analyses]);
 
     if (loading) {
         return (
             <div className="space-y-4">
-                <Skeleton className="h-40 w-full" />
-                <Skeleton className="h-40 w-full" />
-                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-96 w-full" />
             </div>
         )
     }
@@ -79,22 +84,26 @@ export default function ForecastMemoryMap() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><BrainCircuit className="h-6 w-6 text-accent" />Forecast Memory Map</CardTitle>
-                <CardDescription>Initial data scaffold. Visualization layer to be added in the next override.</CardDescription>
+                <CardDescription>Tracking rationale accuracy, volatility, and strategist divergence over time.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-                {analyses.map(analysis => (
-                    <div key={analysis.id} className="p-4 rounded-lg bg-muted/30">
-                        <h3 className="font-semibold">Analysis from: {analysis.timestamp.toLocaleString()}</h3>
-                        {analysis.accuracyScore !== undefined && (
-                             <p className="text-sm text-muted-foreground">Accuracy Score: {(analysis.accuracyScore * 100).toFixed(0)}%</p>
-                        )}
-                        {analysis.strategicNotes && (
-                            <blockquote className="mt-2 pl-4 border-l-2 border-border italic text-xs">
-                                {analysis.strategicNotes}
-                            </blockquote>
-                        )}
-                    </div>
-                ))}
+            <CardContent className="h-[500px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                        data={chartData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                        <Tooltip
+                            contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
+                            labelStyle={{ color: "hsl(var(--foreground))" }}
+                            formatter={(value: number, name: string, props) => [`${value}%`, "Accuracy"]}
+                        />
+                        <Legend />
+                        <Line type="monotone" dataKey="accuracy" stroke="hsl(var(--accent))" strokeWidth={2} activeDot={{ r: 8 }} />
+                    </LineChart>
+                </ResponsiveContainer>
             </CardContent>
         </Card>
     );
