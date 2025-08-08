@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle, X, Tags, ShieldAlert, ShieldX, Globe } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle, X, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, SignalHigh, SignalLow, SignalMedium } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -118,10 +118,15 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
     const rationaleClusters = useMemo(() => {
         if (!rationaleDialog?.rationales) return null;
         
+        type DomainMetrics = { 
+            count: number; 
+            severities: Record<Severity, number>;
+        };
+
         type ClusterInfo = {
             items: TaggedRationale[];
             severities: Record<Severity, number>;
-            domains: Record<string, number>;
+            domains: Record<string, DomainMetrics>;
         };
 
         const clusters = new Map<string, ClusterInfo>();
@@ -139,7 +144,11 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                 cluster.items.push(item);
                 cluster.severities[item.severity]++;
                 item.domains.forEach(domain => {
-                    cluster.domains[domain] = (cluster.domains[domain] || 0) + 1;
+                    if (!cluster.domains[domain]) {
+                        cluster.domains[domain] = { count: 0, severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 } };
+                    }
+                    cluster.domains[domain].count++;
+                    cluster.domains[domain].severities[item.severity]++;
                 });
             })
         })
@@ -239,14 +248,14 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
         </Card>
         
         <Dialog open={!!rationaleDialog} onOpenChange={() => setRationaleDialog(null)}>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>Override Rationales for <span className="text-accent">{rationaleDialog?.domain}</span></DialogTitle>
                     <DialogDescription>
                         Severity Level: <Badge variant={rationaleDialog?.severity === "Critical" || rationaleDialog?.severity === "Catastrophic" ? "destructive" : "secondary"}>{rationaleDialog?.severity}</Badge>
                     </DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="max-h-[60vh] pr-4">
+                <ScrollArea className="max-h-[70vh] pr-4">
                     <div className="space-y-4">
                         {loadingRationales && (
                             <div className="space-y-4">
@@ -257,8 +266,8 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                         )}
                         {!loadingRationales && rationaleClusters && (
                              <Accordion type="multiple" className="w-full">
-                                {Array.from(rationaleClusters.entries()).map(([tag, { items, severities, domains }]) => {
-                                   const sortedDomains = Object.entries(domains).sort((a, b) => b[1] - a[1]);
+                                {Array.from(rationaleClusters.entries()).sort((a,b) => b[1].items.length - a[1].items.length).map(([tag, { items, severities, domains }]) => {
+                                   const sortedDomains = Object.entries(domains).sort((a, b) => b[1].count - a[1].count);
                                     return (
                                         <AccordionItem key={tag} value={tag}>
                                             <AccordionTrigger>
@@ -266,14 +275,15 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                                                     <Tags className="h-4 w-4 text-muted-foreground" />
                                                     <span className="capitalize font-semibold">{tag}</span>
                                                     <Badge variant="outline">{items.length} total</Badge>
-                                                    {severities.Critical > 0 && <Badge variant="destructive" className="gap-1"><ShieldAlert className="h-3 w-3" /> {severities.Critical} Critical</Badge>}
+                                                    {severities.Warning > 0 && <Badge variant="secondary" className="gap-1 bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" /> {severities.Warning} Warning</Badge>}
+                                                    {severities.Critical > 0 && <Badge variant="destructive" className="gap-1 bg-orange-600"><ShieldAlert className="h-3 w-3" /> {severities.Critical} Critical</Badge>}
                                                     {severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 bg-red-800"><ShieldX className="h-3 w-3" /> {severities.Catastrophic} Catastrophic</Badge>}
                                                 </div>
                                             </AccordionTrigger>
                                             <AccordionContent>
                                                 <div className="space-y-4 pl-2">
-                                                    <div className="flex flex-col md:flex-row gap-4">
-                                                        <div className="flex-[2] space-y-4">
+                                                    <div className="flex flex-col md:flex-row gap-8">
+                                                        <div className="flex-[3] space-y-4">
                                                             <h4 className="font-semibold text-sm">Rationales ({items.length})</h4>
                                                              {items.map((item, index) => (
                                                                 <div key={index}>
@@ -283,13 +293,20 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                                                                 </div>
                                                             ))}
                                                         </div>
-                                                        <div className="flex-[1] space-y-4">
+                                                        <div className="flex-[2] space-y-4">
                                                             <h4 className="font-semibold text-sm flex items-center gap-2"><Globe className="h-4 w-4" /> Domain Spread</h4>
                                                             <div className="space-y-2">
-                                                                {sortedDomains.map(([domain, count]) => (
-                                                                    <div key={domain} className="flex items-center justify-between text-xs">
-                                                                        <span className="text-muted-foreground">{domain}</span>
-                                                                        <Badge variant="secondary">{count}</Badge>
+                                                                {sortedDomains.map(([domain, metrics]) => (
+                                                                    <div key={domain} className="text-xs p-2 rounded-md bg-muted/30">
+                                                                        <div className="flex items-center justify-between font-semibold">
+                                                                            <span className="text-foreground">{domain}</span>
+                                                                            <Badge variant="secondary">{metrics.count} total</Badge>
+                                                                        </div>
+                                                                        <div className="flex gap-2 mt-1.5">
+                                                                            {metrics.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{metrics.severities.Warning}</Badge>}
+                                                                            {metrics.severities.Critical > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-orange-600"><ShieldAlert className="h-3 w-3" />{metrics.severities.Critical}</Badge>}
+                                                                            {metrics.severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-red-800"><ShieldX className="h-3 w-3" />{metrics.severities.Catastrophic}</Badge>}
+                                                                        </div>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -507,5 +524,7 @@ export default function HistoryClient() {
     </div>
   );
 }
+
+    
 
     
