@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Radar,
   RadarChart,
@@ -32,9 +32,10 @@ import {
   AlertCircle,
   ShieldAlert,
   ShieldX,
+  RefreshCw,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, setDoc } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import {
   Dialog,
@@ -174,72 +175,97 @@ export default function IntelligenceMap() {
     }
   };
 
-  useEffect(() => {
-    const getAnalysis = async () => {
-      setLoading(true);
-      try {
-        const domainLogs: Record<string, string> = {};
-        const domainsToAnalyze = domainData;
+  const processAnalysis = useCallback((output: CrossDomainIntelligenceOutput) => {
+      const dataWithAnomalies = output.metrics.map((metric) => ({
+        ...metric,
+        isAnomaly:
+          metric.stability < ANOMALY_THRESHOLD ||
+          metric.security < ANOMALY_THRESHOLD,
+      }));
 
-        for (const domain of domainsToAnalyze) {
-          domainLogs[domain.name] = generateDomainLogs(domain.name);
-        }
+      setChartData(dataWithAnomalies);
 
-        const output = await analyzeCrossDomainIntelligence({ domainLogs });
+      const anomalousDomains = dataWithAnomalies.filter((d) => d.isAnomaly);
+      let severity: Severity | null = null;
+      
+      const coreAnomalies = anomalousDomains.filter(d => d.domain.includes("System Core")).length;
 
-        const dataWithAnomalies = output.metrics.map((metric) => ({
-          ...metric,
-          isAnomaly:
-            metric.stability < ANOMALY_THRESHOLD ||
-            metric.security < ANOMALY_THRESHOLD,
-        }));
-
-        const anomalousDomains = dataWithAnomalies.filter((d) => d.isAnomaly);
-        let severity: Severity | null = null;
-        
-        const coreAnomalies = anomalousDomains.filter(d => d.domain.includes("System Core")).length;
-
-        if (anomalousDomains.length >= 5 || coreAnomalies > 0) {
-          severity = "Catastrophic";
-        } else if (anomalousDomains.length >= 3) {
-          severity = "Critical";
-        } else if (anomalousDomains.length >= 1) {
-          severity = "Warning";
-        }
-
-        if (severity) {
-          const details: EscalationDetails = {
-            severity,
-            anomalousDomains: anomalousDomains.map((d) => ({
-              domain: d.domain,
-              stability: d.stability,
-              security: d.security,
-            })),
-          };
-          setEscalation(details);
-          handleLogAction(
-            "AUTO_ESCALATE",
-            `Severity: ${severity}. Anomalies detected in ${anomalousDomains
-              .map((d) => d.domain)
-              .join(", ")}.`
-          );
-        }
-
-        setChartData(dataWithAnomalies);
-      } catch (error) {
-        console.error("AI cross-domain analysis failed:", error);
-        toast({
-          variant: "destructive",
-          title: "Analysis Failed",
-          description: "Could not get AI analysis for the intelligence map.",
-        });
-      } finally {
-        setLoading(false);
+      if (anomalousDomains.length >= 5 || coreAnomalies > 0) {
+        severity = "Catastrophic";
+      } else if (anomalousDomains.length >= 3) {
+        severity = "Critical";
+      } else if (anomalousDomains.length >= 1) {
+        severity = "Warning";
       }
-    };
-    getAnalysis();
+
+      if (severity) {
+        const details: EscalationDetails = {
+          severity,
+          anomalousDomains: anomalousDomains.map((d) => ({
+            domain: d.domain,
+            stability: d.stability,
+            security: d.security,
+          })),
+        };
+        setEscalation(details);
+        handleLogAction(
+          "AUTO_ESCALATE",
+          `Severity: ${severity}. Anomalies detected in ${anomalousDomains
+            .map((d) => d.domain)
+            .join(", ")}.`
+        );
+      }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const q = query(collection(db, "intelligence_map_cache"), orderBy("timestamp", "desc"), limit(1));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+            const latestCache = snapshot.docs[0].data().analysis as CrossDomainIntelligenceOutput;
+            processAnalysis(latestCache);
+        }
+        setLoading(false);
+    }, (error) => {
+        console.error("Failed to fetch cached analysis", error);
+        setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [processAnalysis]);
+
+
+  const getAnalysis = async () => {
+    setLoading(true);
+    setEscalation(null);
+    try {
+      const domainLogs: Record<string, string> = {};
+      const domainsToAnalyze = domainData;
+
+      for (const domain of domainsToAnalyze) {
+        domainLogs[domain.name] = generateDomainLogs(domain.name);
+      }
+
+      const output = await analyzeCrossDomainIntelligence({ domainLogs });
+      
+      await setDoc(doc(db, "intelligence_map_cache", new Date().toISOString()), {
+          analysis: output,
+          timestamp: serverTimestamp(),
+      });
+      
+      // The onSnapshot listener will pick up the new cache and update the UI
+      
+    } catch (error) {
+      console.error("AI cross-domain analysis failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Analysis Failed",
+        description: "Could not get AI analysis for the intelligence map.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleActionClick = (action: string) => {
     if (!escalation) return;
@@ -325,10 +351,16 @@ export default function IntelligenceMap() {
     <>
       <Card className="h-full transition-shadow duration-300 hover:shadow-xl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-6 w-6 text-accent" />
-            Cross-Domain Intelligence
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Bot className="h-6 w-6 text-accent" />
+              <CardTitle>Cross-Domain Intelligence</CardTitle>
+            </div>
+             <Button onClick={getAnalysis} disabled={loading} size="sm" variant="outline">
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Synthesize Intelligence
+            </Button>
+          </div>
           <CardDescription>
             AI-synthesized mesh health across key domains. Anomalies are auto-escalated.
           </CardDescription>
@@ -342,7 +374,7 @@ export default function IntelligenceMap() {
                 <Skeleton className="h-8 w-3/4 mx-auto" />
               </div>
             </div>
-          ) : (
+          ) : chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart
                 cx="50%"
@@ -398,6 +430,10 @@ export default function IntelligenceMap() {
                 />
               </RadarChart>
             </ResponsiveContainer>
+          ) : (
+             <div className="flex justify-center items-center h-full">
+                <p className="text-muted-foreground">No intelligence data available. Click "Synthesize" to generate.</p>
+            </div>
           )}
         </CardContent>
       </Card>
