@@ -73,7 +73,7 @@ export default function ValidatorClient() {
             disabled={loading}
           />
           <Button onClick={handleValidate} disabled={loading}>
-            {loading ? "Validating with AI..." : "Validate Compliance"}
+            {loading ? "Analyzing..." : "Analyze Compliance"}
           </Button>
         </CardContent>
       </Card>
