@@ -433,9 +433,19 @@ export default function HistoryClient() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
-  const [showLowConfidence, setShowLowConfidence] = useState(true);
+  const [showLowConfidence, setShowLowConfidence] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const saved = localStorage.getItem("showLowConfidence");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const { toast } = useToast();
   const { user } = useUser();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("showLowConfidence", JSON.stringify(showLowConfidence));
+    }
+  }, [showLowConfidence]);
 
   useEffect(() => {
     const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
@@ -758,3 +768,5 @@ export default function HistoryClient() {
     </div>
   );
 }
+
+    
