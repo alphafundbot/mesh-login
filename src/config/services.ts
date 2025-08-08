@@ -9,7 +9,7 @@
  * @returns The value of the environment variable or a placeholder.
  */
 function getEnv(variableName: string): string {
-    return process.env[variableName] || `YOUR_${variableName}`;
+    return process.env[variableName] || "";
 }
 
 export interface FirebaseConfig {
