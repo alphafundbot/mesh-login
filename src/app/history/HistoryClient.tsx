@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot, Timestamp, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import {
   Table,
@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput, type Recommendation } from "@/ai/flows/signal-intelligence-flow";
+import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput, type Recommendation, submitFeedback } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
 import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown, Sparkles, HelpCircle, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,7 +45,7 @@ import FeedbackDashboard from "@/components/dashboard/FeedbackDashboard";
 import { useClusterMomentum } from "@/hooks/use-cluster-momentum";
 
 
-interface ActionLog {
+export interface ActionLog {
   id: string;
   action: string;
   role: string;
@@ -675,13 +675,12 @@ export default function HistoryClient() {
     });
 
     try {
-        await addDoc(collection(db, "feedback"), {
+        await submitFeedback({
             recommendationId: recommendation.recommendationId,
             recommendationText: recommendation.text,
             rating,
             strategist: user.name,
             role: user.role,
-            timestamp: serverTimestamp()
         });
     } catch (error) {
         console.error("Failed to submit feedback:", error);
@@ -722,6 +721,11 @@ export default function HistoryClient() {
     if (!analysisResult) return [];
     return [...analysisResult.recommendations].sort((a, b) => b.confidence - a.confidence);
   }, [analysisResult]);
+
+  const filteredRecommendations = useMemo(() => {
+    if (!analysisResult) return [];
+    return sortedRecommendations.filter(rec => rec.confidence >= confidenceThreshold);
+  }, [sortedRecommendations, confidenceThreshold]);
 
   return (
     <div className="space-y-6">
@@ -902,8 +906,8 @@ export default function HistoryClient() {
                             </div>
                         </div>
                         <div className="space-y-4">
-                            {sortedRecommendations.map((rec) => (
-                                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity", rec.confidence < confidenceThreshold && "opacity-50")}>
+                            {filteredRecommendations.length > 0 ? filteredRecommendations.map((rec) => (
+                                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity")}>
                                     <div className="flex-1 pr-4 space-y-2">
                                     <p className="text-muted-foreground">{rec.text}</p>
                                     <RecommendationConfidence rec={rec} />
@@ -929,8 +933,7 @@ export default function HistoryClient() {
                                         </Button>
                                     </div>
                                 </div>
-                            ))}
-                            {sortedRecommendations.length === 0 && (
+                            )) : (
                                 <p className="text-muted-foreground text-center py-4">No recommendations to display based on the current filter.</p>
                             )}
                         </div>

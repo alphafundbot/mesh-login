@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -12,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const AnalyzeSignalHistoryInputSchema = z.object({
@@ -65,7 +64,8 @@ const getFeedbackSummary = ai.defineTool(
         snapshot.forEach(doc => {
             const data = doc.data();
             const id = data.recommendationId;
-            const text = data.recommendationText || `Rec ID: ${id}`; // Fallback
+            // Use recommendationText, fallback to a default if not present
+            const text = data.recommendationText || `Rec ID: ${id}`; 
 
             if (!feedbackData[id]) {
                 feedbackData[id] = { text, up: 0, down: 0 };
@@ -137,3 +137,22 @@ const signalIntelligenceFlow = ai.defineFlow(
   }
 );
 
+export const submitFeedback = ai.defineFlow(
+    {
+        name: 'submitFeedbackFlow',
+        inputSchema: z.object({
+            recommendationId: z.string(),
+            recommendationText: z.string(),
+            rating: z.enum(['up', 'down']),
+            strategist: z.string(),
+            role: z.string(),
+        }),
+        outputSchema: z.void(),
+    },
+    async (feedback) => {
+        await addDoc(collection(db, "feedback"), {
+            ...feedback,
+            timestamp: serverTimestamp()
+        });
+    }
+);

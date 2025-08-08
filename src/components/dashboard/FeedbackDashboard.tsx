@@ -1,20 +1,19 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, onSnapshot, Timestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, Timestamp, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ThumbsUp, ThumbsDown, BarChart2 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface Feedback {
     id: string;
     recommendationId: string;
     rating: 'up' | 'down';
     role: string;
-    domain: string; 
     recommendationText: string; 
     timestamp: Date;
 }
@@ -29,14 +28,12 @@ export default function FeedbackDashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const q = query(collection(db, 'feedback'));
+        const q = query(collection(db, 'feedback'), orderBy("timestamp", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             if (snapshot.empty) {
                 setLoading(false);
                 return;
             }
-            // In a real app, you would fetch recommendation text and domain info
-            // based on the recommendationId. Here we simulate it.
             const fetchedFeedback = snapshot.docs.map(doc => {
                 const data = doc.data();
                 return {
@@ -44,8 +41,7 @@ export default function FeedbackDashboard() {
                     recommendationId: data.recommendationId,
                     rating: data.rating,
                     role: data.role,
-                    domain: 'Unknown', // This would require a lookup
-                    recommendationText: `Rec ID: ${data.recommendationId}`, // This would require a lookup
+                    recommendationText: data.recommendationText || `Rec ID: ${data.recommendationId}`,
                     timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
                 } as Feedback;
             });
@@ -59,43 +55,40 @@ export default function FeedbackDashboard() {
         return () => unsubscribe();
     }, []);
 
-    const processedData = () => {
+    const { byRole, topLiked, topDisliked } = useMemo(() => {
         if (feedback.length === 0) return { byRole: [], topLiked: [], topDisliked: [] };
 
-        const byRole: { [key: string]: { up: number, down: number } } = {};
-        const byRecommendation: { [key: string]: { text: string, up: number, down: number } } = {};
+        const roleMap: { [key: string]: { up: number, down: number } } = {};
+        const recommendationMap: { [key: string]: { text: string, up: number, down: number } } = {};
 
         feedback.forEach(f => {
-            if (!byRole[f.role]) byRole[f.role] = { up: 0, down: 0 };
-            if (!byRecommendation[f.recommendationId]) {
-                 byRecommendation[f.recommendationId] = { text: f.recommendationText, up: 0, down: 0 };
+            if (!roleMap[f.role]) roleMap[f.role] = { up: 0, down: 0 };
+            if (!recommendationMap[f.recommendationId]) {
+                 recommendationMap[f.recommendationId] = { text: f.recommendationText, up: 0, down: 0 };
             }
 
             if (f.rating === 'up') {
-                byRole[f.role].up++;
-                byRecommendation[f.recommendationId].up++;
+                roleMap[f.role].up++;
+                recommendationMap[f.recommendationId].up++;
             } else {
-                byRole[f.role].down++;
-                byRecommendation[f.recommendationId].down++;
+                roleMap[f.role].down++;
+                recommendationMap[f.recommendationId].down++;
             }
         });
 
-        const roleChartData = Object.entries(byRole).map(([name, { up, down }]) => ({ name, upvotes: up, downvotes: down }));
+        const roleChartData = Object.entries(roleMap).map(([name, { up, down }]) => ({ name, Approvals: up, Rejections: down }));
         
-        const recommendationList = Object.values(byRecommendation);
+        const recommendationList = Object.values(recommendationMap);
         const topLiked = [...recommendationList].sort((a,b) => b.up - a.up).slice(0, 5);
         const topDisliked = [...recommendationList].sort((a,b) => b.down - a.down).slice(0, 5);
 
-
         return { byRole: roleChartData, topLiked, topDisliked };
-    };
-
-    const { byRole, topLiked, topDisliked } = processedData();
+    }, [feedback]);
 
     if (loading) {
         return (
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                 <Skeleton className="h-80" />
+                 <Skeleton className="h-80 col-span-1 lg:col-span-3" />
                  <Skeleton className="h-80" />
                  <Skeleton className="h-80" />
              </div>
@@ -104,7 +97,7 @@ export default function FeedbackDashboard() {
     
     if (feedback.length === 0) {
         return (
-             <Card>
+             <Card className="md:col-span-2 lg:col-span-3">
                 <CardHeader>
                     <CardTitle>Strategist Feedback Dashboard</CardTitle>
                     <CardDescription>No feedback data available yet. Please interact with AI recommendations to see insights here.</CardDescription>
@@ -118,27 +111,28 @@ export default function FeedbackDashboard() {
 
     return (
         <div className="grid gap-6 auto-rows-max md:grid-cols-2 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
+            <Card className="lg:col-span-3">
                 <CardHeader>
-                    <CardTitle>Feedback by Role</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><BarChart2 className="h-5 w-5 text-accent" />Feedback by Role</CardTitle>
                     <CardDescription>How different strategist roles are rating AI recommendations.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={250}>
                         <BarChart data={byRole}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                            <YAxis stroke="hsl(var(--muted-foreground))" />
+                            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                             <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))" }} />
-                            <Bar dataKey="upvotes" fill={COLORS.up} name="Approvals" stackId="a" />
-                            <Bar dataKey="downvotes" fill={COLORS.down} name="Rejections" stackId="a" />
+                            <Legend />
+                            <Bar dataKey="Approvals" fill={COLORS.up} stackId="a" />
+                            <Bar dataKey="Rejections" fill={COLORS.down} stackId="a" />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle>Top Approved</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-green-400"><ThumbsUp className="h-5 w-5" />Top Approved</CardTitle>
                     <CardDescription>The most effective AI recommendations based on strategist feedback.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -154,7 +148,7 @@ export default function FeedbackDashboard() {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>Top Rejected</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-red-400"><ThumbsDown className="h-5 w-5" />Top Rejected</CardTitle>
                     <CardDescription>Recommendations needing recalibration or suppression.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">

@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   analyzeSignalHistory,
   type AnalyzeSignalHistoryOutput,
+  submitFeedback,
 } from "@/ai/flows/signal-intelligence-flow";
 import { useToast } from "@/hooks/use-toast";
 import { Bot, BrainCircuit, Lightbulb, History, ThumbsUp, ThumbsDown, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
@@ -21,8 +22,6 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { telecomSignalLogs } from "@/lib/telecom-signal-logs";
@@ -144,13 +143,12 @@ export default function DomainClient({ domain }: { domain: Domain }) {
     });
 
     try {
-        await addDoc(collection(db, "feedback"), {
+        await submitFeedback({
             recommendationId: recommendation.recommendationId,
             recommendationText: recommendation.text,
             rating,
             strategist: user.name,
             role: user.role,
-            timestamp: serverTimestamp()
         });
     } catch (error) {
         console.error("Failed to submit feedback:", error);
@@ -171,6 +169,10 @@ export default function DomainClient({ domain }: { domain: Domain }) {
     if (!result) return [];
     return [...result.recommendations].sort((a, b) => b.confidence - a.confidence);
   }, [result]);
+
+  const filteredRecommendations = useMemo(() => {
+      return sortedRecommendations.filter(rec => rec.confidence >= confidenceThreshold);
+  }, [sortedRecommendations, confidenceThreshold]);
 
   if (loading) {
     return (
@@ -261,8 +263,8 @@ export default function DomainClient({ domain }: { domain: Domain }) {
             </div>
         </CardHeader>
         <CardContent className="space-y-4">
-            {sortedRecommendations.length > 0 ? sortedRecommendations.map(rec => (
-                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity", rec.confidence < confidenceThreshold && "opacity-50")}>
+            {filteredRecommendations.length > 0 ? filteredRecommendations.map(rec => (
+                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity")}>
                     <div className="flex-1 pr-4 space-y-2">
                         <p className="text-muted-foreground">{rec.text}</p>
                         <RecommendationConfidence rec={rec} />
