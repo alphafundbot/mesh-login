@@ -9,7 +9,7 @@ import {
   type AnalyzeSignalHistoryOutput,
 } from "@/ai/flows/signal-intelligence-flow";
 import { useToast } from "@/hooks/use-toast";
-import { Bot, BrainCircuit, Lightbulb, History, GitCommit, ThumbsUp, ThumbsDown, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, History, ThumbsUp, ThumbsDown, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
 import type { Recommendation } from "@/ai/flows/signal-intelligence-flow";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,7 +19,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-
+import { Button } from "@/components/ui/button";
+import { useUser } from "@/hooks/use-user";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 type Domain = {
   name: string;
@@ -86,7 +89,9 @@ export default function DomainClient({ domain }: { domain: Domain }) {
   const [result, setResult] = useState<AnalyzeSignalHistoryOutput | null>(
     null
   );
+  const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
   const { toast } = useToast();
+  const { user } = useUser();
 
   useEffect(() => {
     const getAnalysis = async () => {
@@ -108,6 +113,38 @@ export default function DomainClient({ domain }: { domain: Domain }) {
     };
     getAnalysis();
   }, [domain, toast]);
+  
+  const handleFeedback = async (recommendationId: string, rating: 'up' | 'down') => {
+    if (feedbackGiven[recommendationId]) return; 
+
+    setFeedbackGiven(prev => ({...prev, [recommendationId]: rating }));
+    toast({
+        title: "Feedback Submitted",
+        description: "Thank you for helping improve the AI."
+    });
+
+    try {
+        await addDoc(collection(db, "feedback"), {
+            recommendationId,
+            rating,
+            strategist: user.name,
+            role: user.role,
+            timestamp: serverTimestamp()
+        });
+    } catch (error) {
+        console.error("Failed to submit feedback:", error);
+        toast({
+            variant: "destructive",
+            title: "Feedback Error",
+            description: "Could not save your feedback. Please try again."
+        });
+        setFeedbackGiven(prev => {
+            const newState = {...prev};
+            delete newState[recommendationId];
+            return newState;
+        });
+    }
+  };
 
   if (loading) {
     return (
@@ -186,6 +223,26 @@ export default function DomainClient({ domain }: { domain: Domain }) {
                     <div className="flex-1 pr-4 space-y-2">
                         <p className="text-muted-foreground">{rec.text}</p>
                         <RecommendationConfidence rec={rec} />
+                    </div>
+                     <div className="flex gap-1">
+                        <Button 
+                            size="icon" 
+                            variant={feedbackGiven[rec.recommendationId] === 'up' ? "default" : "outline"}
+                            className="h-8 w-8"
+                            onClick={() => handleFeedback(rec.recommendationId, 'up')}
+                            disabled={!!feedbackGiven[rec.recommendationId]}
+                        >
+                            <ThumbsUp className="h-4 w-4" />
+                        </Button>
+                         <Button 
+                            size="icon" 
+                            variant={feedbackGiven[rec.recommendationId] === 'down' ? "destructive" : "outline"}
+                            className="h-8 w-8"
+                            onClick={() => handleFeedback(rec.recommendationId, 'down')}
+                            disabled={!!feedbackGiven[rec.recommendationId]}
+                        >
+                            <ThumbsDown className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
             ))}
