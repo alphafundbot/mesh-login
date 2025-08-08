@@ -76,6 +76,7 @@ export default function RecentActivity() {
     });
 
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRefresh = async () => {
@@ -106,7 +107,7 @@ export default function RecentActivity() {
         role: user.role,
         strategist: user.name,
         timestamp: serverTimestamp(),
-        details: result ? JSON.stringify(result) : "No details available"
+        details: result ? `AI Detected Unusual Activity: "${result.unusualActivities}"` : "No details available"
       });
     } catch (error) {
       console.error("Failed to log action:", error);
