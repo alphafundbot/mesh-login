@@ -210,65 +210,43 @@ function RationaleDialog({
     }, [content, taggedRationales]);
 
     const previousDialogClusters = useMemo(() => {
-        if (!content || !content.title.includes("Override Rationales for")) return new Map();
-
-        const domain = content.title.replace("Override Rationales for ", "");
-        const severityMatch = (content.description as React.ReactElement)?.props.children[1];
-        const severity = severityMatch ? (severityMatch.props.children as Severity) : null;
-
-        if(!domain || !severity) return new Map();
-
-        const relevantLogs = previousLogs.filter(log => {
-            const d = parseDetails(log.details);
-            return d.isOverride && d.severity === severity && d.domains?.includes(domain)
-        });
-
-        const rationales: TaggedRationale[] = relevantLogs.map(log => {
-            const d = parseDetails(log.details);
-            return { rationale: d.rationale, tags: [], severity: d.severity!, domains: d.domains! };
-        });
-
-        if (rationales.length === 0) return new Map();
-        
-        const alignedPrevClusters: ClusterMap = new Map();
-        const currentTags = Array.from(dialogClusters.keys());
-
-        currentTags.forEach(tag => {
-            const clusterInfo: ClusterInfo = {
-                tag: tag,
-                items: [],
-                severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 },
-                domains: {},
-                riskScore: 0
-            };
-
-            const taggedPrevRationales = rationales.filter(r => {
-                const isMatch = r.rationale.toLowerCase().includes(tag.toLowerCase());
-                if (isMatch) {
-                    r.tags = [...new Set([...r.tags, tag])];
-                }
-                return isMatch;
-            });
-            
-            if (taggedPrevRationales.length > 0) {
-                 taggedPrevRationales.forEach(item => {
-                    clusterInfo.items.push(item);
-                    clusterInfo.severities[item.severity]++;
-                 });
-
-                 let score = 0;
-                 score += clusterInfo.severities.Warning * RISK_WEIGHTS.Warning;
-                 score += clusterInfo.severities.Critical * RISK_WEIGHTS.Critical;
-                 score += clusterInfo.severities.Catastrophic * RISK_WEIGHTS.Catastrophic;
-                 clusterInfo.riskScore = score;
-
-                 alignedPrevClusters.set(tag, clusterInfo);
-            }
-        });
-        
-        return alignedPrevClusters;
-
-    }, [previousLogs, content, dialogClusters]);
+      if (!content || !previousLogs || previousLogs.length === 0) return new Map();
+  
+      // Extract all unique tags from the current clusters to align historical data
+      const currentTags = Array.from(dialogClusters.keys());
+      if (currentTags.length === 0) return new Map();
+  
+      // Pre-parse all previous logs
+      const previousRationales: TaggedRationale[] = previousLogs.map(log => {
+          const d = parseDetails(log.details);
+          return {
+              rationale: d.rationale,
+              tags: [], // Tags will be added based on matching
+              severity: d.severity,
+              domains: d.domains,
+          };
+      }).filter((r): r is TaggedRationale => !!(r.rationale && r.severity && r.domains));
+  
+      // Create a map to hold the reconstituted previous clusters
+      const alignedPrevClusters: ClusterMap = new Map();
+  
+      currentTags.forEach(tag => {
+          const matchingPrevRationales = previousRationales.filter(r =>
+              r.rationale.toLowerCase().includes(tag.toLowerCase())
+          );
+  
+          if (matchingPrevRationales.length > 0) {
+              const taggedPrevRationales = matchingPrevRationales.map(r => ({ ...r, tags: [tag] }));
+              const tempClusterMap = calculateClusters(taggedPrevRationales);
+              const clusterInfo = tempClusterMap.get(tag);
+              if (clusterInfo) {
+                  alignedPrevClusters.set(tag, clusterInfo);
+              }
+          }
+      });
+      
+      return alignedPrevClusters;
+  }, [previousLogs, content, dialogClusters]);
 
     return (
         <Dialog open={!!content} onOpenChange={onOpenChange}>
