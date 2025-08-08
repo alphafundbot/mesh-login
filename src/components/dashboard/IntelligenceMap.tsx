@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -19,7 +20,7 @@ import {
   analyzeCrossDomainIntelligence, 
   type CrossDomainIntelligenceOutput 
 } from "@/ai/flows/cross-domain-intelligence-flow"
-import { Bot } from "lucide-react"
+import { Bot, AlertTriangle } from "lucide-react"
 
 // Generates sample logs for a given domain to simulate fetching real data
 const generateDomainLogs = (domainName: string) => {
@@ -27,8 +28,13 @@ const generateDomainLogs = (domainName: string) => {
     const strategists = ["Nehemie", "Architect-02", "Operator-01", "Analyst-04"];
     
     let logs = `Action logs for domain: ${domainName}\n`;
+    // Add some random errors to make anomalies more likely
+    const errorChance = ["System Core", "Finance & Trading"].includes(domainName) ? 0.5 : 0.2;
     for (let i = 0; i < 5 + Math.floor(Math.random() * 5); i++) {
-        const action = actions[Math.floor(Math.random() * actions.length)];
+        let action = actions[Math.floor(Math.random() * actions.length)];
+        if (Math.random() < errorChance) {
+            action = Math.random() > 0.5 ? "API_ERROR" : "UNAUTHORIZED_ACCESS";
+        }
         const strategist = strategists[Math.floor(Math.random() * strategists.length)];
         const timestamp = new Date(Date.now() - Math.random() * 86400000).toISOString();
         logs += `[${timestamp}] ${action} by ${strategist}\n`;
@@ -36,9 +42,36 @@ const generateDomainLogs = (domainName: string) => {
     return logs;
 }
 
+const ANOMALY_THRESHOLD = 70;
+
+const CustomTick = (props: any) => {
+  const { x, y, payload } = props;
+  const { value, isAnomaly } = payload;
+  
+  if (isAnomaly) {
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text dy={4} textAnchor="middle" fill="hsl(var(--destructive))" className="text-xs font-bold flex items-center">
+            <tspan x="0" dy="-0.5em">{value}</tspan>
+        </text>
+        <AlertTriangle className="h-4 w-4 text-destructive" x="-7" y="10" />
+      </g>
+    );
+  }
+  
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text dy={4} textAnchor="middle" fill="hsl(var(--muted-foreground))" className="text-xs">
+        {value}
+      </text>
+    </g>
+  );
+};
+
+
 export default function IntelligenceMap() {
   const [loading, setLoading] = useState(true);
-  const [chartData, setChartData] = useState<CrossDomainIntelligenceOutput['metrics']>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,7 +87,13 @@ export default function IntelligenceMap() {
         }
         
         const output = await analyzeCrossDomainIntelligence({ domainLogs });
-        setChartData(output.metrics);
+
+        const dataWithAnomalies = output.metrics.map(metric => ({
+          ...metric,
+          isAnomaly: metric.stability < ANOMALY_THRESHOLD || metric.security < ANOMALY_THRESHOLD,
+        }));
+
+        setChartData(dataWithAnomalies);
       } catch (error) {
         console.error("AI cross-domain analysis failed:", error);
         toast({
@@ -77,7 +116,7 @@ export default function IntelligenceMap() {
             Cross-Domain Intelligence Map
         </CardTitle>
         <CardDescription>
-          AI-synthesized view of system mesh health across key domains.
+          AI-synthesized view of system mesh health across key domains. Anomalies are highlighted.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -104,7 +143,7 @@ export default function IntelligenceMap() {
                           </linearGradient>
                       </defs>
                       <PolarGrid />
-                      <PolarAngleAxis dataKey="domain" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                      <PolarAngleAxis dataKey="domain" tick={<CustomTick />} />
                       <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                       <Tooltip
                           contentStyle={{
