@@ -41,6 +41,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import FeedbackDashboard from "@/components/dashboard/FeedbackDashboard";
+import { useClusterMomentum } from "@/hooks/use-cluster-momentum";
 
 
 interface ActionLog {
@@ -191,6 +192,65 @@ function ClusterDelta({ currentScore, previousScore }: { currentScore: number; p
     );
 }
 
+function DialogClusterItem({ cluster, previousLogs }: { cluster: ClusterInfo, previousLogs: ActionLog[] }) {
+    const { previousScore } = useClusterMomentum(cluster, previousLogs);
+    const { items, severities, riskScore, tag } = cluster;
+
+    const sortedDomains = Object.entries(cluster.domains).sort((a, b) => b[1].count - a[1].count);
+    const isLargeDelta = Math.abs(riskScore - previousScore) > DELTA_THRESHOLD;
+
+    return (
+        <AccordionItem value={tag} className={cn((riskScore - previousScore > 0 && isLargeDelta) && "border-red-500/50 rounded-lg border")}>
+            <AccordionTrigger>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <Tags className="h-4 w-4 text-muted-foreground" />
+                    <span className="capitalize font-semibold">{tag}</span>
+                    <Badge variant="outline">{items.length} total</Badge>
+                    <Badge variant={riskScore > 10 ? "destructive" : riskScore > 5 ? "secondary" : "default"} className="gap-1 bg-primary/20 text-primary-foreground"><BarChart className="h-3 w-3" /> Risk: {riskScore}</Badge>
+                    <ClusterDelta currentScore={riskScore} previousScore={previousScore} />
+                    {severities.Warning > 0 && <Badge variant="secondary" className="gap-1 bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" /> {severities.Warning} W</Badge>}
+                    {severities.Critical > 0 && <Badge variant="destructive" className="gap-1 bg-orange-600"><ShieldAlert className="h-3 w-3" /> {severities.Critical} C</Badge>}
+                    {severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 bg-red-800"><ShieldX className="h-3 w-3" /> {severities.Catastrophic} Ct</Badge>}
+                </div>
+            </AccordionTrigger>
+            <AccordionContent>
+                <div className="space-y-4 pl-2">
+                    <div className="flex flex-col md:flex-row gap-8">
+                        <div className="flex-[3] space-y-4">
+                            <h4 className="font-semibold text-sm">Rationales ({items.length})</h4>
+                                {items.map((item, index) => (
+                                <div key={index}>
+                                    <blockquote className="border-l-2 pl-4 italic text-muted-foreground">
+                                        "{item.rationale}"
+                                    </blockquote>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex-[2] space-y-4">
+                            <h4 className="font-semibold text-sm flex items-center gap-2"><Globe className="h-4 w-4" /> Domain Spread</h4>
+                            <div className="space-y-2">
+                                {sortedDomains.map(([domain, metrics]) => (
+                                    <div key={domain} className="text-xs p-2 rounded-md bg-muted/30">
+                                        <div className="flex items-center justify-between font-semibold">
+                                            <span className="text-foreground">{domain}</span>
+                                            <Badge variant="secondary">{metrics.count} total</Badge>
+                                        </div>
+                                        <div className="flex gap-2 mt-1.5">
+                                            {metrics.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{metrics.severities.Warning}</Badge>}
+                                            {metrics.severities.Critical > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-orange-600"><ShieldAlert className="h-3 w-3" />{metrics.severities.Critical}</Badge>}
+                                            {metrics.severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-red-800"><ShieldX className="h-3 w-3" />{metrics.severities.Catastrophic}</Badge>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </AccordionContent>
+        </AccordionItem>
+    );
+}
+
 function RationaleDialog({ 
     content, 
     onOpenChange, 
@@ -209,41 +269,6 @@ function RationaleDialog({
         return calculateClusters(taggedRationales);
     }, [content, taggedRationales]);
 
-    const previousDialogClusters = useMemo(() => {
-        if (!content || !previousLogs || previousLogs.length === 0) return new Map();
-    
-        const currentTags = Array.from(dialogClusters.keys());
-        if (currentTags.length === 0) return new Map();
-    
-        const previousRationales: Omit<TaggedRationale, 'tags'>[] = previousLogs.map(log => {
-            const d = parseDetails(log.details);
-            return {
-                rationale: d.rationale,
-                severity: d.severity,
-                domains: d.domains,
-            };
-        }).filter((r): r is Omit<TaggedRationale, 'tags'> => !!(r.rationale && r.severity && r.domains));
-    
-        const alignedPrevClusters: ClusterMap = new Map();
-    
-        currentTags.forEach(tag => {
-            // Find all historical rationales that seem to match this tag's keywords
-            const tagKeywords = tag.split(' ');
-            const matchingPrevRationales: TaggedRationale[] = previousRationales
-                .filter(r => tagKeywords.every(kw => r.rationale.toLowerCase().includes(kw.toLowerCase())))
-                .map(r => ({ ...r, tags: [tag] })); // Assign the current tag for clustering
-    
-            if (matchingPrevRationales.length > 0) {
-                const tempClusterMap = calculateClusters(matchingPrevRationales);
-                const clusterInfo = tempClusterMap.get(tag);
-                if (clusterInfo) {
-                    alignedPrevClusters.set(tag, clusterInfo);
-                }
-            }
-        });
-        
-        return alignedPrevClusters;
-    }, [previousLogs, content, dialogClusters]);
 
     return (
         <Dialog open={!!content} onOpenChange={onOpenChange}>
@@ -265,62 +290,12 @@ function RationaleDialog({
                         )}
                         {!loading && dialogClusters.size > 0 && (
                              <Accordion type="multiple" className="w-full">
-                                {Array.from(dialogClusters.entries()).sort((a,b) => b[1].riskScore - a[1].riskScore).map(([tag, { items, severities, domains, riskScore }]) => {
-                                   const sortedDomains = Object.entries(domains).sort((a, b) => b[1].count - a[1].count);
-                                   const previousRiskScore = previousDialogClusters.get(tag)?.riskScore ?? 0;
-                                   const isLargeDelta = Math.abs(riskScore - previousRiskScore) > DELTA_THRESHOLD;
-
-                                    return (
-                                        <AccordionItem key={tag} value={tag} className={cn((riskScore - previousRiskScore > 0 && isLargeDelta) && "border-red-500/50 rounded-lg border")}>
-                                            <AccordionTrigger>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <Tags className="h-4 w-4 text-muted-foreground" />
-                                                    <span className="capitalize font-semibold">{tag}</span>
-                                                    <Badge variant="outline">{items.length} total</Badge>
-                                                    <Badge variant={riskScore > 10 ? "destructive" : riskScore > 5 ? "secondary" : "default"} className="gap-1 bg-primary/20 text-primary-foreground"><BarChart className="h-3 w-3" /> Risk: {riskScore}</Badge>
-                                                    <ClusterDelta currentScore={riskScore} previousScore={previousRiskScore} />
-                                                    {severities.Warning > 0 && <Badge variant="secondary" className="gap-1 bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" /> {severities.Warning} W</Badge>}
-                                                    {severities.Critical > 0 && <Badge variant="destructive" className="gap-1 bg-orange-600"><ShieldAlert className="h-3 w-3" /> {severities.Critical} C</Badge>}
-                                                    {severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 bg-red-800"><ShieldX className="h-3 w-3" /> {severities.Catastrophic} Ct</Badge>}
-                                                </div>
-                                            </AccordionTrigger>
-                                            <AccordionContent>
-                                                <div className="space-y-4 pl-2">
-                                                    <div className="flex flex-col md:flex-row gap-8">
-                                                        <div className="flex-[3] space-y-4">
-                                                            <h4 className="font-semibold text-sm">Rationales ({items.length})</h4>
-                                                             {items.map((item, index) => (
-                                                                <div key={index}>
-                                                                    <blockquote className="border-l-2 pl-4 italic text-muted-foreground">
-                                                                        "{item.rationale}"
-                                                                    </blockquote>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                        <div className="flex-[2] space-y-4">
-                                                            <h4 className="font-semibold text-sm flex items-center gap-2"><Globe className="h-4 w-4" /> Domain Spread</h4>
-                                                            <div className="space-y-2">
-                                                                {sortedDomains.map(([domain, metrics]) => (
-                                                                    <div key={domain} className="text-xs p-2 rounded-md bg-muted/30">
-                                                                        <div className="flex items-center justify-between font-semibold">
-                                                                            <span className="text-foreground">{domain}</span>
-                                                                            <Badge variant="secondary">{metrics.count} total</Badge>
-                                                                        </div>
-                                                                        <div className="flex gap-2 mt-1.5">
-                                                                            {metrics.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{metrics.severities.Warning}</Badge>}
-                                                                            {metrics.severities.Critical > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-orange-600"><ShieldAlert className="h-3 w-3" />{metrics.severities.Critical}</Badge>}
-                                                                            {metrics.severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-red-800"><ShieldX className="h-3 w-3" />{metrics.severities.Catastrophic}</Badge>}
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    )
-                                })}
+                                {Array.from(dialogClusters.values())
+                                    .sort((a,b) => b.riskScore - a.riskScore)
+                                    .map((cluster) => (
+                                        <DialogClusterItem key={cluster.tag} cluster={cluster} previousLogs={previousLogs} />
+                                    ))
+                                }
                             </Accordion>
                         )}
                          {!loading && dialogClusters.size === 0 && (
