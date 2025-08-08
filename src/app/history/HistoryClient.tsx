@@ -906,7 +906,7 @@ export default function HistoryClient() {
                         </div>
                         <div className="space-y-4">
                             {filteredRecommendations.length > 0 ? filteredRecommendations.map((rec) => (
-                                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity", rec.confidence < confidenceThreshold && 'opacity-50')}>
+                                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30", rec.confidence < confidenceThreshold && 'opacity-50')}>
                                     <div className="flex-1 pr-4 space-y-2">
                                     <p className="text-muted-foreground">{rec.text}</p>
                                     <RecommendationConfidence rec={rec} />
