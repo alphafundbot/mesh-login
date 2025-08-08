@@ -37,11 +37,11 @@ export interface ServicesConfig {
 export const servicesConfig: ServicesConfig = {
     firebase: {
         apiKey: " ",
-        authDomain: getEnv('FIREBASE_AUTH_DOMAIN'),
-        projectId: getEnv('FIREBASE_PROJECT_ID'),
-        storageBucket: getEnv('FIREBASE_STORAGE_BUCKET'),
-        messagingSenderId: getEnv('FIREBASE_MESSAGING_SENDER_ID'),
-        appId: getEnv('FIREBASE_APP_ID'),
+        authDomain: "stratagemai-xi7q8.firebaseapp.com",
+        projectId: "stratagemai-xi7q8",
+        storageBucket: "stratagemai-xi7q8.appspot.com",
+        messagingSenderId: "405937962472",
+        appId: "1:405937962472:web:a9d3a7c6b9e5d4a1a3b2c1",
         measurementId: process.env.FIREBASE_MEASUREMENT_ID,
     },
     gcp: {
