@@ -12,7 +12,7 @@ import {
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, onSnapshot, Timestamp } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
-import { Bot, AlertTriangle, ShieldAlert, History, ShieldX, CheckCircle } from "lucide-react";
+import { Bot, AlertTriangle, ShieldAlert, History, ShieldX, CheckCircle, CornerDownRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -74,6 +74,14 @@ export default function HudRiskFeed() {
         return () => unsubscribe();
     }, []);
 
+    const parseDetailsForDisplay = (action: string, details: string) => {
+      if (action === 'STRATEGIST_RESPONSE') {
+        const rationaleMatch = details.match(/Rationale: "([^"]*)"/);
+        return rationaleMatch ? `Responded with rationale: "${rationaleMatch[1]}"` : details;
+      }
+      return details;
+    }
+
     return (
         <Card className="h-full">
             <CardHeader>
@@ -92,6 +100,7 @@ export default function HudRiskFeed() {
                            <Skeleton className="h-6 w-6 rounded-full" />
                            <div className="space-y-1 w-full">
                              <Skeleton className="h-4 w-4/5" />
+                             <Skeleton className="h-3 w-full" />
                              <Skeleton className="h-3 w-1/2" />
                            </div>
                         </div>
@@ -101,10 +110,12 @@ export default function HudRiskFeed() {
                         const color = getActionColor(action.action);
                         return (
                             <div key={action.id} className="flex items-start gap-4">
-                                <Icon className={cn("h-5 w-5 mt-0.5", color)} />
+                                <Icon className={cn("h-5 w-5 mt-0.5 shrink-0", color)} />
                                 <div className="text-sm">
                                     <p><span className="font-semibold">{action.strategist}</span> ({action.role}) initiated <span className={cn("font-semibold", color)}>{action.action}</span></p>
-                                    <p className="text-xs text-muted-foreground mt-1">{action.details}</p>
+                                    <p className="text-xs text-muted-foreground mt-1 italic">
+                                      {parseDetailsForDisplay(action.action, action.details)}
+                                    </p>
                                     <p className="text-xs text-muted-foreground mt-2">{formatDistanceToNow(action.timestamp, { addSuffix: true })}</p>
                                 </div>
                             </div>
