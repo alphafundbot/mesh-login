@@ -158,8 +158,8 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
         // Calculate risk score for each cluster
         const RISK_WEIGHTS: Record<Severity, number> = {
             "Warning": 1,
-            "Critical": 5,
-            "Catastrophic": 10
+            "Critical": 3,
+            "Catastrophic": 5
         };
 
         clusters.forEach(cluster => {
@@ -294,7 +294,7 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                                                     <Tags className="h-4 w-4 text-muted-foreground" />
                                                     <span className="capitalize font-semibold">{tag}</span>
                                                     <Badge variant="outline">{items.length} total</Badge>
-                                                    <Badge variant={riskScore > 20 ? "destructive" : riskScore > 10 ? "secondary" : "default"} className="gap-1 bg-primary/20 text-primary-foreground"><BarChart className="h-3 w-3" /> Risk: {riskScore}</Badge>
+                                                    <Badge variant={riskScore > 10 ? "destructive" : riskScore > 5 ? "secondary" : "default"} className="gap-1 bg-primary/20 text-primary-foreground"><BarChart className="h-3 w-3" /> Risk: {riskScore}</Badge>
                                                     {severities.Warning > 0 && <Badge variant="secondary" className="gap-1 bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" /> {severities.Warning} W</Badge>}
                                                     {severities.Critical > 0 && <Badge variant="destructive" className="gap-1 bg-orange-600"><ShieldAlert className="h-3 w-3" /> {severities.Critical} C</Badge>}
                                                     {severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 bg-red-800"><ShieldX className="h-3 w-3" /> {severities.Catastrophic} Ct</Badge>}
@@ -544,7 +544,3 @@ export default function HistoryClient() {
     </div>
   );
 }
-
-    
-
-    
