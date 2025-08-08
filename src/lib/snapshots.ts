@@ -1,6 +1,5 @@
 
 import telecomSignalHistory from './telecom-signal-history-2025-08-08.json';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface Snapshot {
     slug: string;
@@ -11,14 +10,14 @@ export interface Snapshot {
     }
 }
 
-const generateInitialSnapshot = (): Snapshot => ({
-    slug: `genesis-event-${uuidv4().slice(0, 8)}`,
+const genesisEvent: Snapshot = {
+    slug: `genesis-event`,
     label: 'Genesis Event',
     description: 'Initial system state snapshot.',
     data: {
         logs: '[2024-01-01T00:00:00Z] SYSTEM_INIT: Core services online. Awaiting strategist input.'
     }
-});
+};
 
 
 export const snapshotRegistry: Snapshot[] = [
@@ -30,7 +29,7 @@ export const snapshotRegistry: Snapshot[] = [
             logs: telecomSignalHistory.logs
         }
     },
-    generateInitialSnapshot()
+    genesisEvent
 ];
 
 export const getSnapshotBySlug = (slug: string): Snapshot | undefined => {
