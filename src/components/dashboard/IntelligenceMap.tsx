@@ -144,14 +144,6 @@ const SEVERITY_RATIONALE_TEMPLATES: Record<Severity, string> = {
     Catastrophic: "Initiating emergency rollback to restore mesh integrity.",
 };
 
-const ACTION_LOG_TEMPLATES: Record<string, (details: EscalationDetails) => string> = {
-    Acknowledge: (details) => `Acknowledged ${details.severity} event involving ${details.anomalousDomains.map(d=>d.domain).join(', ')}.`,
-    Quarantine: (details) => `Quarantined domains ${details.anomalousDomains.map(d=>d.domain).join(', ')} due to ${details.severity} event.`,
-    Rollback: (details) => `Initiated rollback for ${details.anomalousDomains.map(d=>d.domain).join(', ')} due to ${details.severity} event.`,
-    TAKE_ACTION: (details) => `Took unspecified high-priority action on ${details.anomalousDomains.map(d=>d.domain).join(', ')} in response to ${details.severity} event.`,
-};
-
-
 export default function IntelligenceMap() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -219,10 +211,10 @@ export default function IntelligenceMap() {
   }, []);
 
   useEffect(() => {
-    const q = query(collection(db, "intelligence_map_cache"), orderBy("timestamp", "desc"), limit(1));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-            const latestCache = snapshot.docs[0].data().analysis as CrossDomainIntelligenceOutput;
+    const q = doc(db, "intelligence_map_cache", "latest");
+    const unsubscribe = onSnapshot(q, (doc) => {
+        if (doc.exists()) {
+            const latestCache = doc.data().analysis as CrossDomainIntelligenceOutput;
             processAnalysis(latestCache);
         }
         setLoading(false);
@@ -247,7 +239,7 @@ export default function IntelligenceMap() {
 
       const output = await analyzeCrossDomainIntelligence({ domainLogs });
       
-      await setDoc(doc(db, "intelligence_map_cache", new Date().toISOString()), {
+      await setDoc(doc(db, "intelligence_map_cache", "latest"), {
           analysis: output,
           timestamp: serverTimestamp(),
       });
@@ -280,9 +272,7 @@ export default function IntelligenceMap() {
     const defaultRationale = SEVERITY_RATIONALE_TEMPLATES[escalation.severity];
     const isOverridden = rationale !== defaultRationale;
 
-    const actionText = ACTION_LOG_TEMPLATES[escalation.action] ? ACTION_LOG_TEMPLATES[escalation.action](escalation) : `Responded to ${escalation.severity} event.`;
-
-    const details = `Action: ${escalation.action} involving ${escalation.anomalousDomains.map(d => d.domain).join(', ')}. Severity: ${escalation.severity}. Rationale: "${rationale || "Not provided."}" Override: ${isOverridden}`;
+    const details = `Action: ${escalation.action} on ${escalation.anomalousDomains.map(d => d.domain).join(', ')}. Severity: ${escalation.severity}. Rationale: "${rationale || "Not provided."}" Override: ${isOverridden}`;
     
     handleLogAction("STRATEGIST_RESPONSE", details);
     toast({

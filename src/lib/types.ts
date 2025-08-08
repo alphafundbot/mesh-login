@@ -59,8 +59,7 @@ export const parseDetails = (details: string): ParsedDetails => {
   const isOverride =
     details.includes("Override: true") ||
     details.includes("STRATEGIST_OVERRIDE") ||
-    details.startsWith("Action: ") ||
-    details.startsWith("Dismissed");
+    details.startsWith("Action: ");
 
   const rationaleMatch = details.match(/Rationale: "([^"]*)"/i);
   const rationale = rationaleMatch ? rationaleMatch[1] : "";
@@ -86,7 +85,7 @@ export const parseDetails = (details: string): ParsedDetails => {
 
   let domains: string[] | undefined;
   // Regex to find domains after "on", "involving", or "for"
-  const domainsMatch = details.match(/(?:on|involving|for) ([\w\s,&\-()]+?)(?::|,| with| due| for)/i);
+  const domainsMatch = details.match(/(?:on|involving|for) ([\w\s,&\-()]+?)(?:\. Severity:|,| with| due| for)/i);
   
   if (domainsMatch && domainsMatch[1]) {
     domains = domainsMatch[1].split(',').map(d => d.trim().replace(/\.$/, ''));
