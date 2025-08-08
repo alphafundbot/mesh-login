@@ -36,7 +36,7 @@ export interface ServicesConfig {
 
 export const servicesConfig: ServicesConfig = {
     firebase: {
-        apiKey: getEnv('FIREBASE_API_KEY'),
+        apiKey: " ",
         authDomain: getEnv('FIREBASE_AUTH_DOMAIN'),
         projectId: getEnv('FIREBASE_PROJECT_ID'),
         storageBucket: getEnv('FIREBASE_STORAGE_BUCKET'),
