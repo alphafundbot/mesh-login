@@ -6,16 +6,16 @@ import { db } from '@/lib/firebase';
 import { collection, query, onSnapshot, Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
-import { ThumbsUp, ThumbsDown, CheckCircle, XCircle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Feedback {
     id: string;
     recommendationId: string;
     rating: 'up' | 'down';
     role: string;
-    domain: string; // Assuming domain is part of feedback
-    recommendationText: string; // Assuming we can get this
+    domain: string; 
+    recommendationText: string; 
     timestamp: Date;
 }
 
@@ -35,6 +35,8 @@ export default function FeedbackDashboard() {
                 setLoading(false);
                 return;
             }
+            // In a real app, you would fetch recommendation text and domain info
+            // based on the recommendationId. Here we simulate it.
             const fetchedFeedback = snapshot.docs.map(doc => {
                 const data = doc.data();
                 return {
@@ -42,8 +44,8 @@ export default function FeedbackDashboard() {
                     recommendationId: data.recommendationId,
                     rating: data.rating,
                     role: data.role,
-                    domain: data.domain || 'Unknown', // Mocked for now
-                    recommendationText: data.recommendationText || `Rec ID: ${data.recommendationId}`, // Mocked for now
+                    domain: 'Unknown', // This would require a lookup
+                    recommendationText: `Rec ID: ${data.recommendationId}`, // This would require a lookup
                     timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
                 } as Feedback;
             });
@@ -58,43 +60,37 @@ export default function FeedbackDashboard() {
     }, []);
 
     const processedData = () => {
-        if (feedback.length === 0) return { byRole: [], byDomain: [], topLiked: [], topDisliked: [] };
+        if (feedback.length === 0) return { byRole: [], topLiked: [], topDisliked: [] };
 
         const byRole: { [key: string]: { up: number, down: number } } = {};
-        const byDomain: { [key: string]: { up: number, down: number } } = {};
-        const byRecommendation: { [key: string]: { text: string, up: number, down: number, total: number } } = {};
+        const byRecommendation: { [key: string]: { text: string, up: number, down: number } } = {};
 
         feedback.forEach(f => {
             if (!byRole[f.role]) byRole[f.role] = { up: 0, down: 0 };
-            if (!byDomain[f.domain]) byDomain[f.domain] = { up: 0, down: 0 };
             if (!byRecommendation[f.recommendationId]) {
-                 byRecommendation[f.recommendationId] = { text: f.recommendationText, up: 0, down: 0, total: 0 };
+                 byRecommendation[f.recommendationId] = { text: f.recommendationText, up: 0, down: 0 };
             }
 
             if (f.rating === 'up') {
                 byRole[f.role].up++;
-                byDomain[f.domain].up++;
                 byRecommendation[f.recommendationId].up++;
             } else {
                 byRole[f.role].down++;
-                byDomain[f.domain].down++;
                 byRecommendation[f.recommendationId].down++;
             }
-            byRecommendation[f.recommendationId].total++;
         });
 
         const roleChartData = Object.entries(byRole).map(([name, { up, down }]) => ({ name, upvotes: up, downvotes: down }));
-        const domainChartData = Object.entries(byDomain).map(([name, { up, down }]) => ({ name, upvotes: up, downvotes: down }));
         
         const recommendationList = Object.values(byRecommendation);
         const topLiked = [...recommendationList].sort((a,b) => b.up - a.up).slice(0, 5);
         const topDisliked = [...recommendationList].sort((a,b) => b.down - a.down).slice(0, 5);
 
 
-        return { byRole: roleChartData, byDomain: domainChartData, topLiked, topDisliked };
+        return { byRole: roleChartData, topLiked, topDisliked };
     };
 
-    const { byRole, byDomain, topLiked, topDisliked } = processedData();
+    const { byRole, topLiked, topDisliked } = processedData();
 
     if (loading) {
         return (
@@ -175,3 +171,4 @@ export default function FeedbackDashboard() {
         </div>
     );
 }
+
