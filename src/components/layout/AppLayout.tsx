@@ -7,17 +7,23 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import Nav from "./Nav";
-import { Button } from "../ui/button";
+import { Button, buttonVariants } from "../ui/button";
+import { cn } from "@/lib/utils";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <Sidebar collapsible="icon">
         <SidebarHeader>
-          <Button variant="ghost" className="h-10 w-full justify-start px-2 text-lg font-bold tracking-tighter">
+          <div
+            className={cn(
+              buttonVariants({ variant: "ghost" }),
+              "h-10 w-full justify-start px-2 text-lg font-bold tracking-tighter"
+            )}
+          >
             <SidebarTrigger className="mr-2" />
             <span className="group-data-[collapsible=icon]:hidden">Stratagem.ai</span>
-          </Button>
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <Nav />
