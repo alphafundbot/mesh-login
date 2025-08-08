@@ -11,30 +11,31 @@ import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
 import { useClusterMomentum } from "@/hooks/use-cluster-momentum";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
+import type { ActionLog } from "@/app/history/HistoryClient"; // Assuming type export from HistoryClient
+import { useRouter } from "next/navigation";
 
-// Duplicating necessary types and functions from HistoryClient to make component standalone
+
 type Severity = "Warning" | "Critical" | "Catastrophic";
-interface ActionLog {
-  id: string;
-  details: string;
-  timestamp: Date;
-  action: string;
-  role: string;
-  strategist: string;
-}
+
 interface TaggedRationale {
     rationale: string;
     tags: string[];
     severity: Severity;
     domains: string[];
 }
-type ClusterMap = Map<string, {
+
+type ClusterInfo = {
     tag: string;
     items: TaggedRationale[];
-    riskScore: number;
     severities: Record<Severity, number>;
     domains: Record<string, any>;
-}>;
+    riskScore: number;
+};
+
+
+type ClusterMap = Map<string, ClusterInfo>;
+
+
 const parseDetails = (details: string): { isOverride: boolean; rationale: string; severity?: Severity; domains?: string[] } => {
     const isOverride = details.includes("Override: true");
     const rationaleMatch = details.match(/Rationale: "([^"]*)"/);
@@ -49,15 +50,25 @@ const parseDetails = (details: string): { isOverride: boolean; rationale: string
     const domains = domainsMatch ? domainsMatch[1].split(', ') : [];
     return { isOverride, rationale, severity, domains };
 };
+
 const RISK_WEIGHTS: Record<Severity, number> = { "Warning": 1, "Critical": 3, "Catastrophic": 5 };
+
 const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
     const clusters: ClusterMap = new Map();
     rationales.forEach(item => {
         item.tags.forEach(tag => {
-            if (!clusters.has(tag)) clusters.set(tag, { tag, items: [], severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 }, domains: {}, riskScore: 0 });
+            if (!clusters.has(tag)) {
+                clusters.set(tag, { 
+                    tag: tag,
+                    items: [], 
+                    severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 }, 
+                    domains: {}, 
+                    riskScore: 0 
+                });
+            }
             const cluster = clusters.get(tag)!;
             cluster.items.push(item);
-            cluster.severities[item.severity]++;
+            if(item.severity) cluster.severities[item.severity]++;
         });
     });
     clusters.forEach(cluster => {
@@ -66,15 +77,28 @@ const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
     return clusters;
 };
 
-function ClusterMomentumItem({ cluster, previousLogs }: { cluster: any, previousLogs: ActionLog[] }) {
+function ClusterMomentumItem({ cluster, previousLogs }: { cluster: ClusterInfo, previousLogs: ActionLog[] }) {
     const { riskDelta } = useClusterMomentum(cluster, previousLogs);
+    const router = useRouter();
+
+    if (riskDelta === 0) return null;
+
     const Arrow = riskDelta > 0 ? ArrowUp : ArrowDown;
     let color = "text-muted-foreground";
     if (riskDelta > 0) color = "text-green-400";
     if (riskDelta < 0) color = "text-red-400";
+    
+    const handleInvestigate = () => {
+        const params = new URLSearchParams({
+            time: "7d",
+            autostart: "true",
+            cluster: cluster.tag,
+        });
+        router.push(`/history?${params.toString()}`);
+    }
 
     return (
-        <div className="flex items-center justify-between p-2 rounded-md bg-muted/40">
+        <div className="flex items-center justify-between p-2 rounded-md bg-muted/40 hover:bg-muted/80 cursor-pointer" onClick={handleInvestigate}>
             <span className="capitalize font-semibold text-sm">{cluster.tag}</span>
             <Badge variant="outline" className={cn("gap-1 font-mono text-xs", color)}>
                 <Arrow className="h-3 w-3" />
@@ -92,22 +116,32 @@ export default function OverrideMomentum() {
     useEffect(() => {
         const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const fetchedLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionLog));
+            const fetchedLogs = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    details: data.details,
+                    timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
+                    action: data.action,
+                    role: data.role,
+                    strategist: data.strategist,
+                }
+            });
             setAllLogs(fetchedLogs);
             setLoading(false);
-        });
+        }, () => setLoading(false));
         return () => unsubscribe();
     }, []);
 
     const { currentLogs, previousLogs } = useMemo(() => {
         const now = Date.now();
         const sevenDays = 7 * 24 * 60 * 60 * 1000;
-        const current = allLogs.filter(log => now - new Timestamp(log.timestamp.seconds, log.timestamp.nanoseconds).toMillis() < sevenDays);
+        const current = allLogs.filter(log => now - log.timestamp.getTime() < sevenDays);
         const previous = allLogs.filter(log => {
-            const logTime = new Timestamp(log.timestamp.seconds, log.timestamp.nanoseconds).toMillis();
+            const logTime = log.timestamp.getTime();
             return (now - logTime >= sevenDays) && (now - logTime < 2 * sevenDays);
         });
-        return { currentLogs: current, previousLogs: previous };
+        return { currentLogs: current, previousPeriodLogs: previous };
     }, [allLogs]);
 
     useEffect(() => {
@@ -122,6 +156,7 @@ export default function OverrideMomentum() {
             
             try {
                 const tagged = await Promise.all(rationales.map(async r => {
+                    if(!r.rationale) return {...r, tags: []};
                     const { tags } = await tagRationale({ rationale: r.rationale });
                     return { ...r, tags };
                 }));
@@ -133,16 +168,26 @@ export default function OverrideMomentum() {
         processRationales();
     }, [currentLogs]);
     
-    const sortedClusters = useMemo(() => Array.from(globalClusters.values()).sort((a,b) => b.riskScore - a.riskScore), [globalClusters]);
+    const sortedClusters = useMemo(() => Array.from(globalClusters.values())
+        .map(cluster => ({
+            ...cluster,
+            momentum: useClusterMomentum(cluster, previousLogs)
+        }))
+        .filter(c => c.momentum.riskDelta !== 0)
+        .sort((a,b) => Math.abs(b.momentum.riskDelta) - Math.abs(a.momentum.riskDelta)), 
+        [globalClusters, previousLogs]);
 
     if(loading) return <Skeleton className="h-48 w-full" />
-    if(sortedClusters.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">No override clusters detected.</p>
+    if(sortedClusters.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">No significant override momentum detected.</p>
 
     return (
          <Card>
             <CardHeader>
-                <CardTitle className="text-base">Top Override Momentum</CardTitle>
-                <CardDescription className="text-xs">Clusters with the highest change in risk.</CardDescription>
+                <CardTitle className="text-base flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-accent" />
+                    Top Override Momentum
+                </CardTitle>
+                <CardDescription className="text-xs">Clusters with the highest change in risk over the last 7 days. Click to investigate.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
                 {sortedClusters.slice(0, 5).map(cluster => (
