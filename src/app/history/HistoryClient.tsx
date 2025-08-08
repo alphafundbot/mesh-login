@@ -216,19 +216,13 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
             return d.isOverride && d.severity === rationaleDialog.severity && d.domains?.includes(rationaleDialog.domain)
         });
 
-        const rationales = relevantLogs.map(log => {
+        const rationales: TaggedRationale[] = relevantLogs.map(log => {
             const d = parseDetails(log.details);
             return { rationale: d.rationale, tags: [], severity: d.severity!, domains: d.domains! };
         });
 
         if (rationales.length === 0) return new Map();
         
-        // This is a simplified version for comparison. It doesn't run AI tagging on previous logs.
-        // It's meant to provide a baseline risk score for tags found in the *current* period.
-        const prevClusters = calculateClusters(rationales);
-
-        // We need to tag the previous rationales using the tags from the *current* period
-        // to have a meaningful comparison of risk scores for the *same tags*.
         const alignedPrevClusters: ClusterMap = new Map();
         const currentTags = Array.from(rationaleClusters.keys());
 
@@ -240,9 +234,15 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
                 riskScore: 0
             };
 
-            // Heuristic: if a previous rationale contains the tag text, associate it.
-            // This is a rough approximation without running AI on the previous set.
-            const taggedPrevRationales = rationales.filter(r => r.rationale.toLowerCase().includes(tag.toLowerCase()));
+            const taggedPrevRationales = rationales.filter(r => {
+                const isMatch = r.rationale.toLowerCase().includes(tag.toLowerCase());
+                if (isMatch) {
+                    // This is imperfect, but we need to assign tags to old rationales.
+                    // A single old rationale could match multiple current tags.
+                    r.tags = [...new Set([...r.tags, tag])];
+                }
+                return isMatch;
+            });
             
             if (taggedPrevRationales.length > 0) {
                  taggedPrevRationales.forEach(item => {
@@ -266,7 +266,7 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
 
     const handleCellClick = async (domain: string, severity: Severity) => {
         setLoadingRationales(true);
-        setRationaleDialog({ domain, severity, rationales: [] }); // Open dialog with loading state
+        setRationaleDialog({ domain, severity, rationales: [] });
         try {
             const relevantLogs = logs.filter(log => {
                 const d = parseDetails(log.details);
@@ -285,7 +285,6 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
             }));
             
             setTaggedRationales(processedRationales);
-            // The dialog content will be updated by the useMemo when taggedRationales changes
             setRationaleDialog({ domain, severity, rationales: processedRationales });
 
 
@@ -582,7 +581,7 @@ export default function HistoryClient() {
       
       const result = await analyzeSignalHistory({ actionLogs: logsString });
       setAnalysisResult(result);
-    } catch (error) => {
+    } catch (error) {
       console.error("AI analysis failed:", error);
       toast({
         variant: "destructive",
@@ -836,3 +835,5 @@ export default function HistoryClient() {
     </div>
   );
 }
+
+    
