@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -7,6 +8,7 @@ import {
   LayoutDashboard,
   ShieldCheck,
   History,
+  Palette,
 } from "lucide-react";
 import {
   SidebarMenu,

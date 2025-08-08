@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput, type Recommendation } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown, Sparkles, HelpCircle, TrendingUp } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown, Sparkles, HelpCircle, TrendingUp, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,7 +30,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/hooks/use-user";
 import {
   Tooltip,
@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import FeedbackDashboard from "@/components/dashboard/FeedbackDashboard";
 
 
 interface ActionLog {
@@ -458,6 +459,7 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
 }
 
 type TimeFilter = "24h" | "7d" | "all";
+type ViewMode = "logs" | "feedback";
 
 const RecommendationConfidence = ({ rec }: { rec: Recommendation }) => {
     let Icon = HelpCircle;
@@ -503,6 +505,7 @@ export default function HistoryClient() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("7d");
+  const [viewMode, setViewMode] = useState<ViewMode>("logs");
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
   const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
     if (typeof window === "undefined") return 0;
@@ -599,7 +602,7 @@ export default function HistoryClient() {
       
       const result = await analyzeSignalHistory({ actionLogs: logsString });
       setAnalysisResult(result);
-    } catch (error) {
+    } catch (error) => {
       console.error("AI analysis failed:", error);
       toast({
         variant: "destructive",
@@ -653,6 +656,16 @@ export default function HistoryClient() {
     </Tabs>
   );
 
+  const renderViewModeTabs = () => (
+      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)} className="ml-auto">
+        <TabsList>
+            <TabsTrigger value="logs">Action Logs</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback Dashboard</TabsTrigger>
+        </TabsList>
+      </Tabs>
+  );
+
+
   const sortedRecommendations = useMemo(() => {
     if (!analysisResult) return [];
     
@@ -665,191 +678,200 @@ export default function HistoryClient() {
     <div className="space-y-6">
         <div className="flex justify-start">
           {renderTimeFilterTabs()}
+          {renderViewModeTabs()}
         </div>
 
-        <OverrideHeatmap logs={filteredLogs} previousLogs={previousPeriodLogs} />
+        {viewMode === 'logs' && (
+            <>
+                <OverrideHeatmap logs={filteredLogs} previousLogs={previousPeriodLogs} />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Action History</CardTitle>
-            <CardDescription>A persistent log of all strategist actions in the selected time window.</CardDescription>
-          </div>
-          <Button onClick={handleAnalysis} disabled={loading || loadingAnalysis}>
-            {loadingAnalysis ? "Analyzing..." : "Analyze with AI"}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Action</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Strategist</TableHead>
-                <TableHead>Timestamp</TableHead>
-                <TableHead className="w-[50%]">Details & Rationale</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                  </TableRow>
-                ))
-              ) : filteredLogs.length > 0 ? (
-                filteredLogs.map((log) => {
-                  const { isOverride, rationale, action, severity, domains } = parseDetails(log.details);
-                  return (
-                    <TableRow key={log.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2 flex-wrap">
-                         <Badge variant="secondary">{log.action}</Badge>
-                         {isOverride && (
-                           <Badge variant="destructive" className="flex items-center gap-1">
-                             <AlertTriangle className="h-3 w-3" /> Override
-                           </Badge>
-                         )}
-                         {severity && <Badge variant={severity === 'Critical' || severity === 'Catastrophic' ? 'destructive' : 'secondary'}>{severity}</Badge>}
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Action History</CardTitle>
+                        <CardDescription>A persistent log of all strategist actions in the selected time window.</CardDescription>
+                    </div>
+                    <Button onClick={handleAnalysis} disabled={loading || loadingAnalysis}>
+                        {loadingAnalysis ? "Analyzing..." : "Analyze with AI"}
+                    </Button>
+                    </CardHeader>
+                    <CardContent>
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>Action</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Strategist</TableHead>
+                            <TableHead>Timestamp</TableHead>
+                            <TableHead className="w-[50%]">Details & Rationale</TableHead>
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {loading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                                <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                                <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                            </TableRow>
+                            ))
+                        ) : filteredLogs.length > 0 ? (
+                            filteredLogs.map((log) => {
+                            const { isOverride, rationale, action, severity, domains } = parseDetails(log.details);
+                            return (
+                                <TableRow key={log.id}>
+                                <TableCell>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                    <Badge variant="secondary">{log.action}</Badge>
+                                    {isOverride && (
+                                    <Badge variant="destructive" className="flex items-center gap-1">
+                                        <AlertTriangle className="h-3 w-3" /> Override
+                                    </Badge>
+                                    )}
+                                    {severity && <Badge variant={severity === 'Critical' || severity === 'Catastrophic' ? 'destructive' : 'secondary'}>{severity}</Badge>}
+                                    </div>
+                                </TableCell>
+                                <TableCell>{log.role}</TableCell>
+                                <TableCell>{log.strategist}</TableCell>
+                                <TableCell>{log.timestamp.toLocaleString()}</TableCell>
+                                <TableCell className="font-mono text-xs">
+                                    {log.action === "STRATEGIST_RESPONSE" ? (
+                                        <div className="flex items-start gap-2">
+                                            <MessageSquareQuote className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                            <span>
+                                                Responded with <strong>{action}</strong> on <strong>{domains?.join(', ')}</strong>: <em>"{rationale}"</em>
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        log.details
+                                    )}
+                                </TableCell>
+                                </TableRow>
+                            )
+                            })
+                        ) : (
+                            <TableRow>
+                            <TableCell colSpan={5} className="text-center">
+                                No actions logged in this time period.
+                            </TableCell>
+                            </TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
+                    </CardContent>
+                </Card>
+
+                {loadingAnalysis && (
+                    <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-accent">
+                        <Bot className="h-6 w-6" /> Signal Intelligence Layer
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div>
+                        <h3 className="font-semibold mb-2 flex items-center gap-2"><Bot className="h-5 w-5" />Summary</h3>
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6 mt-2" />
                         </div>
-                      </TableCell>
-                      <TableCell>{log.role}</TableCell>
-                      <TableCell>{log.strategist}</TableCell>
-                      <TableCell>{log.timestamp.toLocaleString()}</TableCell>
-                      <TableCell className="font-mono text-xs">
-                          {log.action === "STRATEGIST_RESPONSE" ? (
-                            <div className="flex items-start gap-2">
-                                <MessageSquareQuote className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                                <span>
-                                    Responded with <strong>{action}</strong> on <strong>{domains?.join(', ')}</strong>: <em>"{rationale}"</em>
-                                </span>
+                        <div>
+                        <h3 className="font-semibold mb-2 flex items-center gap-2"><BrainCircuit className="h-5 w-5" />Patterns Detected</h3>
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4 mt-2" />
+                        </div>
+                        <div>
+                        <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-4/5 mt-2" />
+                        </div>
+                    </CardContent>
+                    </Card>
+                )}
+
+                {analysisResult && (
+                    <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-accent">
+                        <Bot className="h-6 w-6" /> Signal Intelligence Layer
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div>
+                        <h3 className="font-semibold mb-2 flex items-center gap-2"><Bot className="h-5 w-5" />Summary</h3>
+                        <p className="text-muted-foreground whitespace-pre-wrap">{analysisResult.summary}</p>
+                        </div>
+                        <div className="border-t pt-4">
+                        <h3 className="font-semibold mb-2 flex items-center gap-2"><BrainCircuit className="h-5 w-5" />Patterns Detected</h3>
+                            <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                                {analysisResult.patterns.map((pattern, index) => (
+                                    <li key={index}>{pattern}</li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div className="border-t pt-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
+                            <div className="flex items-center space-x-4 w-1/2 max-w-sm">
+                                <Label htmlFor="confidence-slider" className="text-sm whitespace-nowrap">Min Confidence</Label>
+                                <div className="flex-grow flex items-center gap-2">
+                                    <Slider
+                                        id="confidence-slider"
+                                        min={0}
+                                        max={1}
+                                        step={0.01}
+                                        value={[confidenceThreshold]}
+                                        onValueChange={(value) => setConfidenceThreshold(value[0])}
+                                        className="flex-grow"
+                                    />
+                                    <span className="text-sm font-mono w-10 text-center">{confidenceThreshold.toFixed(2)}</span>
+                                </div>
                             </div>
-                          ) : (
-                            log.details
-                          )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    No actions logged in this time period.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {loadingAnalysis && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-accent">
-              <Bot className="h-6 w-6" /> Signal Intelligence Layer
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2"><Bot className="h-5 w-5" />Summary</h3>
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6 mt-2" />
-            </div>
-             <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2"><BrainCircuit className="h-5 w-5" />Patterns Detected</h3>
-               <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4 mt-2" />
-            </div>
-             <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
-               <Skeleton className="h-4 w-full" />
-               <Skeleton className="h-4 w-4/5 mt-2" />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {analysisResult && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-accent">
-              <Bot className="h-6 w-6" /> Signal Intelligence Layer
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2"><Bot className="h-5 w-5" />Summary</h3>
-              <p className="text-muted-foreground whitespace-pre-wrap">{analysisResult.summary}</p>
-            </div>
-             <div className="border-t pt-4">
-              <h3 className="font-semibold mb-2 flex items-center gap-2"><BrainCircuit className="h-5 w-5" />Patterns Detected</h3>
-                <ul className="list-disc pl-5 text-muted-foreground space-y-1">
-                    {analysisResult.patterns.map((pattern, index) => (
-                        <li key={index}>{pattern}</li>
-                    ))}
-                </ul>
-            </div>
-             <div className="border-t pt-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
-                <div className="flex items-center space-x-4 w-1/2 max-w-sm">
-                    <Label htmlFor="confidence-slider" className="text-sm whitespace-nowrap">Min Confidence</Label>
-                    <div className="flex-grow flex items-center gap-2">
-                        <Slider
-                            id="confidence-slider"
-                            min={0}
-                            max={1}
-                            step={0.01}
-                            value={[confidenceThreshold]}
-                            onValueChange={(value) => setConfidenceThreshold(value[0])}
-                            className="flex-grow"
-                        />
-                         <span className="text-sm font-mono w-10 text-center">{confidenceThreshold.toFixed(2)}</span>
-                    </div>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {sortedRecommendations.map((rec) => (
-                    <div key={rec.recommendationId} className="flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30">
-                        <div className="flex-1 pr-4 space-y-2">
-                           <p className="text-muted-foreground">{rec.text}</p>
-                           <RecommendationConfidence rec={rec} />
                         </div>
-                        <div className="flex gap-1">
-                            <Button 
-                                size="icon" 
-                                variant={feedbackGiven[rec.recommendationId] === 'up' ? "default" : "outline"}
-                                className="h-8 w-8"
-                                onClick={() => handleFeedback(rec.recommendationId, 'up')}
-                                disabled={!!feedbackGiven[rec.recommendationId]}
-                            >
-                                <ThumbsUp className="h-4 w-4" />
-                            </Button>
-                             <Button 
-                                size="icon" 
-                                variant={feedbackGiven[rec.recommendationId] === 'down' ? "destructive" : "outline"}
-                                className="h-8 w-8"
-                                onClick={() => handleFeedback(rec.recommendationId, 'down')}
-                                disabled={!!feedbackGiven[rec.recommendationId]}
-                            >
-                                <ThumbsDown className="h-4 w-4" />
-                            </Button>
+                        <div className="space-y-4">
+                            {sortedRecommendations.map((rec) => (
+                                <div key={rec.recommendationId} className="flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30">
+                                    <div className="flex-1 pr-4 space-y-2">
+                                    <p className="text-muted-foreground">{rec.text}</p>
+                                    <RecommendationConfidence rec={rec} />
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <Button 
+                                            size="icon" 
+                                            variant={feedbackGiven[rec.recommendationId] === 'up' ? "default" : "outline"}
+                                            className="h-8 w-8"
+                                            onClick={() => handleFeedback(rec.recommendationId, 'up')}
+                                            disabled={!!feedbackGiven[rec.recommendationId]}
+                                        >
+                                            <ThumbsUp className="h-4 w-4" />
+                                        </Button>
+                                        <Button 
+                                            size="icon" 
+                                            variant={feedbackGiven[rec.recommendationId] === 'down' ? "destructive" : "outline"}
+                                            className="h-8 w-8"
+                                            onClick={() => handleFeedback(rec.recommendationId, 'down')}
+                                            disabled={!!feedbackGiven[rec.recommendationId]}
+                                        >
+                                            <ThumbsDown className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                            {sortedRecommendations.length === 0 && (
+                                <p className="text-muted-foreground text-center py-4">No recommendations to display based on the current filter.</p>
+                            )}
                         </div>
-                    </div>
-                ))}
-                 {sortedRecommendations.length === 0 && (
-                    <p className="text-muted-foreground text-center py-4">No recommendations to display based on the current filter.</p>
-                 )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                        </div>
+                    </CardContent>
+                    </Card>
+                )}
+            </>
+        )}
+        
+        {viewMode === 'feedback' && (
+            <FeedbackDashboard />
+        )}
     </div>
   );
 }
