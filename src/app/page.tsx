@@ -14,9 +14,8 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import RoleSelector from "@/components/dashboard/RoleSelector";
 import { cn } from "@/lib/utils";
 import IntelligenceMap from "@/components/dashboard/IntelligenceMap";
-import HudEscalationMatrix from "@/components/dashboard/HudEscalationMatrix";
-import HudForecastPanel from "@/components/dashboard/HudForecastPanel";
 import { slugify } from "@/lib/utils";
+import VisualIntegrityDashboard from "@/components/dashboard/VisualIntegrityDashboard";
 
 const getStatusColor = (status: string) => {
   if (status.includes("Optimal")) return "bg-green-500";
@@ -40,9 +39,8 @@ export default function DashboardPage() {
             <div className="lg:col-span-3">
                 <IntelligenceMap />
             </div>
-            <div className="lg:col-span-2 grid grid-rows-2 gap-6">
-                <HudEscalationMatrix />
-                <HudForecastPanel />
+            <div className="lg:col-span-2">
+                <VisualIntegrityDashboard />
             </div>
         </div>
 
