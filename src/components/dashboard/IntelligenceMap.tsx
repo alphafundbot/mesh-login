@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Radar,
   RadarChart,
@@ -20,11 +20,21 @@ import {
   analyzeCrossDomainIntelligence, 
   type CrossDomainIntelligenceOutput 
 } from "@/ai/flows/cross-domain-intelligence-flow"
-import { Bot, AlertTriangle } from "lucide-react"
+import { Bot, AlertTriangle, AlertCircle, ShieldAlert, ShieldX } from "lucide-react"
 import { db } from "@/lib/firebase"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { useUser } from "@/hooks/use-user"
-import { canUserPerform, type Action } from "@/lib/roles"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 // Generates sample logs for a given domain to simulate fetching real data
 const generateDomainLogs = (domainName: string) => {
@@ -48,6 +58,11 @@ const generateDomainLogs = (domainName: string) => {
 
 const ANOMALY_THRESHOLD = 70;
 type Severity = "Warning" | "Critical" | "Catastrophic";
+
+interface EscalationDetails {
+  severity: Severity;
+  anomalousDomains: { domain: string; stability: number; security: number; }[];
+}
 
 const CustomTick = (props: any) => {
   const { x, y, payload } = props;
@@ -73,37 +88,31 @@ const CustomTick = (props: any) => {
   );
 };
 
+const SEVERITY_CONFIG = {
+  Warning: { icon: AlertCircle, color: "text-yellow-500", badge: "secondary" },
+  Critical: { icon: ShieldAlert, color: "text-orange-500", badge: "destructive" },
+  Catastrophic: { icon: ShieldX, color: "text-red-500", badge: "destructive" },
+};
+
 export default function IntelligenceMap() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [escalation, setEscalation] = useState<EscalationDetails | null>(null);
+
   const { toast } = useToast();
   const { user } = useUser();
 
-  const handleAction = async (action: Action, details: string, severity?: Severity) => {
+  const handleLogAction = async (action: string, details: string) => {
     try {
       await addDoc(collection(db, "hud_actions"), {
         action,
         role: user.role,
-        strategist: "System",
+        strategist: user.name,
         timestamp: serverTimestamp(),
         details,
       });
-
-      if (action === "Escalate") {
-        toast({
-            variant: "destructive",
-            title: `Risk Escalation Protocol Triggered (${severity})`,
-            description: details,
-        });
-      }
-
     } catch (error) {
       console.error("Failed to log action:", error);
-      toast({
-        variant: "destructive",
-        title: "Logging Failed",
-        description: `Could not log action: ${action}`,
-      });
     }
   };
 
@@ -112,7 +121,6 @@ export default function IntelligenceMap() {
       setLoading(true);
       try {
         const domainLogs: Record<string, string> = {};
-        // We will analyze a subset of domains for clarity on the chart
         const domainsToAnalyze = domainData.filter(d => ["System Core", "Finance & Trading", "Security & Privacy", "Cloud & DevOps", "Telecom & IoT", "Medical & Bio"]);
         
         for (const domain of domainsToAnalyze) {
@@ -138,8 +146,12 @@ export default function IntelligenceMap() {
         }
 
         if (severity) {
-            const details = `Anomalies in ${anomalousDomains.map(d => d.domain).join(', ')}`;
-            handleAction("Escalate", details, severity);
+            const details: EscalationDetails = { 
+              severity, 
+              anomalousDomains: anomalousDomains.map(d => ({ domain: d.domain, stability: d.stability, security: d.security })) 
+            };
+            setEscalation(details);
+            handleLogAction("AUTO_ESCALATE", `Severity: ${severity}, Domains: ${anomalousDomains.map(d => d.domain).join(', ')}`);
         }
 
         setChartData(dataWithAnomalies);
@@ -156,60 +168,118 @@ export default function IntelligenceMap() {
     };
     getAnalysis();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast]);
+  }, []);
+
+  const handleAlertDialogAction = () => {
+    if (!escalation) return;
+    const details = `Strategist acknowledged and took action on ${escalation.severity} escalation involving ${escalation.anomalousDomains.map(d => d.domain).join(', ')}.`;
+    handleLogAction("TAKE_ACTION", details);
+    toast({
+      title: "Action Confirmed",
+      description: `Your response to the ${escalation.severity} event has been logged.`,
+    });
+    setEscalation(null);
+  }
+
+  const handleAlertDialogCancel = () => {
+    if (!escalation) return;
+    const details = `Strategist acknowledged and dismissed ${escalation.severity} escalation.`;
+    handleLogAction("DISMISS_ESCALATION", details);
+    setEscalation(null);
+  }
+  
+  const SeverityIcon = escalation ? SEVERITY_CONFIG[escalation.severity].icon : React.Fragment;
+  const severityConfig = escalation ? SEVERITY_CONFIG[escalation.severity] : null;
+
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-            <Bot className="h-6 w-6 text-accent" />
-            Cross-Domain Intelligence Map
-        </CardTitle>
-        <CardDescription>
-          AI-synthesized view of system mesh health across key domains. Anomalies are highlighted and escalated automatically.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[400px] w-full">
-            {loading ? (
-              <div className="flex justify-center items-center h-full">
-                <div className="w-full space-y-4">
-                  <Skeleton className="h-8 w-1/4 mx-auto" />
-                  <Skeleton className="h-[300px] w-full rounded-full" />
-                  <Skeleton className="h-8 w-3/4 mx-auto" />
+    <>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+              <Bot className="h-6 w-6 text-accent" />
+              Cross-Domain Intelligence Map
+          </CardTitle>
+          <CardDescription>
+            AI-synthesized view of system mesh health across key domains. Anomalies are highlighted and escalated automatically.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px] w-full">
+              {loading ? (
+                <div className="flex justify-center items-center h-full">
+                  <div className="w-full space-y-4">
+                    <Skeleton className="h-8 w-1/4 mx-auto" />
+                    <Skeleton className="h-[300px] w-full rounded-full" />
+                    <Skeleton className="h-8 w-3/4 mx-auto" />
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
-                      <defs>
-                          <linearGradient id="colorStability" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                          </linearGradient>
-                           <linearGradient id="colorSecurity" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.8}/>
-                              <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
-                          </linearGradient>
-                      </defs>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="domain" tick={<CustomTick />} />
-                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                      <Tooltip
-                          contentStyle={{
-                              backgroundColor: 'hsl(var(--card))',
-                              borderColor: 'hsl(var(--border))',
-                          }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: "14px" }}/>
-                      <Radar name="Stability" dataKey="stability" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.6} />
-                      <Radar name="Security" dataKey="security" stroke="hsl(var(--accent))" fill="hsl(var(--accent))" fillOpacity={0.6} />
-                      <Radar name="Activity" dataKey="activity" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.6} />
-                  </RadarChart>
-              </ResponsiveContainer>
-            )}
-        </div>
-      </CardContent>
-    </Card>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+                        <defs>
+                            <linearGradient id="colorStability" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorSecurity" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="domain" tick={<CustomTick />} />
+                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: 'hsl(var(--card))',
+                                borderColor: 'hsl(var(--border))',
+                            }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: "14px" }}/>
+                        <Radar name="Stability" dataKey="stability" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.6} />
+                        <Radar name="Security" dataKey="security" stroke="hsl(var(--accent))" fill="hsl(var(--accent))" fillOpacity={0.6} />
+                        <Radar name="Activity" dataKey="activity" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.6} />
+                    </RadarChart>
+                </ResponsiveContainer>
+              )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {escalation && severityConfig && (
+        <AlertDialog open={!!escalation} onOpenChange={(open) => !open && setEscalation(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className={`flex items-center gap-2 ${severityConfig.color}`}>
+                <SeverityIcon className="h-6 w-6" />
+                {escalation.severity} Escalation Protocol Triggered
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                The system has detected anomalies in {escalation.anomalousDomains.length} domains, requiring strategist attention.
+                <div className="mt-4 space-y-2">
+                  <h4 className="font-semibold">Anomalous Domains:</h4>
+                  {escalation.anomalousDomains.map(d => (
+                    <div key={d.domain} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                      <span>{d.domain}</span>
+                      <div className="flex gap-2">
+                        <Badge variant={d.stability < ANOMALY_THRESHOLD ? "destructive" : "secondary"} className="w-24 justify-center">Stability: {d.stability}</Badge>
+                        <Badge variant={d.security < ANOMALY_THRESHOLD ? "destructive" : "secondary"} className="w-24 justify-center">Security: {d.security}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleAlertDialogCancel}>Acknowledge & Dismiss</AlertDialogCancel>
+              <AlertDialogAction onClick={handleAlertDialogAction}>
+                Take Action & Log
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </>
   )
 }
