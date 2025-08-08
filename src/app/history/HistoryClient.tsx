@@ -17,9 +17,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
+import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput, type Recommendation } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown, Sparkles, HelpCircle, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,6 +31,12 @@ import {
 } from "@/components/ui/accordion";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/hooks/use-user";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 
 interface ActionLog {
@@ -390,6 +396,33 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
 
 type TimeFilter = "24h" | "7d" | "all";
 
+const RecommendationConfidence = ({ rec }: { rec: Recommendation }) => {
+    const confidenceMap = {
+        high: { icon: Sparkles, color: "text-accent" },
+        medium: { icon: TrendingUp, color: "text-primary" },
+        low: { icon: HelpCircle, color: "text-muted-foreground" },
+    };
+    const { icon: Icon, color } = confidenceMap[rec.confidence];
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className={cn("flex items-center gap-1", color)}>
+                        <Icon className="h-4 w-4" />
+                        <span className="text-xs font-semibold capitalize">{rec.confidence}</span>
+                    </div>
+                </TooltipTrigger>
+                {rec.basedOn && rec.basedOn.length > 0 && (
+                     <TooltipContent>
+                        <p>Based on feedback for: {rec.basedOn.join(', ')}</p>
+                    </TooltipContent>
+                )}
+            </Tooltip>
+        </TooltipProvider>
+    )
+}
+
 
 export default function HistoryClient() {
   const [allLogs, setAllLogs] = useState<ActionLog[]>([]);
@@ -661,8 +694,11 @@ export default function HistoryClient() {
               <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
               <div className="space-y-4">
                 {analysisResult.recommendations.map((rec) => (
-                    <div key={rec.recommendationId} className="flex items-start justify-between">
-                        <p className="text-muted-foreground flex-1 pr-4">{rec.text}</p>
+                    <div key={rec.recommendationId} className="flex items-start justify-between p-2 rounded-md hover:bg-muted/30">
+                        <div className="flex-1 pr-4 space-y-2">
+                           <p className="text-muted-foreground">{rec.text}</p>
+                           <RecommendationConfidence rec={rec} />
+                        </div>
                         <div className="flex gap-1">
                             <Button 
                                 size="icon" 

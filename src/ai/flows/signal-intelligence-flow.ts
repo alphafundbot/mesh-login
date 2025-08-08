@@ -24,7 +24,10 @@ export type AnalyzeSignalHistoryInput = z.infer<typeof AnalyzeSignalHistoryInput
 const RecommendationSchema = z.object({
     recommendationId: z.string().describe('A unique identifier for the recommendation.'),
     text: z.string().describe('The recommendation text.'),
+    confidence: z.enum(['high', 'medium', 'low']).describe('The AI\'s confidence in this recommendation.'),
+    basedOn: z.array(z.string()).describe('A list of recommendation IDs from past feedback that this new recommendation is based on.'),
 });
+export type Recommendation = z.infer<typeof RecommendationSchema>;
 
 const AnalyzeSignalHistoryOutputSchema = z.object({
   summary: z.string().describe('A high-level summary of the strategist actions.'),
@@ -69,10 +72,10 @@ const getFeedbackSummary = ai.defineTool(
         // This would typically involve looking up the original recommendation text,
         // but for this flow, we'll just return a summary of votes.
         // A more advanced implementation would correlate IDs with recommendation text.
-        const liked = Object.keys(counts).filter(id => counts[id].up > counts[id].down).length;
-        const disliked = Object.keys(counts).filter(id => counts[id].down > counts[id].up).length;
+        const likedIds = Object.keys(counts).filter(id => counts[id].up > counts[id].down);
+        const dislikedIds = Object.keys(counts).filter(id => counts[id].down > counts[id].up);
 
-        return `Strategists have previously liked ${liked} recommendations and disliked ${disliked} recommendations. Generate new recommendations that align with this general sentiment.`;
+        return `Strategists have previously liked recommendations with these IDs: [${likedIds.join(', ')}] and disliked recommendations with these IDs: [${dislikedIds.join(', ')}]. Generate new recommendations that align with this general sentiment.`;
     }
 );
 
@@ -83,7 +86,11 @@ const prompt = ai.definePrompt({
   output: {schema: z.object({
     summary: z.string().describe('A high-level summary of the strategist actions.'),
     patterns: z.array(z.string()).describe('Identified patterns, anomalies, or escalation clusters in the actions.'),
-    recommendations: z.array(z.string()).describe('Proactive interventions or configuration hardening suggestions based on the patterns.'),
+    recommendations: z.array(z.object({
+        text: z.string().describe('The recommendation text.'),
+        confidence: z.enum(['high', 'medium', 'low']).describe('The AI\'s confidence in this recommendation based on past feedback.'),
+        basedOn: z.array(z.string()).describe('A list of recommendation IDs from past feedback that this new recommendation is based on.'),
+    })).describe('Proactive interventions or configuration hardening suggestions based on the patterns.'),
   })},
   prompt: `You are a command-level AI analyst. Your mission is to analyze the provided logs of strategist actions to identify patterns and provide actionable intelligence.
 
@@ -95,7 +102,7 @@ Action Logs:
 Analyze these logs and provide:
 1.  A concise summary of the actions taken.
 2.  Any notable patterns, anomalies, or clusters of activity (e.g., frequent escalations by one role, repeated actions on a specific module).
-3.  Proactive recommendations for system hardening, policy changes, or further investigation based on the detected patterns and past feedback.
+3.  Proactive recommendations for system hardening, policy changes, or further investigation. For each recommendation, provide your confidence level ('high', 'medium', or 'low') and list the IDs of past recommendations that influenced your suggestion in the 'basedOn' field. High confidence should be reserved for recommendations strongly supported by past positive feedback.
 `,
 });
 
@@ -113,8 +120,8 @@ const signalIntelligenceFlow = ai.defineFlow(
     }
 
     const recommendationsWithIds = output.recommendations.map(rec => ({
+        ...rec,
         recommendationId: uuidv4(),
-        text: rec
     }));
 
     return {
