@@ -327,81 +327,78 @@ export default function IntelligenceMap() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-6 w-6 text-accent" />
-            Cross-Domain Intelligence Map
+            Cross-Domain Intelligence
           </CardTitle>
           <CardDescription>
-            AI-synthesized view of system mesh health across key domains.
-            Anomalies are highlighted and escalated automatically.
+            AI-synthesized mesh health across key domains. Anomalies are auto-escalated.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="h-[400px] w-full">
-            {loading ? (
-              <div className="flex justify-center items-center h-full">
-                <div className="w-full space-y-4">
-                  <Skeleton className="h-8 w-1/4 mx-auto" />
-                  <Skeleton className="h-[300px] w-full rounded-full" />
-                  <Skeleton className="h-8 w-3/4 mx-auto" />
-                </div>
+        <CardContent className="h-[350px] w-full">
+          {loading ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="w-full space-y-4">
+                <Skeleton className="h-8 w-1/4 mx-auto" />
+                <Skeleton className="h-[250px] w-full rounded-full" />
+                <Skeleton className="h-8 w-3/4 mx-auto" />
               </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart
-                  cx="50%"
-                  cy="50%"
-                  outerRadius="80%"
-                  data={chartData}
-                >
-                  <defs>
-                    <linearGradient id="colorStability" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorSecurity" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="domain" tick={<CustomTick />} />
-                  <PolarRadiusAxis
-                    angle={30}
-                    domain={[0, 100]}
-                    tick={false}
-                    axisLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      borderColor: "hsl(var(--border))",
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: "14px" }} />
-                  <Radar
-                    name="Stability"
-                    dataKey="stability"
-                    stroke="hsl(var(--primary))"
-                    fill="url(#colorStability)"
-                    fillOpacity={0.6}
-                  />
-                  <Radar
-                    name="Security"
-                    dataKey="security"
-                    stroke="hsl(var(--accent))"
-                    fill="url(#colorSecurity)"
-                    fillOpacity={0.6}
-                  />
-                  <Radar
-                    name="Activity"
-                    dataKey="activity"
-                    stroke="hsl(var(--chart-1))"
-                    fill="hsl(var(--chart-1))"
-                    fillOpacity={0.3}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart
+                cx="50%"
+                cy="50%"
+                outerRadius="80%"
+                data={chartData}
+              >
+                <defs>
+                  <linearGradient id="colorStability" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorSecurity" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <PolarGrid />
+                <PolarAngleAxis dataKey="domain" tick={<CustomTick />} />
+                <PolarRadiusAxis
+                  angle={30}
+                  domain={[0, 100]}
+                  tick={false}
+                  axisLine={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    borderColor: "hsl(var(--border))",
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "20px" }} />
+                <Radar
+                  name="Stability"
+                  dataKey="stability"
+                  stroke="hsl(var(--primary))"
+                  fill="url(#colorStability)"
+                  fillOpacity={0.6}
+                />
+                <Radar
+                  name="Security"
+                  dataKey="security"
+                  stroke="hsl(var(--accent))"
+                  fill="url(#colorSecurity)"
+                  fillOpacity={0.6}
+                />
+                <Radar
+                  name="Activity"
+                  dataKey="activity"
+                  stroke="hsl(var(--chart-1))"
+                  fill="hsl(var(--chart-1))"
+                  fillOpacity={0.3}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
 

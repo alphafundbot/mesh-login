@@ -28,7 +28,7 @@ const getStatusColor = (status: string) => {
 export default function DashboardPage() {
   return (
     <AppLayout>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex-1 space-y-6 p-4 md:p-6">
         <div className="flex items-center justify-between space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-primary-foreground">
             Strategist HUD
@@ -62,7 +62,7 @@ export default function DashboardPage() {
                 <Card className="overflow-hidden">
                    <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm">
                         <div className="flex items-center justify-between p-4 border-b">
-                            <CardTitle className="flex items-center gap-3">
+                            <CardTitle as="h3" className="flex items-center gap-3">
                               <domain.icon className="h-6 w-6 text-accent" />
                               {domain.name}
                             </CardTitle>
@@ -77,13 +77,13 @@ export default function DashboardPage() {
                             </Badge>
                         </div>
                    </div>
-                  <CardContent className="space-y-6 p-4">
+                  <CardContent className="space-y-6 p-4 md:p-6">
                     <div>
                       <h3 className="font-semibold text-muted-foreground mb-2">Situational Insights</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                           <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                                <CardTitle className="text-sm font-medium">Uptime</CardTitle>
+                                <CardTitle as="h4" className="text-sm font-medium">Uptime</CardTitle>
                                 <ServerIcon className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent className="p-4 pt-0">
@@ -92,7 +92,7 @@ export default function DashboardPage() {
                           </Card>
                            <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                                <CardTitle className="text-sm font-medium">Overrides (24h)</CardTitle>
+                                <CardTitle as="h4" className="text-sm font-medium">Overrides (24h)</CardTitle>
                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="h-4 w-4 text-muted-foreground"><path d="m13 2-3 14 9-2-5-12 5 12Z"/></svg>
                             </CardHeader>
                             <CardContent className="p-4 pt-0">
@@ -101,7 +101,7 @@ export default function DashboardPage() {
                           </Card>
                            <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                                <CardTitle className="text-sm font-medium">Volatility</CardTitle>
+                                <CardTitle as="h4" className="text-sm font-medium">Volatility</CardTitle>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                             </CardHeader>
                             <CardContent className="p-4 pt-0">
@@ -110,7 +110,7 @@ export default function DashboardPage() {
                           </Card>
                           <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                                <CardTitle className="text-sm font-medium">Forecast Accuracy</CardTitle>
+                                <CardTitle as="h4" className="text-sm font-medium">Forecast Accuracy</CardTitle>
                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Z"/><path d="m16 8-4 4-4-4"/><path d="m16 14-4-4-4 4"/></svg>
                             </CardHeader>
                             <CardContent className="p-4 pt-0">
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-muted-foreground mb-2">Modules</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {domain.modules.map((module) => (
                           <Link key={module} href={`/domain/${domain.slug}/${slugify(module)}`} passHref>
                             <div
@@ -143,5 +143,3 @@ export default function DashboardPage() {
     </AppLayout>
   );
 }
-
-    
