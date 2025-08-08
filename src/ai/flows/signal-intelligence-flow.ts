@@ -86,6 +86,7 @@ const getFeedbackSummary = ai.defineTool(
 const prompt = ai.definePrompt({
   name: 'signalIntelligencePrompt',
   tools: [getFeedbackSummary],
+  model: 'googleai/gemini-1.5-flash',
   input: {schema: AnalyzeSignalHistoryInputSchema},
   output: {schema: z.object({
     summary: z.string().describe('A high-level summary of the strategist actions.'),
