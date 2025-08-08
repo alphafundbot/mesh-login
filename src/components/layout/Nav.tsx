@@ -66,20 +66,20 @@ export default function Nav() {
           <SidebarMenuSub>
             {snapshotRegistry.map((item) => (
               <SidebarMenuSubItem key={item.slug}>
-                <Link href={`/snapshots/${item.slug}`}>
+                <Link href={`/snapshots/${item.slug}`} passHref>
                     <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/${item.slug}`}>
-                        <span>{item.label}</span>
+                        <a>{item.label}</a>
                     </SidebarMenuSubButton>
                 </Link>
               </SidebarMenuSubItem>
             ))}
              <SidebarMenuSubItem>
-                <Link href="/snapshots/diff">
+                <Link href="/snapshots/diff" passHref>
                     <SidebarMenuSubButton asChild isActive={pathname === '/snapshots/diff'}>
-                        <span>
+                        <a>
                             <GitCompareArrows className="mr-2 h-4 w-4" />
                             Diff Snapshots
-                        </span>
+                        </a>
                     </SidebarMenuSubButton>
                 </Link>
               </SidebarMenuSubItem>
