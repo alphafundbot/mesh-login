@@ -593,7 +593,8 @@ export default function HistoryClient() {
             l.parsed.isOverride &&
             l.parsed.rationale &&
             l.parsed.severity &&
-            l.parsed.domains
+            l.parsed.domains &&
+            l.parsed.domains.length > 0
         )
         .map((l) => {
           return {
