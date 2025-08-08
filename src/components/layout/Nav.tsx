@@ -10,6 +10,7 @@ import {
   History,
   Palette,
   Camera,
+  GitCompareArrows,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -67,6 +68,13 @@ export default function Nav() {
                 </Link>
               </SidebarMenuSubItem>
             ))}
+             <SidebarMenuSubItem>
+                <Link href="/snapshots/diff" passHref legacyBehavior>
+                    <SidebarMenuSubButton asChild isActive={pathname === '/snapshots/diff'}>
+                        <a><GitCompareArrows className="mr-2 h-4 w-4" />Diff Snapshots</a>
+                    </SidebarMenuSubButton>
+                </Link>
+              </SidebarMenuSubItem>
           </SidebarMenuSub>
         </SidebarMenuItem>
     </SidebarMenu>
