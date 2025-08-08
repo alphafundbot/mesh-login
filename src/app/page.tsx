@@ -13,6 +13,7 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import RoleSelector from "@/components/dashboard/RoleSelector";
 import { cn } from "@/lib/utils";
 import IntelligenceMap from "@/components/dashboard/IntelligenceMap";
+import HudRiskFeed from "@/components/dashboard/HudRiskFeed";
 
 const getStatusColor = (status: string) => {
   if (status.includes("Optimal")) return "bg-green-500";
@@ -32,7 +33,14 @@ export default function DashboardPage() {
           <RoleSelector />
         </div>
 
-        <RecentActivity />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+            <div className="lg:col-span-3">
+                <RecentActivity />
+            </div>
+            <div className="lg:col-span-2">
+                <HudRiskFeed />
+            </div>
+        </div>
 
         <IntelligenceMap />
 

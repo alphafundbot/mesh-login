@@ -7,6 +7,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Bot, AlertTriangle, CornerDownRight, RefreshCw, ShieldQuestion } from "lucide-react";
 import { Button } from "../ui/button";
@@ -137,67 +138,65 @@ export default function RecentActivity() {
   );
 
   return (
-    <div className="space-y-6 mb-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Bot className="h-6 w-6 text-accent" />
-            <CardTitle>Recent Activity (AI Summary)</CardTitle>
-          </div>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline" className="flex items-center gap-2">
-              <ShieldQuestion className="h-4 w-4"/>
-              Role: {user.role}
-            </Badge>
-            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Simulate New Event
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loading && (
-             <>
-              <div>
-                <h3 className="font-semibold mb-2">Summary:</h3>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6" />
-                </div>
-              </div>
-              <div className="border-t border-border pt-4">
-                 <h3 className="font-semibold mb-2 flex items-center gap-2 text-destructive">
-                  <AlertTriangle className="h-5 w-5" />
-                  Unusual Activity Detected:
-                </h3>
-                <div className="space-y-2">
-                   <Skeleton className="h-4 w-full" />
-                   <Skeleton className="h-4 w-full" />
-                </div>
-              </div>
-            </>
-          )}
-
-          {result && !loading && (
+    <Card className="h-full">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Bot className="h-6 w-6 text-accent" />
+          <CardTitle>Recent Activity (AI Summary)</CardTitle>
+        </div>
+        <div className="flex items-center gap-4">
+          <Badge variant="outline" className="flex items-center gap-2">
+            <ShieldQuestion className="h-4 w-4"/>
+            Role: {user.role}
+          </Badge>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Simulate Event
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loading && (
             <>
-              <div>
-                <h3 className="font-semibold mb-2">Summary:</h3>
-                <p className="text-muted-foreground">{result.summary}</p>
+            <div>
+              <h3 className="font-semibold mb-2">Summary:</h3>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
               </div>
-              <div className="border-t border-border pt-4">
+            </div>
+            <div className="border-t border-border pt-4">
                 <h3 className="font-semibold mb-2 flex items-center gap-2 text-destructive">
-                  <AlertTriangle className="h-5 w-5" />
-                  Unusual Activity Detected:
-                </h3>
-                <p className="text-muted-foreground whitespace-pre-wrap">
-                  {result.unusualActivities}
-                </p>
-                {renderActionButtons()}
+                <AlertTriangle className="h-5 w-5" />
+                Unusual Activity Detected:
+              </h3>
+              <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            </div>
+          </>
+        )}
+
+        {result && !loading && (
+          <>
+            <div>
+              <h3 className="font-semibold mb-2">Summary:</h3>
+              <p className="text-muted-foreground">{result.summary}</p>
+            </div>
+            <div className="border-t border-border pt-4">
+              <h3 className="font-semibold mb-2 flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Unusual Activity Detected:
+              </h3>
+              <p className="text-muted-foreground whitespace-pre-wrap">
+                {result.unusualActivities}
+              </p>
+              {renderActionButtons()}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
