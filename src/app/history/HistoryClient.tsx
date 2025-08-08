@@ -292,12 +292,23 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
     }, [logs]);
 
     const allTaggedRationales = useMemo(() => {
-        return logs.filter(l => parseDetails(l.details).isOverride && parseDetails(l.details).rationale)
-                   .map(l => {
-                       const d = parseDetails(l.details);
-                       // We can pre-tag here, but let's do it on demand to save initial load time.
-                       return { rationale: d.rationale, tags: [], severity: d.severity!, domains: d.domains! };
-                   });
+        return logs
+          .map((l) => ({ ...l, parsed: parseDetails(l.details) }))
+          .filter(
+            (l) =>
+              l.parsed.isOverride &&
+              l.parsed.rationale &&
+              l.parsed.severity &&
+              l.parsed.domains
+          )
+          .map((l) => {
+            return {
+              rationale: l.parsed.rationale,
+              tags: [],
+              severity: l.parsed.severity!,
+              domains: l.parsed.domains!,
+            };
+          });
     }, [logs]);
     
     const [globalClusters, setGlobalClusters] = useState<ClusterMap>(new Map());
