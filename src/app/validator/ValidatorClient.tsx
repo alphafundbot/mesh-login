@@ -8,6 +8,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle, XCircle, Bot } from "lucide-react";
@@ -58,18 +59,21 @@ export default function ValidatorClient() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Submit Configuration</CardTitle>
+          <CardTitle>Submit Compliance Matrix or Configuration</CardTitle>
+          <CardDescription>
+            Paste the raw JSON configuration below. The AI will analyze it for structural validity, security, and compliance with relevant standards.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
-            placeholder='{ "key": "value" }'
+            placeholder='{ "complianceRule": "...", "dataHandling": { "encryption": "AES-256" } }'
             className="min-h-[300px] font-mono"
             value={configText}
             onChange={(e) => setConfigText(e.target.value)}
             disabled={loading}
           />
           <Button onClick={handleValidate} disabled={loading}>
-            {loading ? "Validating with AI..." : "Validate"}
+            {loading ? "Validating with AI..." : "Validate Compliance"}
           </Button>
         </CardContent>
       </Card>
