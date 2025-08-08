@@ -853,5 +853,4 @@ export default function HistoryClient() {
     </div>
   );
 }
-
     
