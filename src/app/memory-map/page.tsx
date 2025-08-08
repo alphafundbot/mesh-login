@@ -1,3 +1,4 @@
+
 import AppLayout from "@/components/layout/AppLayout";
 import ForecastMemoryMap from "@/components/dashboard/ForecastMemoryMap";
 import { Suspense } from "react";
