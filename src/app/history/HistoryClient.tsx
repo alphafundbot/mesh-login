@@ -18,8 +18,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ActionLog {
   id: string;
@@ -66,7 +68,15 @@ const getHeatmapColor = (count: number, max: number) => {
     return "bg-yellow-500/20";
 };
 
+type RationaleDialogContent = {
+    domain: string;
+    severity: Severity;
+    rationales: string[];
+} | null;
+
 function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
+    const [rationaleDialog, setRationaleDialog] = useState<RationaleDialogContent>(null);
+
     const heatmapData = useMemo(() => {
         const data: Record<string, Record<Severity, number>> = {};
         let maxOverrides = 0;
@@ -88,6 +98,18 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
         return { data, maxOverrides };
     }, [logs]);
 
+    const handleCellClick = (domain: string, severity: Severity) => {
+        const relevantLogs = logs.filter(log => {
+            const d = parseDetails(log.details);
+            return d.isOverride && d.severity === severity && d.domains?.includes(domain)
+        });
+        const rationales = relevantLogs.map(log => parseDetails(log.details).rationale);
+        
+        if (rationales.length > 0) {
+            setRationaleDialog({ domain, severity, rationales });
+        }
+    }
+
     const { data, maxOverrides } = heatmapData;
     const domains = Object.keys(data);
     const severities: Severity[] = ["Warning", "Critical", "Catastrophic"];
@@ -107,10 +129,11 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
     }
 
     return (
+      <>
         <Card>
             <CardHeader>
                 <CardTitle>Override Frequency Heatmap</CardTitle>
-                <CardDescription>Analysis of strategist overrides across domains and severity levels.</CardDescription>
+                <CardDescription>Analysis of strategist overrides across domains and severity levels. Click a cell to see rationales.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -124,19 +147,47 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                         {domains.map(domain => (
                             <TableRow key={domain}>
                                 <TableCell className="font-medium">{domain}</TableCell>
-                                {severities.map(severity => (
-                                    <TableCell key={severity} className="text-center">
-                                        <div className={cn("w-full h-8 flex items-center justify-center rounded-md", getHeatmapColor(data[domain][severity], maxOverrides))}>
-                                            {data[domain][severity]}
-                                        </div>
-                                    </TableCell>
-                                ))}
+                                {severities.map(severity => {
+                                    const count = data[domain]?.[severity] ?? 0;
+                                    return (
+                                        <TableCell 
+                                            key={severity} 
+                                            className={cn("text-center", count > 0 ? "cursor-pointer hover:bg-muted/50" : "")}
+                                            onClick={() => count > 0 && handleCellClick(domain, severity)}
+                                        >
+                                            <div className={cn("w-full h-8 flex items-center justify-center rounded-md", getHeatmapColor(count, maxOverrides))}>
+                                                {count}
+                                            </div>
+                                        </TableCell>
+                                    )
+                                })}
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </CardContent>
         </Card>
+        
+        <Dialog open={!!rationaleDialog} onOpenChange={() => setRationaleDialog(null)}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Override Rationales for <span className="text-accent">{rationaleDialog?.domain}</span></DialogTitle>
+                    <DialogDescription>
+                        Severity Level: <Badge variant={rationaleDialog?.severity === "Critical" || rationaleDialog?.severity === "Catastrophic" ? "destructive" : "secondary"}>{rationaleDialog?.severity}</Badge>
+                    </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="max-h-[50vh] pr-4">
+                    <div className="space-y-4">
+                        {rationaleDialog?.rationales.map((rationale, index) => (
+                            <blockquote key={index} className="mt-6 border-l-2 pl-6 italic text-muted-foreground">
+                                "{rationale}"
+                            </blockquote>
+                        ))}
+                    </div>
+                </ScrollArea>
+            </DialogContent>
+        </Dialog>
+      </>
     );
 }
 
