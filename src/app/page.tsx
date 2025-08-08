@@ -123,7 +123,7 @@ export default function DashboardPage() {
                       <h3 className="font-semibold text-muted-foreground mb-2">Modules</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {domain.modules.map((module) => (
-                          <Link key={module} href={`/domain/${domain.slug}/${slugify(module)}`} passHref>
+                          <Link key={module} href={`/domain/${domain.slug}/${slugify(module)}`}>
                             <div
                               className="bg-card/50 p-3 rounded-lg hover:shadow-xl hover:bg-card transition-all duration-300 h-full flex flex-col justify-center border transform hover:scale-105"
                             >

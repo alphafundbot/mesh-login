@@ -42,16 +42,16 @@ export default function Nav() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.href}>
-          <Link href={item.href} passHref legacyBehavior>
+          <Link href={item.href}>
             <SidebarMenuButton
               asChild
               isActive={pathname === item.href}
               tooltip={{ children: item.label }}
             >
-              <a>
+              <>
                 <item.icon />
                 <span>{item.label}</span>
-              </a>
+              </>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
@@ -67,17 +67,17 @@ export default function Nav() {
           <SidebarMenuSub>
             {snapshotRegistry.map((item) => (
               <SidebarMenuSubItem key={item.slug}>
-                <Link href={`/snapshots/${item.slug}`} passHref legacyBehavior>
+                <Link href={`/snapshots/${item.slug}`}>
                     <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/${item.slug}`}>
-                        <a>{item.label}</a>
+                        <>{item.label}</>
                     </SidebarMenuSubButton>
                 </Link>
               </SidebarMenuSubItem>
             ))}
              <SidebarMenuSubItem>
-                <Link href="/snapshots/diff" passHref legacyBehavior>
+                <Link href="/snapshots/diff">
                     <SidebarMenuSubButton asChild isActive={pathname === '/snapshots/diff'}>
-                        <a><GitCompareArrows className="mr-2 h-4 w-4" />Diff Snapshots</a>
+                        <><GitCompareArrows className="mr-2 h-4 w-4" />Diff Snapshots</>
                     </SidebarMenuSubButton>
                 </Link>
               </SidebarMenuSubItem>
