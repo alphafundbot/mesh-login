@@ -136,7 +136,6 @@ export default function HudForecastPanel() {
       return <p className="text-muted-foreground text-center py-4">No significant suppression patterns detected. Automation nominal.</p>;
     }
     
-    const filteredForecasts = result.forecasts.filter(f => f.predictedOverrideRate >= confidenceThreshold);
     const sortedForecasts = (result.forecasts || []).sort((a,b) => b.predictedOverrideRate - a.predictedOverrideRate);
 
     if (sortedForecasts.length === 0) {
@@ -147,7 +146,7 @@ export default function HudForecastPanel() {
     return (
         <div className="space-y-3">
             {sortedForecasts.slice(0, 3).map((forecast) => (
-                <div key={forecast.domain} className={cn("p-3 rounded-md bg-muted/30", forecast.predictedOverrideRate < confidenceThreshold && "opacity-50")}>
+                <div key={forecast.domain} className={cn("p-3 rounded-md bg-muted/30")}>
                     <div className="flex justify-between items-start">
                         <p className="font-semibold text-foreground">{forecast.domain}</p>
                          <Badge variant="outline" className={cn("gap-1.5", getRiskColor(forecast.predictedOverrideRate))}>
