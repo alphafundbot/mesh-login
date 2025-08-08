@@ -12,6 +12,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import RoleSelector from "@/components/dashboard/RoleSelector";
 import { cn } from "@/lib/utils";
+import IntelligenceMap from "@/components/dashboard/IntelligenceMap";
 
 const getStatusColor = (status: string) => {
   if (status.includes("Optimal")) return "bg-green-500";
@@ -32,6 +33,8 @@ export default function DashboardPage() {
         </div>
 
         <RecentActivity />
+
+        <IntelligenceMap />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {domainData.map((domain) => (
