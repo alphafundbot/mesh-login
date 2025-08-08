@@ -295,6 +295,7 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
         return logs.filter(l => parseDetails(l.details).isOverride && parseDetails(l.details).rationale)
                    .map(l => {
                        const d = parseDetails(l.details);
+                       // We can pre-tag here, but let's do it on demand to save initial load time.
                        return { rationale: d.rationale, tags: [], severity: d.severity!, domains: d.domains! };
                    });
     }, [logs]);
