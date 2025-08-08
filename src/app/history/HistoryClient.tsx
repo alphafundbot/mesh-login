@@ -854,30 +854,7 @@ export default function HistoryClient() {
 
         {viewMode === 'logs' && (
             <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-2">
-                        <OverrideHeatmap logs={filteredLogs} onCellClick={handleHeatmapCellClick} />
-                    </div>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Top Rationale Clusters</CardTitle>
-                            <CardDescription>Dominant themes in strategist overrides in the current time window.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            {sortedGlobalClusters.length > 0 ? sortedGlobalClusters.slice(0, 5).map(cluster => (
-                                <div key={cluster.tag} className="p-2 rounded-md bg-muted/30 hover:bg-muted/50 cursor-pointer" onClick={() => handleClusterClick(cluster)}>
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="font-semibold capitalize text-sm">{cluster.tag}</h4>
-                                        <Badge variant={cluster.riskScore > 10 ? "destructive" : "secondary"}>Risk: {cluster.riskScore}</Badge>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">{cluster.items.length} overrides in {Object.keys(cluster.domains).length} domains</p>
-                                </div>
-                            )) : (
-                                <p className="text-muted-foreground text-center py-4 text-sm">No clusters to display.</p>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                <OverrideHeatmap logs={filteredLogs} onCellClick={handleHeatmapCellClick} />
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
@@ -1075,3 +1052,5 @@ export default function HistoryClient() {
     </div>
   );
 }
+
+    
