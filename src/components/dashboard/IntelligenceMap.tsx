@@ -64,7 +64,7 @@ const generateDomainLogs = (domainName: string) => {
 
   let logs = `Action logs for domain: ${domainName}\n`;
   // Add some random errors to make anomalies more likely
-  const errorChance = ["System Core", "Finance & Trading", "Medical & Bio"].includes(domainName) ? 0.6 : 0.2;
+  const errorChance = ["System Core", "Finance & Trading", "Medical & Bio"].includes(domainName.substring(domainName.indexOf(" ") + 1)) ? 0.6 : 0.2;
   for (let i = 0; i < 5 + Math.floor(Math.random() * 5); i++) {
     let action = actions[Math.floor(Math.random() * actions.length)];
     if (Math.random() < errorChance) {
@@ -91,6 +91,9 @@ interface EscalationDetails {
 const CustomTick = (props: any) => {
   const { x, y, payload } = props;
   const { value, isAnomaly } = payload;
+  
+  // Truncate long domain names
+  const displayValue = value.length > 15 ? `${value.substring(0, 14)}…` : value;
 
   if (isAnomaly) {
     return (
@@ -102,7 +105,7 @@ const CustomTick = (props: any) => {
           className="text-xs font-bold flex items-center"
         >
           <tspan x="0" dy="-0.5em">
-            {value}
+            {displayValue}
           </tspan>
         </text>
         <AlertTriangle className="h-4 w-4 text-destructive" x="-7" y="10" />
@@ -118,7 +121,7 @@ const CustomTick = (props: any) => {
         fill="hsl(var(--muted-foreground))"
         className="text-xs"
       >
-        {value}
+        {displayValue}
       </text>
     </g>
   );
@@ -135,10 +138,18 @@ const SEVERITY_CONFIG = {
 };
 
 const SEVERITY_RATIONALE_TEMPLATES: Record<Severity, string> = {
-  Warning: "Acknowledged. Monitoring anomaly for further signal drift.",
-  Critical: "Initiating response to prevent propagation of critical failure.",
-  Catastrophic: "Initiating emergency rollback to restore mesh integrity.",
+    Warning: "Acknowledged. Monitoring anomaly for further signal drift.",
+    Critical: "Initiating response to prevent propagation of critical failure.",
+    Catastrophic: "Initiating emergency rollback to restore mesh integrity.",
 };
+
+const ACTION_LOG_TEMPLATES: Record<string, (details: EscalationDetails) => string> = {
+    Acknowledge: (details) => `Acknowledged ${details.severity} event involving ${details.anomalousDomains.map(d=>d.domain).join(', ')}.`,
+    Quarantine: (details) => `Quarantined domains ${details.anomalousDomains.map(d=>d.domain).join(', ')} due to ${details.severity} event.`,
+    Rollback: (details) => `Initiated rollback for ${details.anomalousDomains.map(d=>d.domain).join(', ')} due to ${details.severity} event.`,
+    TAKE_ACTION: (details) => `Took unspecified high-priority action on ${details.anomalousDomains.map(d=>d.domain).join(', ')} in response to ${details.severity} event.`,
+};
+
 
 export default function IntelligenceMap() {
   const [loading, setLoading] = useState(true);
@@ -168,16 +179,7 @@ export default function IntelligenceMap() {
       setLoading(true);
       try {
         const domainLogs: Record<string, string> = {};
-        const domainsToAnalyze = domainData.filter((d) =>
-          [
-            "System Core",
-            "Finance & Trading",
-            "Security & Privacy",
-            "Cloud & DevOps",
-            "Telecom & IoT",
-            "Medical & Bio",
-          ].includes(d.name.substring(d.name.indexOf(" ")+1))
-        );
+        const domainsToAnalyze = domainData;
 
         for (const domain of domainsToAnalyze) {
           domainLogs[domain.name] = generateDomainLogs(domain.name);
@@ -194,12 +196,14 @@ export default function IntelligenceMap() {
 
         const anomalousDomains = dataWithAnomalies.filter((d) => d.isAnomaly);
         let severity: Severity | null = null;
+        
+        const coreAnomalies = anomalousDomains.filter(d => d.domain.includes("System Core")).length;
 
-        if (anomalousDomains.length >= 5) {
+        if (anomalousDomains.length >= 5 || coreAnomalies > 0) {
           severity = "Catastrophic";
         } else if (anomalousDomains.length >= 3) {
           severity = "Critical";
-        } else if (anomalousDomains.length >= 2) {
+        } else if (anomalousDomains.length >= 1) {
           severity = "Warning";
         }
 
@@ -250,7 +254,9 @@ export default function IntelligenceMap() {
     const defaultRationale = SEVERITY_RATIONALE_TEMPLATES[escalation.severity];
     const isOverridden = rationale !== defaultRationale;
 
-    const details = `Response to ${escalation.severity} event for ${escalation.anomalousDomains.map(d => d.domain).join(', ')}. Rationale: "${rationale || "Not provided."}" Override: ${isOverridden}`;
+    const actionText = ACTION_LOG_TEMPLATES[escalation.action] ? ACTION_LOG_TEMPLATES[escalation.action](escalation) : `Responded to ${escalation.severity} event.`;
+
+    const details = `Action: ${escalation.action} involving ${escalation.anomalousDomains.map(d => d.domain).join(', ')}. Severity: ${escalation.severity}. Rationale: "${rationale || "Not provided."}" Override: ${isOverridden}`;
     
     handleLogAction("STRATEGIST_RESPONSE", details);
     toast({
@@ -293,10 +299,10 @@ export default function IntelligenceMap() {
       case "Catastrophic":
         return (
           <>
-            <Button onClick={() => handleActionClick("Rollback")}>
+            <Button variant="destructive" onClick={() => handleActionClick("Rollback")}>
               Rollback
             </Button>
-            <Button onClick={() => handleActionClick("TAKE_ACTION")}>
+            <Button variant="destructive" onClick={() => handleActionClick("TAKE_ACTION")}>
               Take Action & Log
             </Button>
           </>
@@ -375,14 +381,14 @@ export default function IntelligenceMap() {
                     name="Stability"
                     dataKey="stability"
                     stroke="hsl(var(--primary))"
-                    fill="hsl(var(--primary))"
+                    fill="url(#colorStability)"
                     fillOpacity={0.6}
                   />
                   <Radar
                     name="Security"
                     dataKey="security"
                     stroke="hsl(var(--accent))"
-                    fill="hsl(var(--accent))"
+                    fill="url(#colorSecurity)"
                     fillOpacity={0.6}
                   />
                   <Radar
@@ -390,7 +396,7 @@ export default function IntelligenceMap() {
                     dataKey="activity"
                     stroke="hsl(var(--chart-1))"
                     fill="hsl(var(--chart-1))"
-                    fillOpacity={0.6}
+                    fillOpacity={0.3}
                   />
                 </RadarChart>
               </ResponsiveContainer>
@@ -479,3 +485,5 @@ export default function IntelligenceMap() {
     </>
   );
 }
+
+    

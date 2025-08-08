@@ -162,14 +162,14 @@ const DELTA_THRESHOLD = 10;
 function ClusterDelta({ currentScore, previousScore }: { currentScore: number; previousScore: number }) {
     const delta = currentScore - previousScore;
 
-    if (previousScore === 0) return null; // Don't show delta for new clusters
+    if (previousScore === 0 || Math.abs(delta) < 1) return null;
 
     const Arrow = delta > 0 ? ArrowUp : ArrowDown;
-    const isLargeDelta = delta > DELTA_THRESHOLD;
-    const color = delta > 0 ? (isLargeDelta ? "text-red-400 font-bold" : "text-red-400") : delta < 0 ? "text-green-400" : "text-muted-foreground";
+    const isLargeDelta = Math.abs(delta) > DELTA_THRESHOLD;
+    const color = delta > 0 ? "text-red-400" : "text-green-400";
 
     return (
-        <Badge variant="outline" className={cn("gap-1 font-mono", color, isLargeDelta && "border-red-400/50")}>
+        <Badge variant="outline" className={cn("gap-1 font-mono", color, isLargeDelta && "border-red-400/50 font-bold")}>
             <Arrow className="h-3 w-3" />
             {delta > 0 && "+"}{delta}
         </Badge>
@@ -204,18 +204,65 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
     }, [logs]);
 
     const rationaleClusters = useMemo(() => {
-        if (!rationaleDialog) return null;
-        return calculateClusters(rationaleDialog.rationales);
-    }, [rationaleDialog]);
+        if (!rationaleDialog || taggedRationales.length === 0) return new Map();
+        return calculateClusters(taggedRationales);
+    }, [rationaleDialog, taggedRationales]);
     
     const previousRationaleClusters = useMemo(() => {
-        const overrideLogs = previousLogs.filter(log => parseDetails(log.details).isOverride);
-        const rationales = overrideLogs.map(log => {
+        if (!rationaleDialog) return new Map();
+
+        const relevantLogs = previousLogs.filter(log => {
+            const d = parseDetails(log.details);
+            return d.isOverride && d.severity === rationaleDialog.severity && d.domains?.includes(rationaleDialog.domain)
+        });
+
+        const rationales = relevantLogs.map(log => {
             const d = parseDetails(log.details);
             return { rationale: d.rationale, tags: [], severity: d.severity!, domains: d.domains! };
         });
-        return calculateClusters(rationales);
-    }, [previousLogs]);
+
+        if (rationales.length === 0) return new Map();
+        
+        // This is a simplified version for comparison. It doesn't run AI tagging on previous logs.
+        // It's meant to provide a baseline risk score for tags found in the *current* period.
+        const prevClusters = calculateClusters(rationales);
+
+        // We need to tag the previous rationales using the tags from the *current* period
+        // to have a meaningful comparison of risk scores for the *same tags*.
+        const alignedPrevClusters: ClusterMap = new Map();
+        const currentTags = Array.from(rationaleClusters.keys());
+
+        currentTags.forEach(tag => {
+            const clusterInfo: ClusterInfo = {
+                items: [],
+                severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 },
+                domains: {},
+                riskScore: 0
+            };
+
+            // Heuristic: if a previous rationale contains the tag text, associate it.
+            // This is a rough approximation without running AI on the previous set.
+            const taggedPrevRationales = rationales.filter(r => r.rationale.toLowerCase().includes(tag.toLowerCase()));
+            
+            if (taggedPrevRationales.length > 0) {
+                 taggedPrevRationales.forEach(item => {
+                    clusterInfo.items.push(item);
+                    clusterInfo.severities[item.severity]++;
+                 });
+
+                 let score = 0;
+                 score += clusterInfo.severities.Warning * RISK_WEIGHTS.Warning;
+                 score += clusterInfo.severities.Critical * RISK_WEIGHTS.Critical;
+                 score += clusterInfo.severities.Catastrophic * RISK_WEIGHTS.Catastrophic;
+                 clusterInfo.riskScore = score;
+
+                 alignedPrevClusters.set(tag, clusterInfo);
+            }
+        });
+        
+        return alignedPrevClusters;
+
+    }, [previousLogs, rationaleDialog, rationaleClusters]);
 
     const handleCellClick = async (domain: string, severity: Severity) => {
         setLoadingRationales(true);
@@ -238,7 +285,9 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
             }));
             
             setTaggedRationales(processedRationales);
+            // The dialog content will be updated by the useMemo when taggedRationales changes
             setRationaleDialog({ domain, severity, rationales: processedRationales });
+
 
         } catch (error) {
             console.error("Failed to tag rationales:", error);
@@ -311,7 +360,7 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
             </CardContent>
         </Card>
         
-        <Dialog open={!!rationaleDialog} onOpenChange={() => setRationaleDialog(null)}>
+        <Dialog open={!!rationaleDialog} onOpenChange={(open) => { if (!open) setRationaleDialog(null); }}>
             <DialogContent className="max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>Override Rationales for <span className="text-accent">{rationaleDialog?.domain}</span></DialogTitle>
@@ -328,15 +377,15 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
                                 <Skeleton className="h-12 w-full" />
                             </div>
                         )}
-                        {!loadingRationales && rationaleClusters && (
+                        {!loadingRationales && rationaleClusters.size > 0 && (
                              <Accordion type="multiple" className="w-full">
                                 {Array.from(rationaleClusters.entries()).sort((a,b) => b[1].riskScore - a[1].riskScore).map(([tag, { items, severities, domains, riskScore }]) => {
                                    const sortedDomains = Object.entries(domains).sort((a, b) => b[1].count - a[1].count);
                                    const previousRiskScore = previousRationaleClusters.get(tag)?.riskScore ?? 0;
-                                   const delta = riskScore - previousRiskScore;
-                                   const isLargeDelta = delta > DELTA_THRESHOLD;
+                                   const isLargeDelta = Math.abs(riskScore - previousRiskScore) > DELTA_THRESHOLD;
+
                                     return (
-                                        <AccordionItem key={tag} value={tag} className={cn(isLargeDelta && "border-red-500/50 rounded-lg border")}>
+                                        <AccordionItem key={tag} value={tag} className={cn((riskScore - previousRiskScore > 0 && isLargeDelta) && "border-red-500/50 rounded-lg border")}>
                                             <AccordionTrigger>
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <Tags className="h-4 w-4 text-muted-foreground" />
@@ -388,6 +437,9 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
                                 })}
                             </Accordion>
                         )}
+                         {!loadingRationales && rationaleClusters.size === 0 && (
+                            <p className="text-muted-foreground text-center py-4">No rationale clusters found for this selection.</p>
+                         )}
                     </div>
                 </ScrollArea>
             </DialogContent>
@@ -497,7 +549,10 @@ export default function HistoryClient() {
 
     const filterMilliseconds = timeFilter === "24h" ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
     
-    currentLogs = allLogs.filter(log => now - log.timestamp.getTime() < filterMilliseconds);
+    currentLogs = allLogs.filter(log => {
+        const logTime = log.timestamp.getTime();
+        return now - logTime < filterMilliseconds;
+    });
     previousLogs = allLogs.filter(log => {
       const logTime = log.timestamp.getTime();
       return (now - logTime >= filterMilliseconds) && (now - logTime < 2 * filterMilliseconds);
@@ -527,7 +582,7 @@ export default function HistoryClient() {
       
       const result = await analyzeSignalHistory({ actionLogs: logsString });
       setAnalysisResult(result);
-    } catch (error) {
+    } catch (error) => {
       console.error("AI analysis failed:", error);
       toast({
         variant: "destructive",
@@ -631,17 +686,18 @@ export default function HistoryClient() {
                 ))
               ) : filteredLogs.length > 0 ? (
                 filteredLogs.map((log) => {
-                  const { isOverride, rationale, action } = parseDetails(log.details);
+                  const { isOverride, rationale, action, severity, domains } = parseDetails(log.details);
                   return (
                     <TableRow key={log.id}>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                          <Badge variant="secondary">{log.action}</Badge>
                          {isOverride && (
                            <Badge variant="destructive" className="flex items-center gap-1">
                              <AlertTriangle className="h-3 w-3" /> Override
                            </Badge>
                          )}
+                         {severity && <Badge variant={severity === 'Critical' || severity === 'Catastrophic' ? 'destructive' : 'secondary'}>{severity}</Badge>}
                         </div>
                       </TableCell>
                       <TableCell>{log.role}</TableCell>
@@ -652,7 +708,7 @@ export default function HistoryClient() {
                             <div className="flex items-start gap-2">
                                 <MessageSquareQuote className="h-4 w-4 mt-0.5 text-muted-foreground" />
                                 <span>
-                                    Responded with <strong>{action}</strong>: <em>"{rationale}"</em>
+                                    Responded with <strong>{action}</strong> on <strong>{domains?.join(', ')}</strong>: <em>"{rationale}"</em>
                                 </span>
                             </div>
                           ) : (
@@ -780,7 +836,5 @@ export default function HistoryClient() {
     </div>
   );
 }
-
-    
 
     
