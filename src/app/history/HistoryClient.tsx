@@ -179,8 +179,9 @@ const DELTA_THRESHOLD = 10;
 function ClusterDelta({ currentScore, previousScore }: { currentScore: number; previousScore: number }) {
     const delta = currentScore - previousScore;
     
-    const Arrow = delta > 0 ? ArrowUp : delta < 0 ? ArrowDown : 'span';
-    const arrowIcon = delta === 0 ? '⏸️' : <Arrow className="h-3 w-3" />;
+    if (delta === 0) return <Badge variant="outline" className="gap-1 font-mono text-muted-foreground">⏸️ 0</Badge>;
+    
+    const Arrow = delta > 0 ? ArrowUp : ArrowDown;
     const isLargeDelta = Math.abs(delta) > DELTA_THRESHOLD;
     let color = "text-muted-foreground";
     if (delta > 0) color = "text-red-400";
@@ -188,7 +189,7 @@ function ClusterDelta({ currentScore, previousScore }: { currentScore: number; p
 
     return (
         <Badge variant="outline" className={cn("gap-1 font-mono", color, isLargeDelta && "border-red-400/50 font-bold")}>
-            {arrowIcon}
+            <Arrow className="h-3 w-3" />
             {delta > 0 && "+"}{delta.toFixed(0)}
         </Badge>
     );
@@ -719,11 +720,8 @@ export default function HistoryClient() {
 
   const sortedRecommendations = useMemo(() => {
     if (!analysisResult) return [];
-    
-    const filtered = analysisResult.recommendations.filter(rec => rec.confidence >= confidenceThreshold);
-
-    return [...filtered].sort((a, b) => b.confidence - a.confidence);
-  }, [analysisResult, confidenceThreshold]);
+    return [...analysisResult.recommendations].sort((a, b) => b.confidence - a.confidence);
+  }, [analysisResult]);
 
   return (
     <div className="space-y-6">
@@ -905,7 +903,7 @@ export default function HistoryClient() {
                         </div>
                         <div className="space-y-4">
                             {sortedRecommendations.map((rec) => (
-                                <div key={rec.recommendationId} className="flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30">
+                                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity", rec.confidence < confidenceThreshold && "opacity-50")}>
                                     <div className="flex-1 pr-4 space-y-2">
                                     <p className="text-muted-foreground">{rec.text}</p>
                                     <RecommendationConfidence rec={rec} />

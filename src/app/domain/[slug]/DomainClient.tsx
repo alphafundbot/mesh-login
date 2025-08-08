@@ -169,11 +169,8 @@ export default function DomainClient({ domain }: { domain: Domain }) {
 
   const sortedRecommendations = useMemo(() => {
     if (!result) return [];
-    
-    const filtered = result.recommendations.filter(rec => rec.confidence >= confidenceThreshold);
-
-    return [...filtered].sort((a, b) => b.confidence - a.confidence);
-  }, [result, confidenceThreshold]);
+    return [...result.recommendations].sort((a, b) => b.confidence - a.confidence);
+  }, [result]);
 
   if (loading) {
     return (
@@ -265,7 +262,7 @@ export default function DomainClient({ domain }: { domain: Domain }) {
         </CardHeader>
         <CardContent className="space-y-4">
             {sortedRecommendations.length > 0 ? sortedRecommendations.map(rec => (
-                <div key={rec.recommendationId} className="flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30">
+                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity", rec.confidence < confidenceThreshold && "opacity-50")}>
                     <div className="flex-1 pr-4 space-y-2">
                         <p className="text-muted-foreground">{rec.text}</p>
                         <RecommendationConfidence rec={rec} />
