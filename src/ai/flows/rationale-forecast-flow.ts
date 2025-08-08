@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview A flow for forecasting which rationale types are likely to emerge based on historical momentum.
+ * @fileOverview A flow for forecasting which rationale types are likely to emerge based on historical momentum and strategist feedback.
  *
  * - forecastRationales - A function that handles the rationale forecast analysis.
  * - RationaleForecastInput - The input type for the forecastRationales function.
@@ -58,13 +58,13 @@ Analyze this data to predict the future trajectory of each rationale type. Consi
 1.  **High Positive Momentum (riskDelta > 0)**: These clusters are growing in importance. They have a high escalation probability.
 2.  **High Negative Momentum (riskDelta < 0)**: These clusters are becoming less relevant. They have a high suppression likelihood.
 3.  **High Frequency**: Frequent clusters, even with low momentum, are significant and may persist.
-4.  **Strategist Feedback**: If strategists consistently reject recommendations related to a certain activity, they may be more likely to override it manually.
+4.  **Strategist Feedback**: If strategists consistently reject recommendations related to a certain activity, they may be more likely to override it manually. High rejection rates on an AI suggestion can signal an increase in related manual overrides.
 
 For each significant rationale cluster, provide:
 - The rationale tag.
 - An "escalationProbability" score (0.0 to 1.0).
 - A "suppressionLikelihood" score (0.0 to 1.0).
-- A concise justification for your prediction.
+- A concise justification for your prediction, explicitly referencing momentum, frequency, and strategist feedback where applicable.
 
 Focus on the most dynamic or impactful rationale types.
 
