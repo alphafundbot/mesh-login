@@ -7,3 +7,4 @@ import '@/ai/flows/signal-intelligence-flow.ts';
 import '@/ai/flows/cross-domain-intelligence-flow.ts';
 import '@/ai/flows/rationale-tagging-flow.ts';
 import '@/ai/flows/suppression-forecast-flow.ts';
+import '@/ai/flows/snapshot-diff-flow.ts';
