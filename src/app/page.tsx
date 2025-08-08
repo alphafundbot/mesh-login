@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { domainData } from "@/lib/domains";
 import AppLayout from "@/components/layout/AppLayout";
 import RecentActivity from "@/components/dashboard/RecentActivity";
+import RoleSelector from "@/components/dashboard/RoleSelector";
 
 export default function DashboardPage() {
   return (
@@ -17,6 +18,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight text-primary-foreground">
             Strategist HUD
           </h1>
+          <RoleSelector />
         </div>
 
         <RecentActivity />

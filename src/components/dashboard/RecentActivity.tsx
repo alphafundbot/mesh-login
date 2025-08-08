@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Bot, AlertTriangle, CornerDownRight, RefreshCw } from "lucide-react";
+import { Bot, AlertTriangle, CornerDownRight, RefreshCw, ShieldQuestion } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   auditTrailAISummarization,
@@ -18,6 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { useUser } from "@/hooks/use-user";
+import { canUserPerform, type Action } from "@/lib/roles";
+import { Badge } from "../ui/badge";
 
 // Sample data to simulate a live log feed for the dashboard
 const generateSampleLogs = () => {
@@ -37,6 +40,7 @@ export default function RecentActivity() {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<AuditTrailAISummarizationOutput | null>(null);
   const { toast } = useToast();
+  const { user } = useUser();
 
   const fetchActivity = async (logs: string) => {
     setLoading(true);
@@ -63,10 +67,12 @@ export default function RecentActivity() {
         const latestLog = snapshot.docs[0].data();
         fetchActivity(latestLog.logs);
       } else {
-        // Handle case with no logs yet, maybe show a waiting message or seed one
         const initialLogs = generateSampleLogs();
         addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
       }
+    }, (error) => {
+      console.error("Firestore snapshot error:", error);
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -89,14 +95,16 @@ export default function RecentActivity() {
     }
   };
 
-  const handleAction = async (action: string) => {
+  const handleAction = async (action: Action) => {
     toast({
       title: "Action Initiated",
-      description: `${action} protocol has been initiated.`,
+      description: `${action} protocol has been initiated by ${user.role}.`,
     });
     try {
       await addDoc(collection(db, "hud_actions"), {
         action,
+        role: user.role,
+        strategist: user.name,
         timestamp: serverTimestamp(),
         details: result ? JSON.stringify(result) : "No details available"
       });
@@ -109,6 +117,23 @@ export default function RecentActivity() {
       });
     }
   };
+  
+  const renderActionButtons = () => (
+    <div className="flex gap-2 mt-4">
+      <Button variant="destructive" size="sm" onClick={() => handleAction("Escalate")} disabled={!canUserPerform(user.role, "Escalate")}>
+        <CornerDownRight className="mr-2 h-4 w-4" />
+        Escalate
+      </Button>
+      <Button variant="secondary" size="sm" onClick={() => handleAction("Quarantine")} disabled={!canUserPerform(user.role, "Quarantine")}>
+        <CornerDownRight className="mr-2 h-4 w-4" />
+        Quarantine
+      </Button>
+      <Button variant="secondary" size="sm" onClick={() => handleAction("Rollback")} disabled={!canUserPerform(user.role, "Rollback")}>
+        <CornerDownRight className="mr-2 h-4 w-4" />
+        Rollback
+      </Button>
+    </div>
+  );
 
   return (
     <div className="space-y-6 mb-6">
@@ -118,10 +143,16 @@ export default function RecentActivity() {
             <Bot className="h-6 w-6 text-accent" />
             <CardTitle>Recent Activity (AI Summary)</CardTitle>
           </div>
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Simulate New Event
-          </Button>
+          <div className="flex items-center gap-4">
+            <Badge variant="outline" className="flex items-center gap-2">
+              <ShieldQuestion className="h-4 w-4"/>
+              Role: {user.role}
+            </Badge>
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Simulate New Event
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {loading && (
@@ -160,20 +191,7 @@ export default function RecentActivity() {
                 <p className="text-muted-foreground whitespace-pre-wrap">
                   {result.unusualActivities}
                 </p>
-                <div className="flex gap-2 mt-4">
-                  <Button variant="destructive" size="sm" onClick={() => handleAction("Escalate")}>
-                    <CornerDownRight className="mr-2 h-4 w-4" />
-                    Escalate
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={() => handleAction("Quarantine")}>
-                    <CornerDownRight className="mr-2 h-4 w-4" />
-                    Quarantine
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={() => handleAction("Rollback")}>
-                    <CornerDownRight className="mr-2 h-4 w-4" />
-                    Rollback
-                  </Button>
-                </div>
+                {renderActionButtons()}
               </div>
             </>
           )}
