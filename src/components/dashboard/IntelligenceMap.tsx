@@ -246,7 +246,12 @@ export default function IntelligenceMap() {
   
   const handleRationaleSubmit = () => {
     if (!escalation || !escalation.action) return;
-    const details = `Strategist response to ${escalation.severity} escalation involving ${escalation.anomalousDomains.map(d => d.domain).join(', ')}. Action: ${escalation.action}. Rationale: ${rationale || "Not provided."}`;
+
+    const defaultRationale = SEVERITY_RATIONALE_TEMPLATES[escalation.severity];
+    const isOverridden = rationale !== defaultRationale;
+
+    const details = `Strategist response to ${escalation.severity} escalation involving ${escalation.anomalousDomains.map(d => d.domain).join(', ')}. Action: ${escalation.action}. Rationale: "${rationale || "Not provided."}" Override: ${isOverridden}`;
+    
     handleLogAction("STRATEGIST_RESPONSE", details);
     toast({
       title: "Action Confirmed",
