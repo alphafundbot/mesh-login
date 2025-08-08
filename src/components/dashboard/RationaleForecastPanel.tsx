@@ -10,7 +10,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, Timestamp, addDoc, serverTimestamp } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
 import { Lightbulb, ArrowUp, ArrowDown } from "lucide-react";
 import {
@@ -103,7 +103,7 @@ export default function RationaleForecastPanel() {
       });
 
       const feedbackQuery = query(collection(db, 'feedback'));
-      const feedbackSnapshot = await onSnapshot(feedbackQuery, async (snap) => {
+      const feedbackSnapshot = onSnapshot(feedbackQuery, async (snap) => {
         const feedbackSummary: Record<string, { up: number, down: number }> = {};
         snap.forEach(doc => {
             const data = doc.data();
@@ -114,11 +114,22 @@ export default function RationaleForecastPanel() {
         });
         
         try {
+            const clusterMomentumVectors = Array.from(clusters.entries()).map(([tag, data]) => ({ tag, ...data }));
             const output = await forecastRationales({
-              clusterMomentumVectors: Array.from(clusters.entries()).map(([tag, data]) => ({ tag, ...data })),
+              clusterMomentumVectors,
               strategistFeedbackSummary: feedbackSummary
             });
             setResult(output);
+            
+            // Persist the forecast to Firestore
+            if (output && output.forecasts.length > 0) {
+              await addDoc(collection(db, "forecast_analysis"), {
+                forecast: output,
+                inputs: { clusterMomentumVectors, feedbackSummary },
+                timestamp: serverTimestamp(),
+              });
+            }
+
           } catch (error) {
             console.error("AI forecast failed:", error);
             toast({

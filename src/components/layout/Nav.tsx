@@ -12,6 +12,7 @@ import {
   Camera,
   GitCompareArrows,
   Archive,
+  Eye,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/validator", label: "Config Validator", icon: Binary },
   { href: "/history", label: "Signal Memory", icon: History },
   { href: "/analysis-archive", label: "Analysis Archive", icon: Archive },
+  { href: "/forecast-archive", label: "Forecast Archive", icon: Eye },
 ];
 
 export default function Nav() {
