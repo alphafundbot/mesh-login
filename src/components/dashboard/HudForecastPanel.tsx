@@ -53,7 +53,18 @@ const getRiskLabel = (rate: number) => {
 export default function HudForecastPanel() {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<SuppressionForecastOutput | null>(null);
+  const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
+    if (typeof window === "undefined") return 0.5; // Default for SSR
+    const saved = localStorage.getItem("forecastConfidenceThreshold");
+    return saved !== null ? parseFloat(saved) : 0.5; // Default if not set
+  });
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("forecastConfidenceThreshold", String(confidenceThreshold));
+    }
+  }, [confidenceThreshold]);
 
   useEffect(() => {
     const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
@@ -121,7 +132,13 @@ export default function HudForecastPanel() {
       return <p className="text-muted-foreground text-center py-4">No significant suppression patterns detected. Automation nominal.</p>;
     }
     
-    const sortedForecasts = result.forecasts.sort((a,b) => b.predictedOverrideRate - a.predictedOverrideRate);
+    const filteredForecasts = result.forecasts.filter(f => f.predictedOverrideRate >= confidenceThreshold);
+    const sortedForecasts = filteredForecasts.sort((a,b) => b.predictedOverrideRate - a.predictedOverrideRate);
+
+    if (sortedForecasts.length === 0) {
+        return <p className="text-muted-foreground text-center py-4">No forecasts meet the current confidence threshold of {confidenceThreshold.toFixed(2)}.</p>;
+    }
+
 
     return (
         <div className="space-y-3">
