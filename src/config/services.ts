@@ -39,7 +39,7 @@ export interface ServicesConfig {
 
 export const servicesConfig: ServicesConfig = {
     firebase: {
-        apiKey: " ",
+        apiKey: "YOUR_FIREBASE_API_KEY",
         authDomain: "stratagemai-xi7q8.firebaseapp.com",
         projectId: "stratagemai-xi7q8",
         storageBucket: "stratagemai-xi7q8.appspot.com",
