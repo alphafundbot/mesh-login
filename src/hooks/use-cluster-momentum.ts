@@ -69,8 +69,12 @@ export function useClusterMomentum(cluster: ClusterInfo | undefined, previousLog
   previousScore: number;
 } {
     const momentum = useMemo(() => {
-        if (!cluster || !previousLogs || previousLogs.length === 0) {
-            return { riskDelta: cluster?.riskScore || 0, previousScore: 0 };
+        if (!cluster) {
+            return { riskDelta: 0, previousScore: 0 };
+        }
+        
+        if (!previousLogs || previousLogs.length === 0) {
+            return { riskDelta: cluster.riskScore, previousScore: 0 };
         }
 
         const tagKeywords = cluster.tag.toLowerCase().split(' ');

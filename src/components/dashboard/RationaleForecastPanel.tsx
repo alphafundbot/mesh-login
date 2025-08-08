@@ -57,6 +57,7 @@ export default function RationaleForecastPanel() {
     const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       if (snapshot.empty) {
+        setResult(null);
         setLoading(false);
         return;
       }

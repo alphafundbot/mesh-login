@@ -11,7 +11,7 @@ import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
 import { useClusterMomentum } from "@/hooks/use-cluster-momentum";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import type { ActionLog } from "@/app/history/HistoryClient"; // Assuming type export from HistoryClient
+import type { ActionLog } from "@/app/history/HistoryClient";
 import { useRouter } from "next/navigation";
 
 
@@ -133,7 +133,7 @@ export default function OverrideMomentum() {
         return () => unsubscribe();
     }, []);
 
-    const { currentLogs, previousLogs } = useMemo(() => {
+    const { currentLogs, previousPeriodLogs } = useMemo(() => {
         const now = Date.now();
         const sevenDays = 7 * 24 * 60 * 60 * 1000;
         const current = allLogs.filter(log => now - log.timestamp.getTime() < sevenDays);
@@ -168,17 +168,50 @@ export default function OverrideMomentum() {
         processRationales();
     }, [currentLogs]);
     
-    const sortedClusters = useMemo(() => Array.from(globalClusters.values())
-        .map(cluster => ({
-            ...cluster,
-            momentum: useClusterMomentum(cluster, previousLogs)
-        }))
-        .filter(c => c.momentum.riskDelta !== 0)
-        .sort((a,b) => Math.abs(b.momentum.riskDelta) - Math.abs(a.momentum.riskDelta)), 
-        [globalClusters, previousLogs]);
+    const sortedClusters = useMemo(() => {
+        if (globalClusters.size === 0) return [];
+        return Array.from(globalClusters.values())
+            .map(cluster => ({
+                ...cluster,
+                momentum: useClusterMomentum(cluster, previousPeriodLogs)
+            }))
+            .filter(c => c.momentum.riskDelta !== 0)
+            .sort((a,b) => Math.abs(b.momentum.riskDelta) - Math.abs(a.momentum.riskDelta));
+    }, [globalClusters, previousPeriodLogs]);
 
-    if(loading) return <Skeleton className="h-48 w-full" />
-    if(sortedClusters.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">No significant override momentum detected.</p>
+    if(loading) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-accent" />
+                        Top Override Momentum
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                </CardContent>
+             </Card>
+        )
+    }
+
+    if(sortedClusters.length === 0) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-accent" />
+                        Top Override Momentum
+                    </CardTitle>
+                </CardHeader>
+                 <CardContent>
+                    <p className="text-sm text-muted-foreground text-center py-4">No significant override momentum detected.</p>
+                 </CardContent>
+            </Card>
+        )
+    }
 
     return (
          <Card>
@@ -191,7 +224,7 @@ export default function OverrideMomentum() {
             </CardHeader>
             <CardContent className="space-y-2">
                 {sortedClusters.slice(0, 5).map(cluster => (
-                    <ClusterMomentumItem key={cluster.tag} cluster={cluster} previousLogs={previousLogs} />
+                    <ClusterMomentumItem key={cluster.tag} cluster={cluster} previousLogs={previousPeriodLogs} />
                 ))}
             </CardContent>
          </Card>
