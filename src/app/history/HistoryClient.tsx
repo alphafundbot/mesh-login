@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -178,15 +179,16 @@ const DELTA_THRESHOLD = 10;
 function ClusterDelta({ currentScore, previousScore }: { currentScore: number; previousScore: number }) {
     const delta = currentScore - previousScore;
     
-    if (previousScore === 0 || Math.abs(delta) < 1) return null;
-
-    const Arrow = delta > 0 ? ArrowUp : ArrowDown;
+    const Arrow = delta > 0 ? ArrowUp : delta < 0 ? ArrowDown : 'span';
+    const arrowIcon = delta === 0 ? '⏸️' : <Arrow className="h-3 w-3" />;
     const isLargeDelta = Math.abs(delta) > DELTA_THRESHOLD;
-    const color = delta > 0 ? "text-red-400" : "text-green-400";
+    let color = "text-muted-foreground";
+    if (delta > 0) color = "text-red-400";
+    if (delta < 0) color = "text-green-400";
 
     return (
         <Badge variant="outline" className={cn("gap-1 font-mono", color, isLargeDelta && "border-red-400/50 font-bold")}>
-            <Arrow className="h-3 w-3" />
+            {arrowIcon}
             {delta > 0 && "+"}{delta.toFixed(0)}
         </Badge>
     );
@@ -955,3 +957,6 @@ export default function HistoryClient() {
   );
 }
 
+
+
+    
