@@ -108,5 +108,3 @@ export const parseDetails = (details: string): ParsedDetails => {
 
   return { isOverride, rationale, action, severity, domains };
 };
-
-    
