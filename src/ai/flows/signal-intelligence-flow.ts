@@ -24,7 +24,7 @@ export type AnalyzeSignalHistoryInput = z.infer<typeof AnalyzeSignalHistoryInput
 const RecommendationSchema = z.object({
     recommendationId: z.string().describe('A unique identifier for the recommendation.'),
     text: z.string().describe('The recommendation text.'),
-    confidence: z.enum(['high', 'medium', 'low']).describe('The AI\'s confidence in this recommendation.'),
+    confidence: z.number().min(0).max(1).describe("The AI's confidence in this recommendation, from 0.0 to 1.0."),
     basedOn: z.array(z.string()).describe('A list of recommendation IDs from past feedback that this new recommendation is based on.'),
 });
 export type Recommendation = z.infer<typeof RecommendationSchema>;
@@ -88,7 +88,7 @@ const prompt = ai.definePrompt({
     patterns: z.array(z.string()).describe('Identified patterns, anomalies, or escalation clusters in the actions.'),
     recommendations: z.array(z.object({
         text: z.string().describe('The recommendation text.'),
-        confidence: z.enum(['high', 'medium', 'low']).describe('The AI\'s confidence in this recommendation based on past feedback.'),
+        confidence: z.number().min(0).max(1).describe("The AI's confidence in this recommendation, from 0.0 to 1.0. Base this on the clarity of patterns and strength of past feedback."),
         basedOn: z.array(z.string()).describe('A list of recommendation IDs from past feedback that this new recommendation is based on.'),
     })).describe('Proactive interventions or configuration hardening suggestions based on the patterns.'),
   })},
@@ -102,7 +102,7 @@ Action Logs:
 Analyze these logs and provide:
 1.  A concise summary of the actions taken.
 2.  Any notable patterns, anomalies, or clusters of activity (e.g., frequent escalations by one role, repeated actions on a specific module).
-3.  Proactive recommendations for system hardening, policy changes, or further investigation. For each recommendation, provide your confidence level ('high', 'medium', or 'low') and list the IDs of past recommendations that influenced your suggestion in the 'basedOn' field. High confidence should be reserved for recommendations strongly supported by past positive feedback.
+3.  Proactive recommendations for system hardening, policy changes, or further investigation. For each recommendation, provide your confidence as a score from 0.0 (low) to 1.0 (high) and list the IDs of past recommendations that influenced your suggestion in the 'basedOn' field. High confidence should be reserved for recommendations strongly supported by past positive feedback and clear data patterns.
 `,
 });
 

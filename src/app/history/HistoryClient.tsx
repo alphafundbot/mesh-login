@@ -399,20 +399,30 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
 type TimeFilter = "24h" | "7d" | "all";
 
 const RecommendationConfidence = ({ rec }: { rec: Recommendation }) => {
-    const confidenceMap = {
-        high: { icon: Sparkles, color: "text-green-400", bgColor: "bg-green-500/10" },
-        medium: { icon: TrendingUp, color: "text-yellow-400", bgColor: "bg-yellow-500/10" },
-        low: { icon: HelpCircle, color: "text-muted-foreground", bgColor: "bg-muted/30" },
-    };
-    const { icon: Icon, color, bgColor } = confidenceMap[rec.confidence];
+    let Icon = HelpCircle;
+    let label = `Low (${rec.confidence.toFixed(2)})`;
+    let color = "text-muted-foreground";
+    let bgColor = "bg-muted/30";
+
+    if (rec.confidence > 0.75) {
+        Icon = Sparkles;
+        label = `High (${rec.confidence.toFixed(2)})`;
+        color = "text-green-400";
+        bgColor = "bg-green-500/10";
+    } else if (rec.confidence > 0.4) {
+        Icon = TrendingUp;
+        label = `Medium (${rec.confidence.toFixed(2)})`;
+        color = "text-yellow-400";
+        bgColor = "bg-yellow-500/10";
+    }
 
     return (
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                     <Badge variant="outline" className={cn("gap-1.5 capitalize", color, bgColor)}>
+                     <Badge variant="outline" className={cn("gap-1.5", color, bgColor)}>
                         <Icon className="h-3 w-3" />
-                        {rec.confidence}
+                        {label}
                     </Badge>
                 </TooltipTrigger>
                 {rec.basedOn && rec.basedOn.length > 0 && (
@@ -573,18 +583,10 @@ export default function HistoryClient() {
 
   const sortedRecommendations = useMemo(() => {
     if (!analysisResult) return [];
-
-    const confidenceValueMap = { high: 0.8, medium: 0.5, low: 0.2 };
     
-    const filtered = analysisResult.recommendations.filter(rec => {
-        const value = confidenceValueMap[rec.confidence];
-        return value >= confidenceThreshold;
-    });
+    const filtered = analysisResult.recommendations.filter(rec => rec.confidence >= confidenceThreshold);
 
-    const confidenceOrder = ['high', 'medium', 'low'];
-    return [...filtered].sort((a, b) => {
-        return confidenceOrder.indexOf(a.confidence) - confidenceOrder.indexOf(b.confidence);
-    });
+    return [...filtered].sort((a, b) => b.confidence - a.confidence);
   }, [analysisResult, confidenceThreshold]);
 
   return (
@@ -729,12 +731,12 @@ export default function HistoryClient() {
                             id="confidence-slider"
                             min={0}
                             max={1}
-                            step={0.1}
+                            step={0.01}
                             value={[confidenceThreshold]}
                             onValueChange={(value) => setConfidenceThreshold(value[0])}
                             className="flex-grow"
                         />
-                         <span className="text-sm font-mono w-8 text-center">{confidenceThreshold.toFixed(1)}</span>
+                         <span className="text-sm font-mono w-10 text-center">{confidenceThreshold.toFixed(2)}</span>
                     </div>
                 </div>
               </div>
