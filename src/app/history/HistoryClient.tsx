@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -90,9 +90,69 @@ type RationaleDialogContent = {
     rationales: TaggedRationale[];
 } | null;
 
+const RISK_WEIGHTS: Record<Severity, number> = {
+    "Warning": 1,
+    "Critical": 3,
+    "Catastrophic": 5
+};
+
+type DomainMetrics = { 
+    count: number; 
+    severities: Record<Severity, number>;
+};
+
+type ClusterInfo = {
+    items: TaggedRationale[];
+    severities: Record<Severity, number>;
+    domains: Record<string, DomainMetrics>;
+    riskScore: number;
+};
+
+type ClusterMap = Map<string, ClusterInfo>;
+
+
+const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
+    const clusters: ClusterMap = new Map();
+
+    rationales.forEach(item => {
+        item.tags.forEach(tag => {
+            if (!clusters.has(tag)) {
+                clusters.set(tag, { 
+                    items: [], 
+                    severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 },
+                    domains: {},
+                    riskScore: 0
+                });
+            }
+            const cluster = clusters.get(tag)!;
+            cluster.items.push(item);
+            cluster.severities[item.severity]++;
+            item.domains.forEach(domain => {
+                if (!cluster.domains[domain]) {
+                    cluster.domains[domain] = { count: 0, severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 } };
+                }
+                cluster.domains[domain].count++;
+                cluster.domains[domain].severities[item.severity]++;
+            });
+        })
+    });
+
+    clusters.forEach(cluster => {
+        let score = 0;
+        score += cluster.severities.Warning * RISK_WEIGHTS.Warning;
+        score += cluster.severities.Critical * RISK_WEIGHTS.Critical;
+        score += cluster.severities.Catastrophic * RISK_WEIGHTS.Catastrophic;
+        cluster.riskScore = score;
+    });
+
+    return clusters;
+};
+
+
 function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
     const [rationaleDialog, setRationaleDialog] = useState<RationaleDialogContent>(null);
     const [loadingRationales, setLoadingRationales] = useState(false);
+    const [taggedRationales, setTaggedRationales] = useState<TaggedRationale[]>([]);
     const { toast } = useToast();
 
     const heatmapData = useMemo(() => {
@@ -117,63 +177,9 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
     }, [logs]);
 
     const rationaleClusters = useMemo(() => {
-        if (!rationaleDialog?.rationales) return null;
-        
-        type DomainMetrics = { 
-            count: number; 
-            severities: Record<Severity, number>;
-        };
-
-        type ClusterInfo = {
-            items: TaggedRationale[];
-            severities: Record<Severity, number>;
-            domains: Record<string, DomainMetrics>;
-            riskScore: number;
-        };
-
-        const clusters = new Map<string, ClusterInfo>();
-        
-        rationaleDialog.rationales.forEach(item => {
-            item.tags.forEach(tag => {
-                if (!clusters.has(tag)) {
-                    clusters.set(tag, { 
-                        items: [], 
-                        severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 },
-                        domains: {},
-                        riskScore: 0
-                    });
-                }
-                const cluster = clusters.get(tag)!;
-                cluster.items.push(item);
-                cluster.severities[item.severity]++;
-                item.domains.forEach(domain => {
-                    if (!cluster.domains[domain]) {
-                        cluster.domains[domain] = { count: 0, severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 } };
-                    }
-                    cluster.domains[domain].count++;
-                    cluster.domains[domain].severities[item.severity]++;
-                });
-            })
-        });
-
-        // Calculate risk score for each cluster
-        const RISK_WEIGHTS: Record<Severity, number> = {
-            "Warning": 1,
-            "Critical": 3,
-            "Catastrophic": 5
-        };
-
-        clusters.forEach(cluster => {
-            let score = 0;
-            score += cluster.severities.Warning * RISK_WEIGHTS.Warning;
-            score += cluster.severities.Critical * RISK_WEIGHTS.Critical;
-            score += cluster.severities.Catastrophic * RISK_WEIGHTS.Catastrophic;
-            cluster.riskScore = score;
-        });
-
-
-        return clusters;
-    }, [rationaleDialog?.rationales]);
+        if (!rationaleDialog) return null;
+        return calculateClusters(rationaleDialog.rationales);
+    }, [rationaleDialog]);
 
     const handleCellClick = async (domain: string, severity: Severity) => {
         setLoadingRationales(true);
@@ -189,13 +195,15 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                 return;
             }
             
-            const taggedRationales = await Promise.all(relevantLogs.map(async (log) => {
+            const processedRationales = await Promise.all(relevantLogs.map(async (log) => {
                 const details = parseDetails(log.details);
                 const { tags } = await tagRationale({ rationale: details.rationale });
                 return { rationale: details.rationale, tags, severity: details.severity!, domains: details.domains || [] };
             }));
+            
+            setTaggedRationales(processedRationales);
+            setRationaleDialog({ domain, severity, rationales: processedRationales });
 
-            setRationaleDialog({ domain, severity, rationales: taggedRationales });
         } catch (error) {
             console.error("Failed to tag rationales:", error);
             toast({
@@ -388,16 +396,24 @@ export default function HistoryClient() {
     return () => unsubscribe();
   }, [toast]);
 
-  const filteredLogs = useMemo(() => {
-    if (timeFilter === "all") {
-      return allLogs;
-    }
+  const { filteredLogs, previousPeriodLogs } = useMemo(() => {
     const now = Date.now();
+    let currentLogs;
+    let previousLogs;
+
+    if (timeFilter === "all") {
+      return { filteredLogs: allLogs, previousPeriodLogs: [] };
+    }
+
     const filterMilliseconds = timeFilter === "24h" ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
     
-    return allLogs.filter(log => {
-      return now - log.timestamp.getTime() < filterMilliseconds;
+    currentLogs = allLogs.filter(log => now - log.timestamp.getTime() < filterMilliseconds);
+    previousLogs = allLogs.filter(log => {
+      const logTime = log.timestamp.getTime();
+      return (now - logTime >= filterMilliseconds) && (now - logTime < 2 * filterMilliseconds);
     });
+
+    return { filteredLogs: currentLogs, previousPeriodLogs: previousLogs };
   }, [allLogs, timeFilter]);
 
   const handleAnalysis = async () => {
@@ -580,5 +596,3 @@ export default function HistoryClient() {
     </div>
   );
 }
-
-    
