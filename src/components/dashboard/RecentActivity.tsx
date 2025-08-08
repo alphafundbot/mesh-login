@@ -17,7 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, getDocs, setDoc, doc } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, getDocs, setDoc, doc, where } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { canUserPerform, type Action } from "@/lib/roles";
 
@@ -241,5 +241,3 @@ export default function RecentActivity() {
     </Card>
   );
 }
-
-    
