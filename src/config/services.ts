@@ -20,7 +20,7 @@ function getEnv(variableName: string, fallbackValue: string = ""): string {
     if(fallbackValue) {
         return fallbackValue;
     }
-    console.warn(`Environment variable ${variableName} is not set.`);
+    console.warn(`Environment variable ${variableName} is not set. You may need to create a .env.local file.`);
     return "";
 }
 
@@ -48,13 +48,13 @@ const firebaseConfigValues = {
     storageBucket: "stratagemai-xi7q8.appspot.com",
     messagingSenderId: "405937962472",
     appId: "1:405937962472:web:a9d3a7c6b9e5d4a1a3b2c1",
-    measurementId: process.env.FIREBASE_MEASUREMENT_ID,
+    measurementId: getEnv('FIREBASE_MEASUREMENT_ID'),
 };
 
 
 export const servicesConfig: ServicesConfig = {
     firebase: firebaseConfigValues,
     gcp: {
-        geminiApiKey: getEnv('GEMINI_API_KEY', firebaseConfigValues.apiKey),
+        geminiApiKey: getEnv('GEMINI_API_KEY'),
     }
 };
