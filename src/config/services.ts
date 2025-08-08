@@ -21,7 +21,7 @@ config({ path: '.env' });
  */
 function getEnv(variableName: string, fallbackValue?: string): string {
     const value = process.env[variableName];
-    if (value !== undefined) {
+    if (value !== undefined && value.trim() !== '') {
         return value;
     }
     if (fallbackValue !== undefined) {
@@ -29,7 +29,13 @@ function getEnv(variableName: string, fallbackValue?: string): string {
     }
     // In a production environment, you would want to throw an error here.
     // For this demo, we'll log a warning and proceed.
-    console.warn(`Warning: Environment variable ${variableName} is not set. Please create a .env.local file and add it.`);
+    console.warn(`
+        ================================================================================
+        Warning: Environment variable ${variableName} is not set.
+        Please create a .env.local file and add the following line:
+        ${variableName}=YOUR_SECRET_KEY
+        ================================================================================
+    `);
     return '';
 }
 
@@ -63,8 +69,8 @@ const firebaseConfigValues: FirebaseConfig = {
 export const servicesConfig: ServicesConfig = {
     firebase: firebaseConfigValues,
     gcp: {
-        // This will load the GEMINI_API_KEY from your .env.local file.
-        // It is critical that you create this file and add your key.
+        // This will load the GEMINI_API_KEY from your .env.local file (priority) or .env file.
+        // It is critical that you create a .env.local file for your private keys.
         geminiApiKey: getEnv('GEMINI_API_KEY'),
     }
 };
