@@ -7,31 +7,29 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { BrainCircuit } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 interface ForecastAnalysis {
     id: string;
     timestamp: Date;
     accuracyScore?: number;
     strategicNotes?: string;
+    divergenceMap?: { rationaleTag: string; predicted: string; actual: string; impact: string }[];
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="p-2 bg-card border border-border rounded-lg shadow-lg">
-        <p className="label text-sm text-foreground">{`${label}`}</p>
-        <p className="intro text-primary font-semibold">{`Accuracy: ${(data.accuracy).toFixed(2)}%`}</p>
-        {data.notes && <p className="desc text-muted-foreground text-xs mt-1 max-w-xs">{data.notes}</p>}
+      <div className="p-2 bg-card border border-border rounded-lg shadow-lg max-w-xs">
+        <p className="label text-sm text-foreground font-semibold">{`${label}`}</p>
+        {data.accuracy && <p className="intro text-primary font-semibold">{`Accuracy: ${(data.accuracy).toFixed(2)}%`}</p>}
+        {data.notes && <p className="desc text-muted-foreground text-xs mt-1">{data.notes}</p>}
       </div>
     );
   }
-
   return null;
 };
-
 
 export default function ForecastMemoryMap() {
     const [analyses, setAnalyses] = useState<ForecastAnalysis[]>([]);
@@ -48,6 +46,7 @@ export default function ForecastMemoryMap() {
                     timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
                     accuracyScore: data.commentary?.accuracyScore,
                     strategicNotes: data.commentary?.strategicNotes,
+                    divergenceMap: data.commentary?.divergenceMap || [],
                 };
             }).filter(a => a.accuracyScore !== undefined);
             setAnalyses(fetchedAnalyses);
@@ -66,11 +65,24 @@ export default function ForecastMemoryMap() {
     }, [toast]);
     
     const chartData = useMemo(() => {
-        return analyses.map(a => ({
-            name: a.timestamp.toLocaleDateString(),
-            accuracy: a.accuracyScore ? parseFloat((a.accuracyScore * 100).toFixed(2)) : null,
-            notes: a.strategicNotes
-        }));
+        return analyses.map(a => {
+            const divergence = a.divergenceMap?.length ?? 0;
+            const volatility = Math.min(100, (divergence / 5) * 100); // Simple volatility score
+            const accuracy = a.accuracyScore ? parseFloat((a.accuracyScore * 100).toFixed(2)) : null;
+            
+            let volatilityRange: [number | null, number | null] = [null, null];
+            if (accuracy !== null) {
+                const halfVol = volatility / 3;
+                volatilityRange = [Math.max(0, accuracy - halfVol), Math.min(100, accuracy + halfVol)];
+            }
+
+            return {
+                name: a.timestamp.toLocaleDateString(),
+                accuracy,
+                notes: a.strategicNotes,
+                volatilityRange
+            }
+        });
     }, [analyses]);
 
     if (loading) {
@@ -85,7 +97,7 @@ export default function ForecastMemoryMap() {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Forecast Memory Map</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><BrainCircuit className="h-6 w-6 text-accent" />Forecast Memory Map</CardTitle>
                     <CardDescription>No forecast analysis data available yet.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -114,7 +126,21 @@ export default function ForecastMemoryMap() {
                             content={<CustomTooltip />}
                         />
                         <Legend />
-                        <Line type="monotone" dataKey="accuracy" stroke="hsl(var(--accent))" strokeWidth={2} activeDot={{ r: 8 }} />
+                        <defs>
+                            <linearGradient id="volatilityGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
+                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <Line type="monotone" dataKey="accuracy" stroke="hsl(var(--accent))" strokeWidth={2} activeDot={{ r: 8 }} dot={{ r: 4 }} />
+                        <Area
+                          type="monotone"
+                          dataKey="volatilityRange"
+                          stroke="hsl(var(--primary))"
+                          fill="url(#volatilityGradient)"
+                          strokeWidth={0}
+                          name="Volatility Range"
+                        />
                     </LineChart>
                 </ResponsiveContainer>
             </CardContent>
