@@ -51,7 +51,7 @@ export default function ValidatorClient() {
         <CardContent className="space-y-4">
           <Textarea
             placeholder='{ "key": "value" }'
-            className="min-h-[300px] font-code"
+            className="min-h-[300px] font-mono"
             value={configText}
             onChange={(e) => setConfigText(e.target.value)}
           />

@@ -84,7 +84,7 @@ export default function AuditClient() {
                     <FormControl>
                       <Textarea
                         placeholder="Paste your raw audit logs here..."
-                        className="min-h-[200px] font-code"
+                        className="min-h-[200px] font-mono"
                         {...field}
                       />
                     </FormControl>
