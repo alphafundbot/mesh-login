@@ -82,9 +82,15 @@ export default function ForecastMemoryMap() {
 
     if (loading) {
         return (
-            <div className="space-y-4">
-                <Skeleton className="h-96 w-full" />
-            </div>
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent className="h-[500px]">
+                    <Skeleton className="h-full w-full" />
+                </CardContent>
+            </Card>
         )
     }
 
