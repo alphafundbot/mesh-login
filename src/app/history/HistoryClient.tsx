@@ -502,7 +502,7 @@ export default function HistoryClient() {
   const [loading, setLoading] = useState(true);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("7d");
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
   const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
     if (typeof window === "undefined") return 0;
@@ -853,3 +853,5 @@ export default function HistoryClient() {
     </div>
   );
 }
+
+    
