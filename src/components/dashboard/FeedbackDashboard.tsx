@@ -91,6 +91,7 @@ export default function FeedbackDashboard() {
                  <Skeleton className="h-80 col-span-1 lg:col-span-3" />
                  <Skeleton className="h-80" />
                  <Skeleton className="h-80" />
+                 <Skeleton className="h-80" />
              </div>
         );
     }

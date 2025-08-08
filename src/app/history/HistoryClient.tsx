@@ -796,7 +796,7 @@ export default function HistoryClient() {
       <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)} className="ml-auto">
         <TabsList>
             <TabsTrigger value="logs">Action Logs</TabsTrigger>
-            <TabsTrigger value="feedback">Feedback Dashboard</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
         </TabsList>
       </Tabs>
   );
