@@ -18,10 +18,10 @@ function getEnv(variableName: string, fallbackValue: string = ""): string {
         return value;
     }
     if(fallbackValue) {
+        // In a real app, you might want to log a warning here.
         return fallbackValue;
     }
-    console.warn(`Environment variable ${variableName} is not set. You may need to create a .env.local file.`);
-    return "";
+    throw new Error(`Environment variable ${variableName} is not set. Please create a .env.local file and add it.`);
 }
 
 export interface FirebaseConfig {
@@ -42,7 +42,7 @@ export interface ServicesConfig {
 }
 
 const firebaseConfigValues = {
-    apiKey: "YOUR_FIREBASE_API_KEY", // This is a public key, safe to hardcode
+    apiKey: "YOUR_FIREBASE_API_KEY", // This is a public key, safe to hardcode if not using other services.
     authDomain: "stratagemai-xi7q8.firebaseapp.com",
     projectId: "stratagemai-xi7q8",
     storageBucket: "stratagemai-xi7q8.appspot.com",
@@ -54,6 +54,6 @@ const firebaseConfigValues = {
 export const servicesConfig: ServicesConfig = {
     firebase: firebaseConfigValues,
     gcp: {
-        geminiApiKey: getEnv('GEMINI_API_KEY', firebaseConfigValues.apiKey),
+        geminiApiKey: getEnv('GEMINI_API_KEY'),
     }
 };

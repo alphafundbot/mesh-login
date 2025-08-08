@@ -24,6 +24,17 @@ const AuditTrailAISummarizationOutputSchema = z.object({
 });
 export type AuditTrailAISummarizationOutput = z.infer<typeof AuditTrailAISummarizationOutputSchema>;
 
+const prompt = ai.definePrompt({
+  name: 'auditTrailAISummarizationPrompt',
+  input: {schema: AuditTrailAISummarizationInputSchema},
+  output: {schema: AuditTrailAISummarizationOutputSchema},
+  model: 'googleai/gemini-1.5-flash',
+  prompt: `You are a security analyst specializing in identifying unusual activity patterns.
+
+You will use the provided audit logs to identify and summarize the security events, and any unusual activity patterns.
+
+Audit Logs: {{{auditLogs}}}`,
+});
 
 const auditTrailAISummarizationFlow = ai.defineFlow(
   {
@@ -32,21 +43,11 @@ const auditTrailAISummarizationFlow = ai.defineFlow(
     outputSchema: AuditTrailAISummarizationOutputSchema,
   },
   async (input) => {
-    const {output} = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
-      prompt: `You are a security analyst specializing in identifying unusual activity patterns.
-
-You will use the provided audit logs to identify and summarize the security events, and any unusual activity patterns.
-
-Audit Logs: {{{auditLogs}}}`,
-      input: {
-        auditLogs: input.auditLogs
-      },
-      output: {
-        schema: AuditTrailAISummarizationOutputSchema
-      }
-    });
-    return output!;
+    const {output} = await prompt(input);
+    if (!output) {
+        throw new Error("Failed to get a response from the AI.");
+    }
+    return output;
   }
 );
 

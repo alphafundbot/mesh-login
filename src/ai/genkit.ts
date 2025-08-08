@@ -1,9 +1,11 @@
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
-import { servicesConfig } from '@/config/services';
+import {servicesConfig} from '@/config/services';
 
 export const ai = genkit({
-  plugins: [googleAI({
-    apiKey: servicesConfig.gcp.geminiApiKey,
-  })],
+  plugins: [
+    googleAI({
+      apiKey: servicesConfig.gcp.geminiApiKey,
+    }),
+  ],
 });
