@@ -358,7 +358,7 @@ function RationaleDialog({
     )
 }
 
-function OverrideHeatmap({ logs, onCellClick, onClusterClick }: { logs: ActionLog[], onCellClick: (domain: string, severity: Severity) => void, onClusterClick: (cluster: ClusterInfo) => void }) {
+function OverrideHeatmap({ logs, onCellClick }: { logs: ActionLog[], onCellClick: (domain: string, severity: Severity) => void }) {
     const heatmapData = useMemo(() => {
         const data: Record<string, Record<Severity, number>> = {};
         let maxOverrides = 0;
@@ -486,7 +486,7 @@ export default function HistoryClient() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("7d");
-  const [viewMode, setViewMode] = useState<ViewMode>("logs");
+  const [viewMode, setViewMode] = useState<ViewMode>("logs" | "feedback");
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
   const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
     if (typeof window === "undefined") return 0;
@@ -636,23 +636,23 @@ export default function HistoryClient() {
     }, [searchParams, filteredLogs, handleHeatmapCellClick]);
     
     const allTaggedRationales = useMemo(() => {
-        return filteredLogs
-          .map((l) => ({ ...l, parsed: parseDetails(l.details) }))
-          .filter(
-            (l) =>
-              l.parsed.isOverride &&
-              l.parsed.rationale &&
-              l.parsed.severity &&
-              l.parsed.domains
-          )
-          .map((l) => {
-            return {
-              rationale: l.parsed.rationale,
-              tags: [],
-              severity: l.parsed.severity!,
-              domains: l.parsed.domains!,
-            };
-          });
+      return filteredLogs
+        .map((l) => ({ ...l, parsed: parseDetails(l.details) }))
+        .filter(
+          (l) =>
+            l.parsed.isOverride &&
+            l.parsed.rationale &&
+            l.parsed.severity &&
+            l.parsed.domains
+        )
+        .map((l) => {
+          return {
+            rationale: l.parsed.rationale,
+            tags: [],
+            severity: l.parsed.severity!,
+            domains: l.parsed.domains!,
+          };
+        });
     }, [filteredLogs]);
     
     const [globalClusters, setGlobalClusters] = useState<ClusterMap>(new Map());
@@ -662,11 +662,16 @@ export default function HistoryClient() {
                 setGlobalClusters(new Map());
                 return;
             };
-            const tagged = await Promise.all(allTaggedRationales.map(async r => {
-                const { tags } = await tagRationale({ rationale: r.rationale });
-                return {...r, tags};
-            }));
-            setGlobalClusters(calculateClusters(tagged));
+            try {
+              const tagged = await Promise.all(allTaggedRationales.map(async r => {
+                  const { tags } = await tagRationale({ rationale: r.rationale });
+                  return {...r, tags};
+              }));
+              setGlobalClusters(calculateClusters(tagged));
+            } catch (e) {
+              console.error("Failed to tag and cluster rationales", e);
+              setGlobalClusters(new Map());
+            }
         }
         tagAndCluster();
     }, [allTaggedRationales]);
@@ -694,7 +699,7 @@ export default function HistoryClient() {
       
       const result = await analyzeSignalHistory({ actionLogs: logsString });
       setAnalysisResult(result);
-    } catch (error) => {
+    } catch (error) {
       console.error("AI analysis failed:", error);
       toast({
         variant: "destructive",
@@ -778,7 +783,7 @@ export default function HistoryClient() {
             <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2">
-                        <OverrideHeatmap logs={filteredLogs} onCellClick={handleHeatmapCellClick} onClusterClick={handleClusterClick} />
+                        <OverrideHeatmap logs={filteredLogs} onCellClick={handleHeatmapCellClick} />
                     </div>
                     <Card>
                         <CardHeader>
