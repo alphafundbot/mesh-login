@@ -1,3 +1,7 @@
+'use server';
+/**
+ * @fileOverview A development server for Genkit, loading all defined flows.
+ */
 import { config } from 'dotenv';
 config();
 

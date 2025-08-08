@@ -90,7 +90,7 @@ export default function ForecastArchiveClient() {
                 <CardHeader>
                     <CardTitle>Archive Empty</CardTitle>
                     <CardDescription>No rationale forecasts have been saved yet.</CardDescription>
-                </CardHeader>
+                </Header>
                 <CardContent>
                     <p className="text-muted-foreground text-center py-4">Forecasts will be archived here automatically.</p>
                 </CardContent>

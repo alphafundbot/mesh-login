@@ -164,4 +164,3 @@ const rationaleForecastFlow = ai.defineFlow(
     return output!;
   }
 );
-

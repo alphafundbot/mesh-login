@@ -78,7 +78,7 @@ export default function ArchiveClient() {
                 <CardHeader>
                     <CardTitle>Archive Empty</CardTitle>
                     <CardDescription>No snapshot diff analyses have been saved yet.</CardDescription>
-                </CardHeader>
+                </Header>
                 <CardContent>
                     <p className="text-muted-foreground text-center py-4">Go to "Snapshots" &gt; "Diff Snapshots" to create and archive an analysis.</p>
                 </CardContent>
