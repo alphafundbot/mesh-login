@@ -21,7 +21,7 @@ export type SuppressionForecastInput = z.infer<typeof SuppressionForecastInputSc
 
 const ForecastSchema = z.object({
     domain: z.string().describe('The domain being analyzed.'),
-    predictedOverrideRate: z.enum(["Low", "Medium", "High", "Critical"]).describe('The forecasted rate of manual overrides for the next operational period.'),
+    predictedOverrideRate: z.number().min(0).max(1).describe('The forecasted rate of manual overrides as a score from 0.0 (low) to 1.0 (high) for the next operational period.'),
     justification: z.string().describe('The reasoning for the forecast, based on historical data trends, override density, and risk deltas.'),
 });
 
@@ -49,7 +49,7 @@ Consider the following factors in your forecast:
 
 For each domain with a notable forecast, provide:
 - The domain name.
-- A predicted override rate ('Low', 'Medium', 'High', 'Critical').
+- A predicted override rate as a score from 0.0 (unlikely) to 1.0 (highly likely).
 - A concise justification for your prediction, citing the key factors.
 
 Focus only on the domains with the most significant risk of future overrides.
