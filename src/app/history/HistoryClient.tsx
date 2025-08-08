@@ -516,7 +516,7 @@ export default function HistoryClient() {
   useEffect(() => {
     const drilldownTime = searchParams.get('time');
     if (drilldownTime && (drilldownTime === '24h' || drilldownTime === '7d' || drilldownTime === 'all')) {
-        setTimeFilter(drilldownTime);
+        setTimeFilter(drilldownTime as TimeFilter);
     }
   }, [searchParams]);
 
@@ -853,5 +853,3 @@ export default function HistoryClient() {
     </div>
   );
 }
-
-    
