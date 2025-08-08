@@ -577,16 +577,6 @@ export default function HistoryClient() {
         openRationaleModal(title, description, cluster.items);
     }, [openRationaleModal]);
     
-    useEffect(() => {
-        const autoStart = searchParams.get('autostart');
-        const domain = searchParams.get('domain');
-        const severity = searchParams.get('severity') as Severity;
-
-        if (autoStart === 'true' && domain && severity && filteredLogs.length > 0) {
-            handleHeatmapCellClick(domain, severity);
-        }
-    }, [searchParams, filteredLogs, handleHeatmapCellClick]);
-    
     const allTaggedRationales = useMemo(() => {
       return filteredLogs
         .map((l) => ({ ...l, parsed: parseDetails(l.details) }))
@@ -630,6 +620,24 @@ export default function HistoryClient() {
     }, [allTaggedRationales]);
 
     const sortedGlobalClusters = useMemo(() => Array.from(globalClusters.values()).sort((a, b) => b.riskScore - a.riskScore), [globalClusters]);
+
+    useEffect(() => {
+        const autoStart = searchParams.get('autostart');
+        const domain = searchParams.get('domain');
+        const severity = searchParams.get('severity') as Severity;
+        const clusterTag = searchParams.get('cluster');
+
+        if (autoStart !== 'true' || filteredLogs.length === 0) return;
+
+        if (domain && severity) {
+            handleHeatmapCellClick(domain, severity);
+        } else if (clusterTag && globalClusters.size > 0) {
+            const cluster = globalClusters.get(clusterTag);
+            if (cluster) {
+                handleClusterClick(cluster);
+            }
+        }
+    }, [searchParams, filteredLogs, handleHeatmapCellClick, handleClusterClick, globalClusters]);
 
   const handleAnalysis = async () => {
     setLoadingAnalysis(true);

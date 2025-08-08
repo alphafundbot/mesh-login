@@ -85,8 +85,8 @@ function ClusterMomentumItem({ cluster, previousLogs }: { cluster: ClusterInfo, 
 
     const Arrow = riskDelta > 0 ? ArrowUp : ArrowDown;
     let color = "text-muted-foreground";
-    if (riskDelta > 0) color = "text-green-400";
-    if (riskDelta < 0) color = "text-red-400";
+    if (riskDelta > 0) color = "text-red-400";
+    if (riskDelta < 0) color = "text-green-400";
     
     const handleInvestigate = () => {
         const params = new URLSearchParams({
