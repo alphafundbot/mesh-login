@@ -37,17 +37,17 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "../ui/button";
+import { Textarea } from "../ui/textarea";
 
 // Generates sample logs for a given domain to simulate fetching real data
 const generateDomainLogs = (domainName: string) => {
@@ -85,6 +85,7 @@ type Severity = "Warning" | "Critical" | "Catastrophic";
 interface EscalationDetails {
   severity: Severity;
   anomalousDomains: { domain: string; stability: number; security: number }[];
+  action?: string;
 }
 
 const CustomTick = (props: any) => {
@@ -137,6 +138,7 @@ export default function IntelligenceMap() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<any[]>([]);
   const [escalation, setEscalation] = useState<EscalationDetails | null>(null);
+  const [rationale, setRationale] = useState("");
 
   const { toast } = useToast();
   const { user } = useUser();
@@ -229,54 +231,68 @@ export default function IntelligenceMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleEscalationResponse = (response: string) => {
-     if (!escalation) return;
-    const details = `Strategist response to ${escalation.severity} escalation involving ${escalation.anomalousDomains.map(d => d.domain).join(', ')}: ${response}`;
+  const handleActionClick = (action: string) => {
+    if (!escalation) return;
+    setEscalation({ ...escalation, action });
+  };
+  
+  const handleRationaleSubmit = () => {
+    if (!escalation || !escalation.action) return;
+    const details = `Strategist response to ${escalation.severity} escalation involving ${escalation.anomalousDomains.map(d => d.domain).join(', ')}. Action: ${escalation.action}. Rationale: ${rationale || "Not provided."}`;
     handleLogAction("STRATEGIST_RESPONSE", details);
     toast({
       title: "Action Confirmed",
-      description: `Your response ('${response}') to the ${escalation.severity} event has been logged.`,
+      description: `Your response ('${escalation.action}') to the ${escalation.severity} event has been logged.`,
     });
     setEscalation(null);
-  }
+    setRationale("");
+  };
 
+  const handleDismiss = () => {
+    if (!escalation) return;
+    const details = `Strategist dismissed ${escalation.severity} escalation involving ${escalation.anomalousDomains.map(d => d.domain).join(', ')}`;
+    handleLogAction("DISMISS", details);
+    setEscalation(null);
+    setRationale("");
+  }
+  
   const renderActionButtons = () => {
     if (!escalation) return null;
 
     switch (escalation.severity) {
       case "Warning":
         return (
-          <AlertDialogAction onClick={() => handleEscalationResponse("Acknowledge")}>
+          <Button onClick={() => handleActionClick("Acknowledge")}>
             Acknowledge
-          </AlertDialogAction>
+          </Button>
         );
       case "Critical":
         return (
           <>
-            <AlertDialogAction onClick={() => handleEscalationResponse("Quarantine")}>
+            <Button onClick={() => handleActionClick("Quarantine")}>
               Quarantine
-            </AlertDialogAction>
-            <AlertDialogAction onClick={() => handleEscalationResponse("Rollback")}>
+            </Button>
+            <Button onClick={() => handleActionClick("Rollback")}>
               Rollback
-            </AlertDialogAction>
+            </Button>
           </>
         );
       case "Catastrophic":
         return (
           <>
-            <AlertDialogAction onClick={() => handleEscalationResponse("Rollback")}>
+            <Button onClick={() => handleActionClick("Rollback")}>
               Rollback
-            </AlertDialogAction>
-            <AlertDialogAction onClick={() => handleEscalationResponse("TAKE_ACTION")}>
+            </Button>
+            <Button onClick={() => handleActionClick("TAKE_ACTION")}>
               Take Action & Log
-            </AlertDialogAction>
+            </Button>
           </>
         );
       default:
         return (
-          <AlertDialogAction onClick={() => handleEscalationResponse("Acknowledge")}>
+          <Button onClick={() => handleActionClick("Acknowledge")}>
             Acknowledge
-          </AlertDialogAction>
+          </Button>
         );
     }
   };
@@ -371,19 +387,19 @@ export default function IntelligenceMap() {
       </Card>
 
       {escalation && severityConfig && (
-        <AlertDialog
+        <Dialog
           open={!!escalation}
-          onOpenChange={(open) => !open && setEscalation(null)}
+          onOpenChange={(open) => !open && handleDismiss()}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle
                 className={`flex items-center gap-2 ${severityConfig.color}`}
               >
                 <SeverityIcon className="h-6 w-6" />
-                {escalation.severity} Escalation Protocol Triggered
-              </AlertDialogTitle>
-              <AlertDialogDescription>
+                {escalation.severity} Escalation Protocol
+              </DialogTitle>
+              <DialogDescription>
                 The system has detected anomalies in{" "}
                 {escalation.anomalousDomains.length} domains, requiring
                 strategist attention.
@@ -420,16 +436,32 @@ export default function IntelligenceMap() {
                     </div>
                   ))}
                 </div>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => handleEscalationResponse("Dismissed")}>
-                  Dismiss
-              </AlertDialogCancel>
-              {renderActionButtons()}
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </DialogDescription>
+            </DialogHeader>
+
+            {escalation.action ? (
+              <div className="space-y-4 pt-4">
+                 <h3 className="font-semibold">Log Rationale for: <Badge variant="destructive">{escalation.action}</Badge></h3>
+                <Textarea
+                  placeholder="Provide context for this action..."
+                  value={rationale}
+                  onChange={(e) => setRationale(e.target.value)}
+                  className="min-h-[100px]"
+                />
+                 <DialogFooter>
+                  <Button variant="outline" onClick={() => setEscalation({...escalation, action: undefined })}>Back</Button>
+                  <Button onClick={handleRationaleSubmit}>Submit Action</Button>
+                </DialogFooter>
+              </div>
+            ) : (
+               <DialogFooter>
+                 <Button variant="outline" onClick={handleDismiss}>Dismiss</Button>
+                 {renderActionButtons()}
+               </DialogFooter>
+            )}
+
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
