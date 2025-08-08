@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -18,7 +17,7 @@ interface ForecastAnalysis {
     divergenceMap?: { rationaleTag: string; predicted: string; actual: string; impact: string }[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = React.memo(({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -30,7 +29,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     );
   }
   return null;
-};
+});
+CustomTooltip.displayName = 'CustomTooltip';
+
 
 export default function ForecastMemoryMap() {
     const [analyses, setAnalyses] = useState<ForecastAnalysis[]>([]);
@@ -100,7 +101,7 @@ export default function ForecastMemoryMap() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><BrainCircuit className="h-6 w-6 text-accent" />Forecast Memory Map</CardTitle>
                     <CardDescription>No forecast analysis data available yet.</CardDescription>
-                </Header>
+                </CardHeader>
                 <CardContent>
                     <p className="text-muted-foreground text-center py-4">Run some forecasts and replays to build the memory map.</p>
                 </CardContent>
