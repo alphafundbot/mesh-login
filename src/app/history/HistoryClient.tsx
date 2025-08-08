@@ -37,7 +37,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 
 
@@ -433,19 +433,19 @@ export default function HistoryClient() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
-  const [showLowConfidence, setShowLowConfidence] = useState(() => {
-    if (typeof window === "undefined") return true;
-    const saved = localStorage.getItem("showLowConfidence");
-    return saved !== null ? JSON.parse(saved) : true;
+  const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    const saved = localStorage.getItem("confidenceThreshold");
+    return saved !== null ? parseFloat(saved) : 0;
   });
   const { toast } = useToast();
   const { user } = useUser();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("showLowConfidence", JSON.stringify(showLowConfidence));
+      localStorage.setItem("confidenceThreshold", String(confidenceThreshold));
     }
-  }, [showLowConfidence]);
+  }, [confidenceThreshold]);
 
   useEffect(() => {
     const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
@@ -573,16 +573,19 @@ export default function HistoryClient() {
 
   const sortedRecommendations = useMemo(() => {
     if (!analysisResult) return [];
+
+    const confidenceValueMap = { high: 0.8, medium: 0.5, low: 0.2 };
     
-    const filtered = showLowConfidence
-      ? analysisResult.recommendations
-      : analysisResult.recommendations.filter(rec => rec.confidence !== 'low');
+    const filtered = analysisResult.recommendations.filter(rec => {
+        const value = confidenceValueMap[rec.confidence];
+        return value >= confidenceThreshold;
+    });
 
     const confidenceOrder = ['high', 'medium', 'low'];
     return [...filtered].sort((a, b) => {
         return confidenceOrder.indexOf(a.confidence) - confidenceOrder.indexOf(b.confidence);
     });
-  }, [analysisResult, showLowConfidence]);
+  }, [analysisResult, confidenceThreshold]);
 
   return (
     <div className="space-y-6">
@@ -717,15 +720,22 @@ export default function HistoryClient() {
                 </ul>
             </div>
              <div className="border-t pt-4">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
-                <div className="flex items-center space-x-2">
-                    <Switch
-                        id="show-low-confidence"
-                        checked={showLowConfidence}
-                        onCheckedChange={setShowLowConfidence}
-                    />
-                    <Label htmlFor="show-low-confidence" className="text-sm">Show Low-Confidence</Label>
+                <div className="flex items-center space-x-4 w-1/2 max-w-sm">
+                    <Label htmlFor="confidence-slider" className="text-sm whitespace-nowrap">Min Confidence</Label>
+                    <div className="flex-grow flex items-center gap-2">
+                        <Slider
+                            id="confidence-slider"
+                            min={0}
+                            max={1}
+                            step={0.1}
+                            value={[confidenceThreshold]}
+                            onValueChange={(value) => setConfidenceThreshold(value[0])}
+                            className="flex-grow"
+                        />
+                         <span className="text-sm font-mono w-8 text-center">{confidenceThreshold.toFixed(1)}</span>
+                    </div>
                 </div>
               </div>
               <div className="space-y-4">
@@ -768,5 +778,7 @@ export default function HistoryClient() {
     </div>
   );
 }
+
+    
 
     
