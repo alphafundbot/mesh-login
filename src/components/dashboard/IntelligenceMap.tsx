@@ -134,6 +134,12 @@ const SEVERITY_CONFIG = {
   Catastrophic: { icon: ShieldX, color: "text-red-500", badge: "destructive" },
 };
 
+const SEVERITY_RATIONALE_TEMPLATES: Record<Severity, string> = {
+  Warning: "Acknowledged. Monitoring anomaly for further signal drift.",
+  Critical: "Initiating response to prevent propagation of critical failure.",
+  Catastrophic: "Initiating emergency rollback to restore mesh integrity.",
+};
+
 export default function IntelligenceMap() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -233,6 +239,8 @@ export default function IntelligenceMap() {
 
   const handleActionClick = (action: string) => {
     if (!escalation) return;
+    const template = SEVERITY_RATIONALE_TEMPLATES[escalation.severity] || "";
+    setRationale(template);
     setEscalation({ ...escalation, action });
   };
   
