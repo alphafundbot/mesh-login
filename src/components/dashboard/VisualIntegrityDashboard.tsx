@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -13,7 +13,7 @@ import {
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp, addDoc, serverTimestamp, getDocs, limit } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
-import { Eye, TrendingUp, Settings, Lightbulb, ArrowUp, ArrowDown, BarChart, ShieldAlert } from "lucide-react";
+import { Eye, TrendingUp, Settings, Lightbulb, ArrowUp, ArrowDown, BarChart, ShieldAlert, RefreshCw } from "lucide-react";
 import { forecastSuppression, type SuppressionForecastOutput } from "@/ai/flows/suppression-forecast-flow";
 import { forecastRationales, type RationaleForecastOutput } from "@/ai/flows/rationale-forecast-flow";
 import { useToast } from "@/hooks/use-toast";
@@ -102,18 +102,17 @@ const getRiskLabel = (rate: number) => {
 
 
 export default function VisualIntegrityDashboard() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadingLogs, setLoadingLogs] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
   
-  // State for all panels
   const [allLogs, setAllLogs] = useState<ActionLog[]>([]);
   const [suppressionForecast, setSuppressionForecast] = useState<SuppressionForecastOutput | null>(null);
   const [rationaleForecast, setRationaleForecast] = useState<RationaleForecastOutput | null>(null);
   const [globalClusters, setGlobalClusters] = useState<ClusterMap>(new Map());
   const [confidenceThreshold, setConfidenceThreshold] = useState(0);
 
-  // Memoized calculations
   const { currentLogs, previousPeriodLogs } = useMemo(() => {
     const now = Date.now();
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
@@ -124,6 +123,94 @@ export default function VisualIntegrityDashboard() {
     });
     return { currentLogs: current, previousPeriodLogs: previous };
   }, [allLogs]);
+
+  useEffect(() => {
+    const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        setLoadingLogs(true);
+        if (snapshot.empty) {
+            setAllLogs([]);
+            setLoadingLogs(false);
+            return;
+        }
+        const logs = snapshot.docs.map((doc) => ({
+            ...doc.data(),
+            id: doc.id,
+            timestamp: (doc.data().timestamp as Timestamp)?.toDate() || new Date(),
+        })) as ActionLog[];
+        setAllLogs(logs);
+        setLoadingLogs(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleGenerateForecasts = async () => {
+    setLoading(true);
+    setSuppressionForecast(null);
+    setRationaleForecast(null);
+    setGlobalClusters(new Map());
+
+    if (currentLogs.length === 0) {
+        toast({ title: "No Data", description: "No logs found in the last 7 days to generate forecasts."});
+        setLoading(false);
+        return;
+    }
+
+    const logsString = currentLogs.map(log => `[${log.timestamp.toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`).join("\n");
+    
+    try {
+      const [suppression, taggedRationales] = await Promise.all([
+         forecastSuppression({ actionLogs: logsString }),
+         Promise.all(currentLogs
+            .map(l => ({...l, parsed: parseDetails(l.details)}))
+            .filter(l => l.parsed.isOverride && l.parsed.rationale && l.parsed.severity)
+            .map(l => ({ rationale: l.parsed.rationale!, tags: [], severity: l.parsed.severity!, domains: l.parsed.domains! }))
+            .map(async r => ({...r, tags: (await tagRationale({ rationale: r.rationale})).tags}))
+        )
+      ]);
+      setSuppressionForecast(suppression);
+      const clusters = calculateClusters(taggedRationales);
+      setGlobalClusters(clusters);
+      
+      const feedbackQuery = query(collection(db, 'feedback'));
+      const feedbackSnapshot = await getDocs(feedbackQuery);
+      const feedbackSummary: Record<string, { up: number, down: number }> = {};
+      feedbackSnapshot.forEach(doc => {
+          const data = doc.data();
+          const text = data.recommendationText || `Rec ID: ${data.recommendationId}`;
+          if (!feedbackSummary[text]) feedbackSummary[text] = { up: 0, down: 0 };
+          if (data.rating === 'up') feedbackSummary[text].up++;
+          else if (data.rating === 'down') feedbackSummary[text].down++;
+      });
+
+      const clusterMomentumVectors = Array.from(clusters.entries()).map(([tag, data]) => ({ tag, riskScore: data.riskScore, riskDelta: useClusterMomentum(data, previousPeriodLogs).riskDelta, recentFrequency: data.items.length }));
+
+      const rationaleOutput = await forecastRationales({
+          clusterMomentumVectors,
+          strategistFeedbackSummary: feedbackSummary
+        });
+      setRationaleForecast(rationaleOutput);
+      
+       if (rationaleOutput && rationaleOutput.forecasts.length > 0) {
+          const latestForecastQuery = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"), limit(1));
+          const latestForecastSnapshot = await getDocs(latestForecastQuery);
+          if (latestForecastSnapshot.empty || JSON.stringify(latestForecastSnapshot.docs[0].data().forecast) !== JSON.stringify(rationaleOutput)) {
+              await addDoc(collection(db, "forecast_analysis"), {
+                forecast: rationaleOutput,
+                inputs: { clusterMomentumVectors, feedbackSummary },
+                timestamp: serverTimestamp(),
+              });
+          }
+        }
+      toast({ title: "Forecasts Generated", description: "Successfully updated integrity matrix."});
+    } catch (error) {
+       console.error("One or more forecasts failed:", error);
+       toast({ variant: "destructive", title: "Forecast Error", description: "Failed to update all forecast panels."});
+    } finally {
+        setLoading(false);
+    }
+  };
+
 
    const escalationData = useMemo(() => {
     if (allLogs.length === 0) return {
@@ -201,94 +288,6 @@ export default function VisualIntegrityDashboard() {
     }
   }, [confidenceThreshold]);
 
-  // Main data fetching and processing effect
-  useEffect(() => {
-    const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      setLoading(true);
-      if (snapshot.empty) {
-        setAllLogs([]);
-        setLoading(false);
-        return;
-      }
-      
-      const logs = snapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-        timestamp: (doc.data().timestamp as Timestamp)?.toDate() || new Date(),
-      })) as ActionLog[];
-      setAllLogs(logs);
-
-      // Branch for forecasts
-      const now = Date.now();
-      const sevenDays = 7 * 24 * 60 * 60 * 1000;
-      const currentLogsSlice = logs.filter(log => now - log.timestamp.getTime() < sevenDays);
-      
-      if (currentLogsSlice.length > 0) {
-        const logsString = currentLogsSlice.map(log => `[${log.timestamp.toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`).join("\n");
-        
-        try {
-          const [suppression, taggedRationales] = await Promise.all([
-             forecastSuppression({ actionLogs: logsString }),
-             Promise.all(currentLogsSlice
-                .map(l => ({...l, parsed: parseDetails(l.details)}))
-                .filter(l => l.parsed.isOverride && l.parsed.rationale && l.parsed.severity)
-                .map(l => ({ rationale: l.parsed.rationale!, tags: [], severity: l.parsed.severity!, domains: l.parsed.domains! }))
-                .map(async r => ({...r, tags: (await tagRationale({ rationale: r.rationale})).tags}))
-            )
-          ]);
-          setSuppressionForecast(suppression);
-          setGlobalClusters(calculateClusters(taggedRationales));
-          // Rationale Forecast (dependent on clusters and feedback)
-          const feedbackQuery = query(collection(db, 'feedback'));
-          const feedbackSnapshot = await getDocs(feedbackQuery);
-          const feedbackSummary: Record<string, { up: number, down: number }> = {};
-          feedbackSnapshot.forEach(doc => {
-              const data = doc.data();
-              const text = data.recommendationText || `Rec ID: ${data.recommendationId}`;
-              if (!feedbackSummary[text]) feedbackSummary[text] = { up: 0, down: 0 };
-              if (data.rating === 'up') feedbackSummary[text].up++;
-              else if (data.rating === 'down') feedbackSummary[text].down++;
-          });
-
-          const clusterMomentumVectors = Array.from(calculateClusters(taggedRationales).entries()).map(([tag, data]) => ({ tag, riskScore: data.riskScore, riskDelta: useClusterMomentum(data, previousPeriodLogs).riskDelta, recentFrequency: data.items.length }));
-
-          const rationaleOutput = await forecastRationales({
-              clusterMomentumVectors,
-              strategistFeedbackSummary: feedbackSummary
-            });
-          setRationaleForecast(rationaleOutput);
-           if (rationaleOutput && rationaleOutput.forecasts.length > 0) {
-              const latestForecastQuery = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"), limit(1));
-              const latestForecastSnapshot = await getDocs(latestForecastQuery);
-              if (latestForecastSnapshot.empty || JSON.stringify(latestForecastSnapshot.docs[0].data().forecast) !== JSON.stringify(rationaleOutput)) {
-                  await addDoc(collection(db, "forecast_analysis"), {
-                    forecast: rationaleOutput,
-                    inputs: { clusterMomentumVectors, feedbackSummary },
-                    timestamp: serverTimestamp(),
-                  });
-              }
-            }
-
-
-        } catch (error) {
-           console.error("One or more forecasts failed:", error);
-           toast({ variant: "destructive", title: "Forecast Error", description: "Failed to update all forecast panels."});
-        }
-      } else {
-        setSuppressionForecast(null);
-        setRationaleForecast(null);
-        setGlobalClusters(new Map());
-      }
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching HUD actions:", error);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [previousPeriodLogs, toast]);
-
-
   const handleInvestigate = () => {
     if (!escalationData || !escalationData.topDomain || !escalationData.topDomainSeverity) return;
     const params = new URLSearchParams({
@@ -311,16 +310,24 @@ export default function VisualIntegrityDashboard() {
   return (
     <Card className="h-full transition-shadow duration-300 hover:shadow-xl">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-            <BarChart className="h-6 w-6 text-accent" />
-            Visual Integrity Matrix
-        </CardTitle>
-        <CardDescription>
-            AI-surfaced view of system stress, risk trends, and predictive forecasts.
-        </CardDescription>
+        <div className="flex justify-between items-start">
+            <div>
+                <CardTitle className="flex items-center gap-2">
+                    <BarChart className="h-6 w-6 text-accent" />
+                    Visual Integrity Matrix
+                </CardTitle>
+                <CardDescription>
+                    AI-surfaced view of system stress, risk trends, and predictive forecasts.
+                </CardDescription>
+            </div>
+            <Button onClick={handleGenerateForecasts} disabled={loading || loadingLogs} size="sm">
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                Generate Forecasts
+            </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {loading ? renderLoadingSkeleton() : (
+        {(loading || loadingLogs) ? renderLoadingSkeleton() : (
           <>
             {/* Escalation Matrix */}
             <div className={cn("space-y-3 rounded-lg p-3 transition-colors duration-300", escalationData.riskDelta > 10 ? "bg-red-900/30 border border-destructive/50" : "bg-muted/20")}>

@@ -198,7 +198,7 @@ export default function RecentActivity() {
             <pre className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-lg overflow-x-auto">
                 <code>{latestLog}</code>
             </pre>
-            <Button onClick={handleAnalysis} disabled={loading} className="mt-4">
+            <Button onClick={handleAnalysis} disabled={loading || !latestLog} className="mt-4">
                 {loading ? "Analyzing..." : "Analyze with AI"}
             </Button>
           </div>

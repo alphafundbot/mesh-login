@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,50 +15,38 @@ import {
   analyzeSignalHistory,
   type AnalyzeSignalHistoryOutput,
 } from "@/ai/flows/signal-intelligence-flow";
-import { Bot, BrainCircuit, Lightbulb, History } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, History, RefreshCw } from "lucide-react";
 import type { Snapshot } from "@/lib/snapshots";
+import { Button } from "@/components/ui/button";
 
 export default function SnapshotClient({ snapshot }: { snapshot: Snapshot }) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const getAnalysis = async () => {
-      setLoading(true);
-      try {
-        const output = await analyzeSignalHistory({
-          actionLogs: snapshot.data.logs,
-        });
-        setResult(output);
-      } catch (error) {
-        console.error("AI analysis failed:", error);
-        toast({
-          variant: "destructive",
-          title: "Analysis Failed",
-          description: "Could not get AI analysis for this snapshot.",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    getAnalysis();
-  }, [snapshot, toast]);
+  const handleAnalysis = async () => {
+    setLoading(true);
+    setResult(null);
+    try {
+      const output = await analyzeSignalHistory({
+        actionLogs: snapshot.data.logs,
+      });
+      setResult(output);
+    } catch (error) {
+      console.error("AI analysis failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Analysis Failed",
+        description: "Could not get AI analysis for this snapshot.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Raw Signal History</CardTitle>
-            <CardDescription>{snapshot.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-40 w-full" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
+  const renderLoading = () => (
+     <Card>
+        <CardHeader>
             <CardTitle className="flex items-center gap-2 text-accent">
               <Bot className="h-6 w-6" /> AI Synthesis
             </CardTitle>
@@ -65,7 +54,7 @@ export default function SnapshotClient({ snapshot }: { snapshot: Snapshot }) {
               The AI is analyzing the historical data to provide insights.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+        <CardContent className="space-y-6">
             <div className="space-y-2">
               <h3 className="font-semibold flex items-center gap-2">
                 <History className="h-5 w-5" /> Summary
@@ -88,26 +77,29 @@ export default function SnapshotClient({ snapshot }: { snapshot: Snapshot }) {
               <Skeleton className="h-4 w-3/4" />
             </div>
           </CardContent>
-        </Card>
-      </div>
-    );
-  }
+    </Card>
+  )
 
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Raw Signal History</CardTitle>
-          <CardDescription>{snapshot.description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-lg overflow-x-auto">
-            <code>{snapshot.data.logs}</code>
-          </pre>
-        </CardContent>
-      </Card>
-      {result && (
-        <Card>
+  const renderContent = () => {
+     if (!result) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-accent">
+                        <Bot className="h-6 w-6" /> AI Synthesis
+                    </CardTitle>
+                    <CardDescription>
+                      AI-generated analysis of the signal history from this event.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground text-center py-4">No analysis available. Click "Analyze Snapshot" to generate insights.</p>
+                </CardContent>
+            </Card>
+        )
+     }
+    return (
+         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-accent">
               <Bot className="h-6 w-6" /> AI Synthesis
@@ -150,7 +142,32 @@ export default function SnapshotClient({ snapshot }: { snapshot: Snapshot }) {
             </div>
           </CardContent>
         </Card>
-      )}
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Raw Signal History</CardTitle>
+          <CardDescription>{snapshot.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <pre className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-lg overflow-x-auto">
+            <code>{snapshot.data.logs}</code>
+          </pre>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleAnalysis} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Analyze Snapshot
+        </Button>
+      </div>
+      
+      {loading ? renderLoading() : renderContent()}
+
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from 'next/link';
-import { ChevronRight, Lock, Bot, BrainCircuit, Lightbulb, History } from "lucide-react";
+import { ChevronRight, Lock, Bot, BrainCircuit, Lightbulb, History, RefreshCw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
 import { useToast } from "@/hooks/use-toast";
@@ -39,13 +39,13 @@ const generateModuleLogs = (moduleName: string) => {
 
 export default function ModuleClient({ domain, moduleName }: { domain: Domain, moduleName: string }) {
   const isSensitive = SENSITIVE_MODULES.includes(moduleName);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
   const { toast } = useToast();
 
-   useEffect(() => {
-    const getAnalysis = async () => {
+   const handleAnalysis = async () => {
       setLoading(true);
+      setResult(null);
       try {
         const simulatedLogs = generateModuleLogs(moduleName);
         const output = await analyzeSignalHistory({ actionLogs: simulatedLogs });
@@ -61,9 +61,7 @@ export default function ModuleClient({ domain, moduleName }: { domain: Domain, m
         setLoading(false);
       }
     };
-    getAnalysis();
-  }, [moduleName, toast]);
-
+    
   const renderLoading = () => (
      <Card>
         <CardHeader>
@@ -92,7 +90,7 @@ export default function ModuleClient({ domain, moduleName }: { domain: Domain, m
 
   const renderContent = () => {
     if (!result) {
-        return <p className="text-muted-foreground text-center py-4">No analysis available for this module.</p>
+        return <p className="text-muted-foreground text-center py-4">No analysis available. Click "Analyze Module" to generate insights.</p>
     }
     return (
         <Card>
@@ -135,6 +133,13 @@ export default function ModuleClient({ domain, moduleName }: { domain: Domain, m
         </div>
         <div className="flex items-center justify-between space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">{moduleName}</h1>
+        </div>
+        
+        <div className="flex justify-end">
+            <Button onClick={handleAnalysis} disabled={loading}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Analyze Module
+            </Button>
         </div>
 
         {loading ? renderLoading() : renderContent()}

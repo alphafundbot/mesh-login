@@ -10,7 +10,7 @@ import {
   submitFeedback,
 } from "@/ai/flows/signal-intelligence-flow";
 import { useToast } from "@/hooks/use-toast";
-import { Bot, BrainCircuit, Lightbulb, History, ThumbsUp, ThumbsDown, Sparkles, TrendingUp, HelpCircle, HardDrive, ChevronRight } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, History, ThumbsUp, ThumbsDown, Sparkles, TrendingUp, HelpCircle, HardDrive, ChevronRight, RefreshCw } from "lucide-react";
 import type { Recommendation } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -94,7 +94,7 @@ const RecommendationConfidence = ({ rec }: { rec: Recommendation }) => {
 
 
 export default function DomainClient({ domain }: { domain: Domain }) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalyzeSignalHistoryOutput | null>(
     null
   );
@@ -117,9 +117,9 @@ export default function DomainClient({ domain }: { domain: Domain }) {
     }
   }, [confidenceThreshold]);
 
-  useEffect(() => {
-    const getAnalysis = async () => {
+  const handleAnalysis = async () => {
       setLoading(true);
+      setResult(null);
       try {
         const simulatedLogs = generateDomainLogs(domain);
         const output = await analyzeSignalHistory({ actionLogs: simulatedLogs });
@@ -135,8 +135,6 @@ export default function DomainClient({ domain }: { domain: Domain }) {
         setLoading(false);
       }
     };
-    getAnalysis();
-  }, [domain, toast]);
   
   const handleFeedback = async (recommendation: Recommendation, rating: 'up' | 'down') => {
     if (feedbackGiven[recommendation.recommendationId]) return; 
@@ -176,33 +174,10 @@ export default function DomainClient({ domain }: { domain: Domain }) {
   }, [result]);
 
   const filteredRecommendations = useMemo(() => {
+      if (!result) return [];
       return sortedRecommendations.filter(rec => rec.confidence >= confidenceThreshold);
-  }, [sortedRecommendations, confidenceThreshold]);
+  }, [sortedRecommendations, confidenceThreshold, result]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6 mt-6">
-        <Card>
-            <CardHeader><CardTitle>Intelligence Feed</CardTitle></CardHeader>
-            <CardContent>
-                <Skeleton className="h-40 w-full" />
-            </CardContent>
-        </Card>
-         <Card>
-            <CardHeader><CardTitle>Domain Modules</CardTitle></CardHeader>
-            <CardContent>
-                <Skeleton className="h-20 w-full" />
-            </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
-  if (!result) {
-    return (
-        <div className="text-center text-muted-foreground mt-6">No analysis data available.</div>
-    )
-  }
 
   return (
     <div className="space-y-6 mt-6">
@@ -227,85 +202,105 @@ export default function DomainClient({ domain }: { domain: Domain }) {
             </CardContent>
         </Card>
 
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-accent"><History className="h-5 w-5" />Action History Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground whitespace-pre-wrap">
-              {result.summary}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-accent"><BrainCircuit className="h-5 w-5" />Detected Patterns</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc pl-5 text-muted-foreground space-y-1">
-              {result.patterns.map((pattern, index) => (
-                  <li key={index}>{pattern}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+      <div className="flex justify-end">
+        <Button onClick={handleAnalysis} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Analyze Domain Signals
+        </Button>
       </div>
-      <Card>
-        <CardHeader>
-            <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-accent"><Lightbulb className="h-5 w-5" />Tactical Recommendations</CardTitle>
-                <div className="flex items-center space-x-4 w-1/2 max-w-sm">
-                    <Label htmlFor="confidence-slider" className="text-sm whitespace-nowrap">Min Confidence</Label>
-                    <div className="flex-grow flex items-center gap-2">
-                        <Slider
-                            id="confidence-slider"
-                            min={0}
-                            max={1}
-                            step={0.01}
-                            value={[confidenceThreshold]}
-                            onValueChange={(value) => setConfidenceThreshold(value[0])}
-                            className="flex-grow"
-                        />
-                         <span className="text-sm font-mono w-10 text-center">{confidenceThreshold.toFixed(2)}</span>
-                    </div>
-                </div>
+
+      {loading && (
+        <div className="grid gap-6 md:grid-cols-2">
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-48 w-full" />
+            <div className="md:col-span-2">
+                <Skeleton className="h-64 w-full" />
             </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            {filteredRecommendations.length > 0 ? filteredRecommendations.map(rec => (
-                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity")}>
-                    <div className="flex-1 pr-4 space-y-2">
-                        <p className="text-muted-foreground">{rec.text}</p>
-                        <RecommendationConfidence rec={rec} />
+        </div>
+      )}
+
+      {result && (
+        <>
+            <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-accent"><History className="h-5 w-5" />Action History Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground whitespace-pre-wrap">
+                    {result.summary}
+                    </p>
+                </CardContent>
+                </Card>
+                <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-accent"><BrainCircuit className="h-5 w-5" />Detected Patterns</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                    {result.patterns.map((pattern, index) => (
+                        <li key={index}>{pattern}</li>
+                    ))}
+                    </ul>
+                </CardContent>
+                </Card>
+            </div>
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-accent"><Lightbulb className="h-5 w-5" />Tactical Recommendations</CardTitle>
+                        <div className="flex items-center space-x-4 w-1/2 max-w-sm">
+                            <Label htmlFor="confidence-slider" className="text-sm whitespace-nowrap">Min Confidence</Label>
+                            <div className="flex-grow flex items-center gap-2">
+                                <Slider
+                                    id="confidence-slider"
+                                    min={0}
+                                    max={1}
+                                    step={0.01}
+                                    value={[confidenceThreshold]}
+                                    onValueChange={(value) => setConfidenceThreshold(value[0])}
+                                    className="flex-grow"
+                                />
+                                <span className="text-sm font-mono w-10 text-center">{confidenceThreshold.toFixed(2)}</span>
+                            </div>
+                        </div>
                     </div>
-                     <div className="flex gap-1">
-                        <Button 
-                            size="icon" 
-                            variant={feedbackGiven[rec.recommendationId] === 'up' ? "default" : "outline"}
-                            className="h-8 w-8"
-                            onClick={() => handleFeedback(rec, 'up')}
-                            disabled={!!feedbackGiven[rec.recommendationId]}
-                        >
-                            <ThumbsUp className="h-4 w-4" />
-                        </Button>
-                         <Button 
-                            size="icon" 
-                            variant={feedbackGiven[rec.recommendationId] === 'down' ? "destructive" : "outline"}
-                            className="h-8 w-8"
-                            onClick={() => handleFeedback(rec, 'down')}
-                            disabled={!!feedbackGiven[rec.recommendationId]}
-                        >
-                            <ThumbsDown className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
-            )) : (
-                 <p className="text-muted-foreground text-center py-4">No recommendations meet the current confidence threshold.</p>
-            )}
-        </CardContent>
-      </Card>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {filteredRecommendations.length > 0 ? filteredRecommendations.map(rec => (
+                        <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity")}>
+                            <div className="flex-1 pr-4 space-y-2">
+                                <p className="text-muted-foreground">{rec.text}</p>
+                                <RecommendationConfidence rec={rec} />
+                            </div>
+                            <div className="flex gap-1">
+                                <Button 
+                                    size="icon" 
+                                    variant={feedbackGiven[rec.recommendationId] === 'up' ? "default" : "outline"}
+                                    className="h-8 w-8"
+                                    onClick={() => handleFeedback(rec, 'up')}
+                                    disabled={!!feedbackGiven[rec.recommendationId]}
+                                >
+                                    <ThumbsUp className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                    size="icon" 
+                                    variant={feedbackGiven[rec.recommendationId] === 'down' ? "destructive" : "outline"}
+                                    className="h-8 w-8"
+                                    onClick={() => handleFeedback(rec, 'down')}
+                                    disabled={!!feedbackGiven[rec.recommendationId]}
+                                >
+                                    <ThumbsDown className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )) : (
+                        <p className="text-muted-foreground text-center py-4">No recommendations meet the current confidence threshold.</p>
+                    )}
+                </CardContent>
+            </Card>
+        </>
+      )}
     </div>
   );
 }
