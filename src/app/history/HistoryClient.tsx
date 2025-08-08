@@ -1,9 +1,10 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp, addDoc, serverTimestamp } from "firebase/firestore";
+import { useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -181,6 +182,54 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
     const [loadingRationales, setLoadingRationales] = useState(false);
     const [taggedRationales, setTaggedRationales] = useState<TaggedRationale[]>([]);
     const { toast } = useToast();
+    const searchParams = useSearchParams();
+
+    const handleCellClick = useCallback(async (domain: string, severity: Severity) => {
+        setLoadingRationales(true);
+        setRationaleDialog({ domain, severity, rationales: [] });
+        try {
+            const relevantLogs = logs.filter(log => {
+                const d = parseDetails(log.details);
+                return d.isOverride && d.severity === severity && d.domains?.includes(domain)
+            });
+
+            if (relevantLogs.length === 0) {
+                setRationaleDialog(null);
+                return;
+            }
+            
+            const processedRationales = await Promise.all(relevantLogs.map(async (log) => {
+                const details = parseDetails(log.details);
+                const { tags } = await tagRationale({ rationale: details.rationale });
+                return { rationale: details.rationale, tags, severity: details.severity!, domains: details.domains || [] };
+            }));
+            
+            setTaggedRationales(processedRationales);
+            setRationaleDialog({ domain, severity, rationales: processedRationales });
+
+
+        } catch (error) {
+            console.error("Failed to tag rationales:", error);
+            toast({
+                variant: "destructive",
+                title: "Tagging Failed",
+                description: "Could not get AI tags for rationales. Please try again."
+            })
+            setRationaleDialog(null);
+        } finally {
+            setLoadingRationales(false);
+        }
+    }, [logs, toast]);
+    
+    useEffect(() => {
+        const autoStart = searchParams.get('autostart');
+        const domain = searchParams.get('domain');
+        const severity = searchParams.get('severity') as Severity;
+
+        if (autoStart === 'true' && domain && severity && logs.length > 0) {
+            handleCellClick(domain, severity);
+        }
+    }, [searchParams, logs, handleCellClick]);
 
     const heatmapData = useMemo(() => {
         const data: Record<string, Record<Severity, number>> = {};
@@ -237,8 +286,6 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
             const taggedPrevRationales = rationales.filter(r => {
                 const isMatch = r.rationale.toLowerCase().includes(tag.toLowerCase());
                 if (isMatch) {
-                    // This is imperfect, but we need to assign tags to old rationales.
-                    // A single old rationale could match multiple current tags.
                     r.tags = [...new Set([...r.tags, tag])];
                 }
                 return isMatch;
@@ -263,43 +310,6 @@ function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLo
         return alignedPrevClusters;
 
     }, [previousLogs, rationaleDialog, rationaleClusters]);
-
-    const handleCellClick = async (domain: string, severity: Severity) => {
-        setLoadingRationales(true);
-        setRationaleDialog({ domain, severity, rationales: [] });
-        try {
-            const relevantLogs = logs.filter(log => {
-                const d = parseDetails(log.details);
-                return d.isOverride && d.severity === severity && d.domains?.includes(domain)
-            });
-
-            if (relevantLogs.length === 0) {
-                setRationaleDialog(null);
-                return;
-            }
-            
-            const processedRationales = await Promise.all(relevantLogs.map(async (log) => {
-                const details = parseDetails(log.details);
-                const { tags } = await tagRationale({ rationale: details.rationale });
-                return { rationale: details.rationale, tags, severity: details.severity!, domains: details.domains || [] };
-            }));
-            
-            setTaggedRationales(processedRationales);
-            setRationaleDialog({ domain, severity, rationales: processedRationales });
-
-
-        } catch (error) {
-            console.error("Failed to tag rationales:", error);
-            toast({
-                variant: "destructive",
-                title: "Tagging Failed",
-                description: "Could not get AI tags for rationales. Please try again."
-            })
-            setRationaleDialog(null);
-        } finally {
-            setLoadingRationales(false);
-        }
-    }
 
     const { data, maxOverrides } = heatmapData;
     const domains = Object.keys(data).sort();
@@ -501,6 +511,14 @@ export default function HistoryClient() {
   });
   const { toast } = useToast();
   const { user } = useUser();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const drilldownTime = searchParams.get('time');
+    if (drilldownTime && (drilldownTime === '24h' || drilldownTime === '7d' || drilldownTime === 'all')) {
+        setTimeFilter(drilldownTime);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -581,7 +599,7 @@ export default function HistoryClient() {
       
       const result = await analyzeSignalHistory({ actionLogs: logsString });
       setAnalysisResult(result);
-    } catch (error) {
+    } catch (error) => {
       console.error("AI analysis failed:", error);
       toast({
         variant: "destructive",
@@ -594,7 +612,7 @@ export default function HistoryClient() {
   };
 
   const handleFeedback = async (recommendationId: string, rating: 'up' | 'down') => {
-    if (feedbackGiven[recommendationId]) return; // Prevent double voting
+    if (feedbackGiven[recommendationId]) return; 
 
     setFeedbackGiven(prev => ({...prev, [recommendationId]: rating }));
     toast({
@@ -835,5 +853,3 @@ export default function HistoryClient() {
     </div>
   );
 }
-
-    

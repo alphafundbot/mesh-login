@@ -1,8 +1,9 @@
 
 import AppLayout from "@/components/layout/AppLayout";
 import HistoryClient from "./HistoryClient";
+import { Suspense } from "react";
 
-export default function HistoryPage() {
+function HistoryContent() {
   return (
     <AppLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -18,4 +19,12 @@ export default function HistoryPage() {
   );
 }
 
+
+export default function HistoryPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HistoryContent />
+    </Suspense>
+  )
+}
     

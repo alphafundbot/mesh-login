@@ -16,6 +16,8 @@ import { TrendingUp, ShieldAlert, BarChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 
 interface ActionLog {
   id: string;
@@ -53,6 +55,7 @@ const RISK_WEIGHTS: Record<Severity, number> = {
 export default function HudEscalationMatrix() {
     const [logs, setLogs] = useState<ActionLog[]>([]);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
@@ -85,19 +88,29 @@ export default function HudEscalationMatrix() {
         const currentLogs = logs.filter(log => log.timestamp.getTime() > sevenDaysAgo);
         const previousLogs = logs.filter(log => log.timestamp.getTime() <= sevenDaysAgo && log.timestamp.getTime() > fourteenDaysAgo);
 
-        const criticalOverrides: Record<string, number> = {};
+        const criticalOverrides: Record<string, { count: number, severities: Record<Severity, number> }> = {};
         
         currentLogs.forEach(log => {
             const { isOverride, severity, domains } = parseDetails(log.details);
             if (isOverride && (severity === 'Critical' || severity === 'Catastrophic')) {
                 domains?.forEach(domain => {
-                    criticalOverrides[domain] = (criticalOverrides[domain] || 0) + 1;
+                    if (!criticalOverrides[domain]) {
+                        criticalOverrides[domain] = { count: 0, severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 }};
+                    }
+                    criticalOverrides[domain].count++;
+                    if(severity) criticalOverrides[domain].severities[severity]++;
                 });
             }
         });
         
-        const topCriticalDomain = Object.entries(criticalOverrides).sort((a, b) => b[1] - a[1])[0];
+        const topCriticalDomain = Object.entries(criticalOverrides).sort((a, b) => b[1].count - a[1].count)[0];
         
+        const getTopSeverity = (severities: Record<Severity, number>): Severity => {
+            if (severities.Catastrophic > 0) return 'Catastrophic';
+            if (severities.Critical > 0) return 'Critical';
+            return 'Warning';
+        }
+
         const calculateRisk = (logList: ActionLog[]) => logList.reduce((acc, log) => {
             const { severity, isOverride } = parseDetails(log.details);
             if(isOverride && severity && RISK_WEIGHTS[severity]) {
@@ -113,10 +126,22 @@ export default function HudEscalationMatrix() {
         
         return {
             topDomain: topCriticalDomain ? topCriticalDomain[0] : "None",
-            topDomainCount: topCriticalDomain ? topCriticalDomain[1] : 0,
+            topDomainCount: topCriticalDomain ? topCriticalDomain[1].count : 0,
+            topDomainSeverity: topCriticalDomain ? getTopSeverity(topCriticalDomain[1].severities) : undefined,
             riskDelta: delta,
         };
     }, [logs]);
+
+    const handleInvestigate = () => {
+        if (!escalationData || !escalationData.topDomain || !escalationData.topDomainSeverity) return;
+        const params = new URLSearchParams({
+            time: "7d",
+            domain: escalationData.topDomain,
+            severity: escalationData.topDomainSeverity,
+            autostart: "true"
+        });
+        router.push(`/history?${params.toString()}`);
+    }
 
     const renderContent = () => {
         if (loading) {
@@ -147,18 +172,16 @@ export default function HudEscalationMatrix() {
                     </p>
                     <p className="text-xs text-muted-foreground">Change in weighted override risk vs previous period.</p>
                 </div>
-                <div>
+                <div className="cursor-pointer" onClick={handleInvestigate}>
                     <p className="text-sm font-semibold flex items-center gap-2">
                         <ShieldAlert className="h-4 w-4 text-orange-400" />
                         Top Stress Zone: 
-                        <span className="font-bold text-orange-400">{escalationData.topDomain}</span>
+                        <span className="font-bold text-orange-400 hover:underline">{escalationData.topDomain}</span>
                     </p>
                     <p className="text-xs text-muted-foreground">Domain with the most Critical/Catastrophic overrides.</p>
                 </div>
-                 <Button asChild variant="secondary" size="sm" className="w-full">
-                    <Link href="/history">
-                        Investigate in Signal Memory
-                    </Link>
+                 <Button onClick={handleInvestigate} variant="secondary" size="sm" className="w-full">
+                    Investigate in Signal Memory
                 </Button>
             </div>
         );
