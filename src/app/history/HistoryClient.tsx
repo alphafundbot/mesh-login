@@ -148,8 +148,26 @@ const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
     return clusters;
 };
 
+const DELTA_THRESHOLD = 10;
 
-function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
+function ClusterDelta({ currentScore, previousScore }: { currentScore: number; previousScore: number }) {
+    const delta = currentScore - previousScore;
+
+    if (previousScore === 0) return null; // Don't show delta for new clusters
+
+    const Arrow = delta > 0 ? ArrowUp : ArrowDown;
+    const isLargeDelta = delta > DELTA_THRESHOLD;
+    const color = delta > 0 ? (isLargeDelta ? "text-red-400 font-bold" : "text-red-400") : delta < 0 ? "text-green-400" : "text-muted-foreground";
+
+    return (
+        <Badge variant="outline" className={cn("gap-1 font-mono", color, isLargeDelta && "border-red-400/50")}>
+            <Arrow className="h-3 w-3" />
+            {delta > 0 && "+"}{delta}
+        </Badge>
+    );
+}
+
+function OverrideHeatmap({ logs, previousLogs }: { logs: ActionLog[], previousLogs: ActionLog[] }) {
     const [rationaleDialog, setRationaleDialog] = useState<RationaleDialogContent>(null);
     const [loadingRationales, setLoadingRationales] = useState(false);
     const [taggedRationales, setTaggedRationales] = useState<TaggedRationale[]>([]);
@@ -180,6 +198,15 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
         if (!rationaleDialog) return null;
         return calculateClusters(rationaleDialog.rationales);
     }, [rationaleDialog]);
+    
+    const previousRationaleClusters = useMemo(() => {
+        const overrideLogs = previousLogs.filter(log => parseDetails(log.details).isOverride);
+        const rationales = overrideLogs.map(log => {
+            const d = parseDetails(log.details);
+            return { rationale: d.rationale, tags: [], severity: d.severity!, domains: d.domains! };
+        });
+        return calculateClusters(rationales);
+    }, [previousLogs]);
 
     const handleCellClick = async (domain: string, severity: Severity) => {
         setLoadingRationales(true);
@@ -239,8 +266,8 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
       <>
         <Card>
             <CardHeader>
-                <CardTitle>Override Frequency Heatmap</CardTitle>
-                <CardDescription>Analysis of strategist overrides across domains and severity levels. Click a cell to see rationales.</CardDescription>
+                <CardTitle>Override Frequency Heatmap & Cluster Analysis</CardTitle>
+                <CardDescription>Analysis of strategist overrides across domains and severity levels. Click a cell to inspect rationale clusters.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -296,14 +323,18 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
                              <Accordion type="multiple" className="w-full">
                                 {Array.from(rationaleClusters.entries()).sort((a,b) => b[1].riskScore - a[1].riskScore).map(([tag, { items, severities, domains, riskScore }]) => {
                                    const sortedDomains = Object.entries(domains).sort((a, b) => b[1].count - a[1].count);
+                                   const previousRiskScore = previousRationaleClusters.get(tag)?.riskScore ?? 0;
+                                   const delta = riskScore - previousRiskScore;
+                                   const isLargeDelta = delta > DELTA_THRESHOLD;
                                     return (
-                                        <AccordionItem key={tag} value={tag}>
+                                        <AccordionItem key={tag} value={tag} className={cn(isLargeDelta && "border-red-500/50 rounded-lg border")}>
                                             <AccordionTrigger>
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <Tags className="h-4 w-4 text-muted-foreground" />
                                                     <span className="capitalize font-semibold">{tag}</span>
                                                     <Badge variant="outline">{items.length} total</Badge>
                                                     <Badge variant={riskScore > 10 ? "destructive" : riskScore > 5 ? "secondary" : "default"} className="gap-1 bg-primary/20 text-primary-foreground"><BarChart className="h-3 w-3" /> Risk: {riskScore}</Badge>
+                                                    <ClusterDelta currentScore={riskScore} previousScore={previousRiskScore} />
                                                     {severities.Warning > 0 && <Badge variant="secondary" className="gap-1 bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" /> {severities.Warning} W</Badge>}
                                                     {severities.Critical > 0 && <Badge variant="destructive" className="gap-1 bg-orange-600"><ShieldAlert className="h-3 w-3" /> {severities.Critical} C</Badge>}
                                                     {severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 bg-red-800"><ShieldX className="h-3 w-3" /> {severities.Catastrophic} Ct</Badge>}
@@ -398,8 +429,8 @@ export default function HistoryClient() {
 
   const { filteredLogs, previousPeriodLogs } = useMemo(() => {
     const now = Date.now();
-    let currentLogs;
-    let previousLogs;
+    let currentLogs: ActionLog[];
+    let previousLogs: ActionLog[];
 
     if (timeFilter === "all") {
       return { filteredLogs: allLogs, previousPeriodLogs: [] };
@@ -464,7 +495,7 @@ export default function HistoryClient() {
           {renderTimeFilterTabs()}
         </div>
 
-        <OverrideHeatmap logs={filteredLogs} />
+        <OverrideHeatmap logs={filteredLogs} previousLogs={previousPeriodLogs} />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
