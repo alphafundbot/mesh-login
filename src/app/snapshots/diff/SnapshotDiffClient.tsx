@@ -25,13 +25,16 @@ import {
 } from "@/ai/flows/snapshot-diff-flow";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot, GitCompareArrows, ChevronsRight, FileText } from "lucide-react";
+import { Bot, GitCompareArrows, ChevronsRight, FileText, Save } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function SnapshotDiffClient() {
   const [snapshotA, setSnapshotA] = useState<Snapshot | null>(null);
   const [snapshotB, setSnapshotB] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SnapshotDiffOutput | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const handleSelectA = (slug: string) => {
@@ -72,6 +75,32 @@ export default function SnapshotDiffClient() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const handleSaveAnalysis = async () => {
+    if (!result || !snapshotA || !snapshotB) return;
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, "diff_analysis"), {
+        snapshotA: snapshotA.slug,
+        snapshotB: snapshotB.slug,
+        analysis: result,
+        timestamp: serverTimestamp(),
+      });
+      toast({
+        title: "Analysis Saved",
+        description: "The trajectory synthesis has been archived.",
+      });
+    } catch (error) {
+      console.error("Failed to save analysis:", error);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: "Could not archive the analysis.",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -146,14 +175,22 @@ export default function SnapshotDiffClient() {
       {result && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-accent">
-              <Bot className="h-6 w-6" /> AI Trajectory Synthesis
-            </CardTitle>
-            <CardDescription>
-              AI-generated analysis of the strategic divergence between{" "}
-              <strong>{snapshotA?.label}</strong> and{" "}
-              <strong>{snapshotB?.label}</strong>.
-            </CardDescription>
+            <div className="flex justify-between items-center">
+                <div>
+                    <CardTitle className="flex items-center gap-2 text-accent">
+                        <Bot className="h-6 w-6" /> AI Trajectory Synthesis
+                    </CardTitle>
+                    <CardDescription>
+                        AI-generated analysis of the strategic divergence between{" "}
+                        <strong>{snapshotA?.label}</strong> and{" "}
+                        <strong>{snapshotB?.label}</strong>.
+                    </CardDescription>
+                </div>
+                <Button onClick={handleSaveAnalysis} disabled={isSaving} variant="outline">
+                    <Save className="mr-2 h-4 w-4" />
+                    {isSaving ? "Archiving..." : "Archive Analysis"}
+                </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
