@@ -55,6 +55,6 @@ const firebaseConfigValues = {
 export const servicesConfig: ServicesConfig = {
     firebase: firebaseConfigValues,
     gcp: {
-        geminiApiKey: getEnv('GEMINI_API_KEY', firebaseConfigValues.apiKey),
+        geminiApiKey: getEnv('GEMINI_API_KEY', "YOUR_FIREBASE_API_KEY"),
     }
 };
