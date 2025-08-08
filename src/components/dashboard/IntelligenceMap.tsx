@@ -323,7 +323,7 @@ export default function IntelligenceMap() {
 
   return (
     <>
-      <Card className="mb-6">
+      <Card className="h-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-6 w-6 text-accent" />
@@ -487,5 +487,3 @@ export default function IntelligenceMap() {
     </>
   );
 }
-
-    
