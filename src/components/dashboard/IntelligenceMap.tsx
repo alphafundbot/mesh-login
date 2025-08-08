@@ -47,6 +47,7 @@ const generateDomainLogs = (domainName: string) => {
 }
 
 const ANOMALY_THRESHOLD = 70;
+type Severity = "Warning" | "Critical" | "Catastrophic";
 
 const CustomTick = (props: any) => {
   const { x, y, payload } = props;
@@ -78,7 +79,7 @@ export default function IntelligenceMap() {
   const { toast } = useToast();
   const { user } = useUser();
 
-  const handleAction = async (action: Action, details: string) => {
+  const handleAction = async (action: Action, details: string, severity?: Severity) => {
     try {
       await addDoc(collection(db, "hud_actions"), {
         action,
@@ -87,11 +88,15 @@ export default function IntelligenceMap() {
         timestamp: serverTimestamp(),
         details,
       });
-       toast({
-        variant: "destructive",
-        title: "Risk Escalation Protocol Triggered",
-        description: `Multiple domain anomalies detected. Escalating for review.`,
-      });
+
+      if (action === "Escalate") {
+        toast({
+            variant: "destructive",
+            title: `Risk Escalation Protocol Triggered (${severity})`,
+            description: details,
+        });
+      }
+
     } catch (error) {
       console.error("Failed to log action:", error);
       toast({
@@ -122,9 +127,19 @@ export default function IntelligenceMap() {
         }));
         
         const anomalousDomains = dataWithAnomalies.filter(d => d.isAnomaly);
-        if (anomalousDomains.length >= 2) {
-          const details = `Anomalies detected in: ${anomalousDomains.map(d => d.domain).join(', ')}`;
-          handleAction("Escalate", details);
+        let severity: Severity | null = null;
+
+        if (anomalousDomains.length >= 5) {
+            severity = 'Catastrophic';
+        } else if (anomalousDomains.length >= 3) {
+            severity = 'Critical';
+        } else if (anomalousDomains.length >= 2) {
+            severity = 'Warning';
+        }
+
+        if (severity) {
+            const details = `Anomalies in ${anomalousDomains.map(d => d.domain).join(', ')}`;
+            handleAction("Escalate", details, severity);
         }
 
         setChartData(dataWithAnomalies);
