@@ -56,37 +56,60 @@ export interface Recommendation {
 
 
 export const parseDetails = (details: string): ParsedDetails => {
-    const isOverride = details.includes("Override: true") || details.includes("STRATEGIST_OVERRIDE");
-    const rationaleMatch = details.match(/rationale: "([^"]*)"/i);
-    const rationale = rationaleMatch ? rationaleMatch[1] : "";
+  const isOverride =
+    details.includes("Override: true") ||
+    details.includes("STRATEGIST_OVERRIDE") ||
+    details.startsWith("Action: ") ||
+    details.startsWith("Dismissed");
 
-    let action = "";
-    const actionMatch = details.match(/action: "([^"]*)"/i);
-     if (actionMatch) {
-      action = actionMatch[1];
-    } else if (details.startsWith("Event: Strategist Override Initiated")) {
-      action = "Override Initiated";
-    }
+  const rationaleMatch = details.match(/Rationale: "([^"]*)"/i);
+  const rationale = rationaleMatch ? rationaleMatch[1] : "";
 
-    const severityMatch = details.match(/Severity: (Warning|Critical|Catastrophic)/i);
-    let severity = severityMatch ? (severityMatch[1] as Severity) : undefined;
-    if (!severity) {
-        const eventSeverityMatch = details.match(/Acknowledged (Warning|Critical|Catastrophic) event/);
-        if (eventSeverityMatch) {
-            severity = eventSeverityMatch[1] as Severity;
-        }
+  let action = "";
+  const actionMatch = details.match(/Action: ([^ ]*)/i);
+  if (actionMatch) {
+    action = actionMatch[1].replace(/\"/g, '');
+  } else if (details.startsWith("Event: Strategist Override Initiated")) {
+    action = "Override Initiated";
+  }
+
+  const severityMatch = details.match(/Severity: (Warning|Critical|Catastrophic)/i);
+  let severity = severityMatch ? (severityMatch[1] as Severity) : undefined;
+  if (!severity) {
+    const eventSeverityMatch = details.match(
+      /Acknowledged (Warning|Critical|Catastrophic) event/
+    );
+     if (eventSeverityMatch) {
+      severity = eventSeverityMatch[1] as Severity;
     }
+  }
+
+  let domains: string[] | undefined;
+  const domainsMatch = details.match(/involving (.*?)\./i);
+  if (domainsMatch) {
+    domains = domainsMatch[1].split(', ').map(d => d.trim());
+  } else {
+    const onDomainsMatch = details.match(/on (.*?):/i);
+    if (onDomainsMatch) {
+      domains = onDomainsMatch[1].split(', ').map(d => d.trim());
+    } else {
+      const forDomainsMatch = details.match(/for (.*?)\s/i);
+      if(forDomainsMatch) {
+          domains = forDomainsMatch[1].split(', ').map(d => d.trim());
+      }
+    }
+  }
+  
+  // A special case for STRATEGIST_RESPONSE
+   if (details.includes("Responded with")) {
+    const onDomainMatch = details.match(/on (.*?):/);
+     if (onDomainMatch) {
+       domains = onDomainMatch[1].split(', ').map(d => d.trim());
+     }
+  }
+
+
+  return { isOverride, rationale, action, severity, domains };
+};
+
     
-    const domainsMatch = details.match(/involving (.*?)\./);
-    let domains = domainsMatch ? domainsMatch[1].split(', ') : undefined;
-    
-    if(!domains) {
-        const domainsMatch2 = details.match(/domains (.*?)\s/);
-        if (domainsMatch2) {
-             domains = domainsMatch2[1].split(', ');
-        }
-    }
-
-
-    return { isOverride, rationale, action, severity, domains };
-}

@@ -34,6 +34,7 @@ export function useClusterMomentum(cluster: ClusterInfo | undefined, previousLog
         previousRationales.forEach(r => {
             const rationaleText = r.rationale.toLowerCase();
             // Check if all keywords for the cluster tag are present in the rationale
+            // This is a simple heuristic. A more robust solution might use embeddings.
             if (tagKeywords.every(kw => rationaleText.includes(kw))) {
                  previousScore += RISK_WEIGHTS[r.severity!];
             }
@@ -46,3 +47,5 @@ export function useClusterMomentum(cluster: ClusterInfo | undefined, previousLog
 
     return momentum;
 }
+
+    
