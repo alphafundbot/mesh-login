@@ -32,6 +32,7 @@ const prompt = ai.definePrompt({
   name: 'snapshotDiffPrompt',
   input: {schema: SnapshotDiffInputSchema},
   output: {schema: SnapshotDiffOutputSchema},
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are a master systems analyst specializing in temporal event correlation. You are given two sets of logs from two different time periods (Snapshot A and Snapshot B). Your task is to compare them and produce a detailed analysis of the differences.
 
 Analyze the logs to identify:
@@ -56,13 +57,7 @@ const snapshotDiffFlow = ai.defineFlow(
     outputSchema: SnapshotDiffOutputSchema,
   },
   async input => {
-    const {output} = await ai.generate({
-        prompt: await prompt.render(input),
-        model: 'googleai/gemini-1.5-flash',
-        output: {
-            schema: SnapshotDiffOutputSchema,
-        }
-    });
+    const {output} = await prompt(input);
     return output!;
   }
 );

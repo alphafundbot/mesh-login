@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -48,6 +47,7 @@ const prompt = ai.definePrompt({
   name: 'replayCommentaryPrompt',
   input: {schema: ReplayCommentaryInputSchema},
   output: {schema: ReplayCommentaryOutputSchema},
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are a master strategist AI specializing in analyzing and comparing predictive forecasts against real-world outcomes. Your task is to generate "Replay Commentary" by comparing an original rationale forecast with the actual action logs from that period.
 
 Your analysis must include:
@@ -78,13 +78,7 @@ const replayCommentaryFlow = ai.defineFlow(
     outputSchema: ReplayCommentaryOutputSchema,
   },
   async input => {
-    const {output} = await ai.generate({
-        prompt: await prompt.render(input),
-        model: 'googleai/gemini-1.5-flash',
-        output: {
-            schema: ReplayCommentaryOutputSchema,
-        }
-    });
+    const {output} = await prompt(input);
     return output!;
   }
 );

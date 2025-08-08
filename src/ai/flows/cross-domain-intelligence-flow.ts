@@ -37,6 +37,7 @@ const prompt = ai.definePrompt({
   name: 'crossDomainIntelligencePrompt',
   input: {schema: CrossDomainIntelligenceInputSchema},
   output: {schema: CrossDomainIntelligenceOutputSchema},
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are a master systems analyst. You are provided with logs from multiple operational domains. Your task is to analyze these logs and generate a quantitative score (0-100) for each domain across three key metrics: Stability, Security, and Activity.
 
 - **Stability**: Assess this based on errors, rollbacks, downtime, and successful deployments. High errors and frequent rollbacks decrease the score.
@@ -63,13 +64,7 @@ const crossDomainIntelligenceFlow = ai.defineFlow(
     outputSchema: CrossDomainIntelligenceOutputSchema,
   },
   async input => {
-    const {output} = await ai.generate({
-        prompt: await prompt.render(input),
-        model: 'googleai/gemini-1.5-flash',
-        output: {
-            schema: CrossDomainIntelligenceOutputSchema,
-        }
-    });
+    const {output} = await prompt(input);
     return output!;
   }
 );

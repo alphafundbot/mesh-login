@@ -28,6 +28,7 @@ const prompt = ai.definePrompt({
   name: 'auditTrailAISummarizationPrompt',
   input: {schema: AuditTrailAISummarizationInputSchema},
   output: {schema: AuditTrailAISummarizationOutputSchema},
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are a security analyst specializing in identifying unusual activity patterns.
 
 You will use the provided audit logs to identify and summarize the security events, and any unusual activity patterns.
@@ -42,13 +43,7 @@ const auditTrailAISummarizationFlow = ai.defineFlow(
     outputSchema: AuditTrailAISummarizationOutputSchema,
   },
   async (input) => {
-    const {output} = await ai.generate({
-        prompt: await prompt.render(input),
-        model: 'googleai/gemini-1.5-flash',
-        output: {
-            schema: AuditTrailAISummarizationOutputSchema,
-        }
-    });
+    const {output} = await prompt(input);
     if (!output) {
         throw new Error("Failed to get a response from the AI.");
     }
