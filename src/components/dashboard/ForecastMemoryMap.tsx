@@ -132,7 +132,7 @@ export default function ForecastMemoryMap() {
                                 <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
-                        <Line type="monotone" dataKey="accuracy" stroke="hsl(var(--accent))" strokeWidth={2} activeDot={{ r: 8 }} dot={{ r: 4 }} />
+                        <Line type="monotone" dataKey="accuracy" stroke="hsl(var(--accent))" strokeWidth={2} activeDot={{ r: 8 }} dot={{ r: 4 }} name="Forecast Accuracy" />
                         <Area
                           type="monotone"
                           dataKey="volatilityRange"
