@@ -10,14 +10,23 @@ config({ path: '.env' });
 
 /**
  * Returns the value of an environment variable.
- * Throws an error if the variable is not set.
+ * Throws an error if the variable is not set on the server.
+ * Returns an empty string if not found on the client.
  * @param variableName The name of the environment variable.
  * @returns The value of the environment variable.
  */
 function getEnv(variableName: string): string {
+    // Check if running in a browser environment
+    if (typeof window !== 'undefined') {
+        // On the client, Next.js exposes env vars via process.env
+        // If it's not there, return empty string to avoid crashing the app.
+        return process.env[variableName] || '';
+    }
+
+    // On the server, we expect the variable to be loaded from .env
     const value = process.env[variableName];
     if (!value) {
-        console.error(`Missing env var: ${variableName}`);
+        console.error(`FATAL ERROR: Environment variable ${variableName} is not set. Please ensure it is defined in your .env file.`);
         throw new Error(`FATAL ERROR: Environment variable ${variableName} is not set. Please ensure it is defined in your .env file.`);
     }
     return value;
