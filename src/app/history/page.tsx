@@ -1,3 +1,4 @@
+
 import AppLayout from "@/components/layout/AppLayout";
 import HistoryClient from "./HistoryClient";
 
@@ -9,10 +10,12 @@ export default function HistoryPage() {
           <h1 className="text-3xl font-bold tracking-tight">Signal Memory</h1>
         </div>
         <p className="text-muted-foreground">
-          A persistent, historical log of all strategist actions recorded in the mesh.
+          A persistent, historical log of all strategist actions recorded in the mesh. Use the time filter to analyze specific periods.
         </p>
         <HistoryClient />
       </div>
     </AppLayout>
   );
 }
+
+    

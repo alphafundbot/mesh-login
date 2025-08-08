@@ -19,9 +19,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle, X, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, SignalHigh, SignalLow, SignalMedium, BarChart } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Accordion,
@@ -29,7 +29,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 interface ActionLog {
   id: string;
@@ -209,7 +210,7 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
     }
 
     const { data, maxOverrides } = heatmapData;
-    const domains = Object.keys(data);
+    const domains = Object.keys(data).sort();
     const severities: Severity[] = ["Warning", "Critical", "Catastrophic"];
 
     if (domains.length === 0) {
@@ -217,7 +218,7 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
             <Card>
                 <CardHeader>
                     <CardTitle>Override Frequency Heatmap</CardTitle>
-                    <CardDescription>No override data available yet.</CardDescription>
+                    <CardDescription>No override data available for the selected time window.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <p className="text-muted-foreground text-center py-4">Overrides will be analyzed here once they are logged.</p>
@@ -347,12 +348,15 @@ function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
     );
 }
 
+type TimeFilter = "24h" | "7d" | "all";
+
 
 export default function HistoryClient() {
-  const [logs, setLogs] = useState<ActionLog[]>([]);
+  const [allLogs, setAllLogs] = useState<ActionLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -369,29 +373,46 @@ export default function HistoryClient() {
           timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
         };
       });
-      setLogs(fetchedLogs);
+      setAllLogs(fetchedLogs);
       setLoading(false);
     }, (error) => {
       console.error("Error fetching action logs:", error);
+      toast({
+        variant: "destructive",
+        title: "Fetch Error",
+        description: "Could not fetch Signal Memory logs.",
+      });
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
+
+  const filteredLogs = useMemo(() => {
+    if (timeFilter === "all") {
+      return allLogs;
+    }
+    const now = Date.now();
+    const filterMilliseconds = timeFilter === "24h" ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+    
+    return allLogs.filter(log => {
+      return now - log.timestamp.getTime() < filterMilliseconds;
+    });
+  }, [allLogs, timeFilter]);
 
   const handleAnalysis = async () => {
     setLoadingAnalysis(true);
     setAnalysisResult(null);
     try {
-      const logsString = logs
+      const logsString = filteredLogs
         .map(log => `[${log.timestamp.toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
         .join("\n");
       
       if (!logsString) {
         toast({
-          variant: "destructive",
+          variant: "default",
           title: "No Logs",
-          description: "There are no action logs to analyze.",
+          description: `There are no action logs to analyze in the selected time window.`,
         });
         setLoadingAnalysis(false);
         return;
@@ -410,15 +431,30 @@ export default function HistoryClient() {
       setLoadingAnalysis(false);
     }
   };
+  
+  const renderTimeFilterTabs = () => (
+    <Tabs value={timeFilter} onValueChange={(value) => setTimeFilter(value as TimeFilter)}>
+      <TabsList>
+        <TabsTrigger value="24h">Last 24h</TabsTrigger>
+        <TabsTrigger value="7d">Last 7 Days</TabsTrigger>
+        <TabsTrigger value="all">All Time</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  );
 
   return (
     <div className="space-y-6">
-        <OverrideHeatmap logs={logs} />
+        <div className="flex justify-start">
+          {renderTimeFilterTabs()}
+        </div>
+
+        <OverrideHeatmap logs={filteredLogs} />
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Action History</CardTitle>
-            <CardDescription>A persistent log of all strategist actions.</CardDescription>
+            <CardDescription>A persistent log of all strategist actions in the selected time window.</CardDescription>
           </div>
           <Button onClick={handleAnalysis} disabled={loading || loadingAnalysis}>
             {loadingAnalysis ? "Analyzing..." : "Analyze with AI"}
@@ -446,8 +482,8 @@ export default function HistoryClient() {
                     <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                   </TableRow>
                 ))
-              ) : logs.length > 0 ? (
-                logs.map((log) => {
+              ) : filteredLogs.length > 0 ? (
+                filteredLogs.map((log) => {
                   const { isOverride, rationale, action } = parseDetails(log.details);
                   return (
                     <TableRow key={log.id}>
@@ -482,7 +518,7 @@ export default function HistoryClient() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center">
-                    No actions logged yet.
+                    No actions logged in this time period.
                   </TableCell>
                 </TableRow>
               )}
@@ -544,3 +580,5 @@ export default function HistoryClient() {
     </div>
   );
 }
+
+    
