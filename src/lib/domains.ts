@@ -13,6 +13,7 @@ import {
 
 type Domain = {
   name: string;
+  slug: string;
   icon: LucideIcon;
   modules: string[];
   status: string;
@@ -21,6 +22,7 @@ type Domain = {
 export const domainData: Domain[] = [
   {
     name: "🧠 System Core",
+    slug: "system-core",
     icon: BrainCircuit,
     status: "All systems optimal.",
     modules: [
@@ -33,6 +35,7 @@ export const domainData: Domain[] = [
   },
   {
     name: "📊 Finance & Trading",
+    slug: "finance-trading",
     icon: Activity,
     status: "Warning: High volatility detected.",
     modules: [
@@ -60,6 +63,7 @@ export const domainData: Domain[] = [
   },
   {
     name: "☁️ Cloud & DevOps",
+    slug: "cloud-devops",
     icon: Cloud,
     status: "Optimal. CI/CD pipeline stable.",
     modules: [
@@ -77,6 +81,7 @@ export const domainData: Domain[] = [
   },
   {
     name: "📡 Telecom & IoT",
+    slug: "telecom-iot",
     icon: Signal,
     status: "Warning: Mesh latency increasing.",
     modules: [
@@ -93,6 +98,7 @@ export const domainData: Domain[] = [
   },
   {
     name: "🏥 Medical & Bio",
+    slug: "medical-bio",
     icon: HeartPulse,
     status: "Error: Compliance matrix desynced.",
     modules: [
@@ -108,6 +114,7 @@ export const domainData: Domain[] = [
   },
   {
     name: "⚖️ Legal & Identity",
+    slug: "legal-identity",
     icon: Scale,
     status: "Optimal. All roles compliant.",
     modules: [
@@ -128,6 +135,7 @@ export const domainData: Domain[] = [
   },
   {
     name: "🎨 UI & Experience",
+    slug: "ui-experience",
     icon: Palette,
     status: "Optimal. UX feedback positive.",
     modules: [
@@ -145,6 +153,7 @@ export const domainData: Domain[] = [
   },
   {
     name: "🔐 Security & Privacy",
+    slug: "security-privacy",
     icon: Shield,
     status: "Warning: Unusual port scan detected.",
     modules: [
@@ -162,6 +171,7 @@ export const domainData: Domain[] = [
   },
   {
     name: "🌍 Planetary & Eco",
+    slug: "planetary-eco",
     icon: Globe,
     status: "Optimal. Energy consumption nominal.",
     modules: [
