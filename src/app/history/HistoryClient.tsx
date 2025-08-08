@@ -174,10 +174,10 @@ const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
 
 const DELTA_THRESHOLD = 10;
 
-function ClusterDelta({ currentScore, previousScore, forceVisible = false }: { currentScore: number; previousScore: number, forceVisible?: boolean }) {
-    const delta = forceVisible ? 4.2 : currentScore - previousScore;
+function ClusterDelta({ currentScore, previousScore }: { currentScore: number; previousScore: number }) {
+    const delta = currentScore - previousScore;
     
-    if (!forceVisible && (previousScore === 0 || Math.abs(delta) < 1)) return null;
+    if (previousScore === 0 || Math.abs(delta) < 1) return null;
 
     const Arrow = delta > 0 ? ArrowUp : ArrowDown;
     const isLargeDelta = Math.abs(delta) > DELTA_THRESHOLD;
@@ -210,43 +210,40 @@ function RationaleDialog({
     }, [content, taggedRationales]);
 
     const previousDialogClusters = useMemo(() => {
-      if (!content || !previousLogs || previousLogs.length === 0) return new Map();
-  
-      const currentTags = Array.from(dialogClusters.keys());
-      if (currentTags.length === 0) return new Map();
-  
-      const previousRationales: TaggedRationale[] = previousLogs.map(log => {
-          const d = parseDetails(log.details);
-          return {
-              rationale: d.rationale,
-              tags: [],
-              severity: d.severity,
-              domains: d.domains,
-          };
-      }).filter((r): r is TaggedRationale => !!(r.rationale && r.severity && r.domains));
-  
-      const alignedPrevClusters: ClusterMap = new Map();
-  
-      currentTags.forEach(tag => {
-          const matchingPrevRationales: TaggedRationale[] = [];
-          
-          previousRationales.forEach(r => {
-              if (r.rationale.toLowerCase().includes(tag.toLowerCase())) {
-                  matchingPrevRationales.push({ ...r, tags: [tag] });
-              }
-          });
-  
-          if (matchingPrevRationales.length > 0) {
-              const tempClusterMap = calculateClusters(matchingPrevRationales);
-              const clusterInfo = tempClusterMap.get(tag);
-              if (clusterInfo) {
-                  alignedPrevClusters.set(tag, clusterInfo);
-              }
-          }
-      });
-      
-      return alignedPrevClusters;
-  }, [previousLogs, content, dialogClusters]);
+        if (!content || !previousLogs || previousLogs.length === 0) return new Map();
+    
+        const currentTags = Array.from(dialogClusters.keys());
+        if (currentTags.length === 0) return new Map();
+    
+        const previousRationales: Omit<TaggedRationale, 'tags'>[] = previousLogs.map(log => {
+            const d = parseDetails(log.details);
+            return {
+                rationale: d.rationale,
+                severity: d.severity,
+                domains: d.domains,
+            };
+        }).filter((r): r is Omit<TaggedRationale, 'tags'> => !!(r.rationale && r.severity && r.domains));
+    
+        const alignedPrevClusters: ClusterMap = new Map();
+    
+        currentTags.forEach(tag => {
+            // Find all historical rationales that seem to match this tag's keywords
+            const tagKeywords = tag.split(' ');
+            const matchingPrevRationales: TaggedRationale[] = previousRationales
+                .filter(r => tagKeywords.every(kw => r.rationale.toLowerCase().includes(kw.toLowerCase())))
+                .map(r => ({ ...r, tags: [tag] })); // Assign the current tag for clustering
+    
+            if (matchingPrevRationales.length > 0) {
+                const tempClusterMap = calculateClusters(matchingPrevRationales);
+                const clusterInfo = tempClusterMap.get(tag);
+                if (clusterInfo) {
+                    alignedPrevClusters.set(tag, clusterInfo);
+                }
+            }
+        });
+        
+        return alignedPrevClusters;
+    }, [previousLogs, content, dialogClusters]);
 
     return (
         <Dialog open={!!content} onOpenChange={onOpenChange}>
@@ -281,7 +278,7 @@ function RationaleDialog({
                                                     <span className="capitalize font-semibold">{tag}</span>
                                                     <Badge variant="outline">{items.length} total</Badge>
                                                     <Badge variant={riskScore > 10 ? "destructive" : riskScore > 5 ? "secondary" : "default"} className="gap-1 bg-primary/20 text-primary-foreground"><BarChart className="h-3 w-3" /> Risk: {riskScore}</Badge>
-                                                    <ClusterDelta currentScore={riskScore} previousScore={previousRiskScore} forceVisible />
+                                                    <ClusterDelta currentScore={riskScore} previousScore={previousRiskScore} />
                                                     {severities.Warning > 0 && <Badge variant="secondary" className="gap-1 bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" /> {severities.Warning} W</Badge>}
                                                     {severities.Critical > 0 && <Badge variant="destructive" className="gap-1 bg-orange-600"><ShieldAlert className="h-3 w-3" /> {severities.Critical} C</Badge>}
                                                     {severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 bg-red-800"><ShieldX className="h-3 w-3" /> {severities.Catastrophic} Ct</Badge>}
