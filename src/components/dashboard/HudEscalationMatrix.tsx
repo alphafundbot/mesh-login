@@ -98,21 +98,23 @@ export default function HudEscalationMatrix() {
         
         const topCriticalDomain = Object.entries(criticalOverrides).sort((a, b) => b[1] - a[1])[0];
         
-        const calculateRisk = (logs: ActionLog[]) => logs.reduce((acc, log) => {
+        const calculateRisk = (logList: ActionLog[]) => logList.reduce((acc, log) => {
             const { severity, isOverride } = parseDetails(log.details);
-            return acc + (isOverride && severity ? RISK_WEIGHTS[severity] : 0);
+            if(isOverride && severity && RISK_WEIGHTS[severity]) {
+                return acc + RISK_WEIGHTS[severity];
+            }
+            return acc;
         }, 0);
 
         const currentRisk = calculateRisk(currentLogs);
         const previousRisk = calculateRisk(previousLogs);
 
         const delta = currentRisk - previousRisk;
-        const percentChange = previousRisk > 0 ? Math.round((delta / previousRisk) * 100) : (currentRisk > 0 ? 100 : 0);
-
+        
         return {
             topDomain: topCriticalDomain ? topCriticalDomain[0] : "None",
             topDomainCount: topCriticalDomain ? topCriticalDomain[1] : 0,
-            riskDelta: percentChange,
+            riskDelta: delta,
         };
     }, [logs]);
 
@@ -131,7 +133,7 @@ export default function HudEscalationMatrix() {
             return <p className="text-muted-foreground text-center py-4">No significant escalation patterns detected in the last 7 days. System nominal.</p>;
         }
         
-        const isHighRisk = escalationData.riskDelta > 20 || escalationData.topDomainCount > 5;
+        const isHighRisk = escalationData.riskDelta > 10 || escalationData.topDomainCount > 5;
 
         return (
             <div className={cn("space-y-4 rounded-lg p-4", isHighRisk ? "bg-red-900/30 border border-destructive/50" : "bg-muted/20")}>
@@ -139,8 +141,8 @@ export default function HudEscalationMatrix() {
                      <p className="text-sm font-semibold flex items-center gap-2">
                         <TrendingUp className={cn("h-4 w-4", escalationData.riskDelta > 0 ? "text-destructive" : "text-green-400")} />
                         7-Day Risk Delta: 
-                        <span className={cn("font-bold", escalationData.riskDelta > 0 ? "text-destructive" : "text-green-400")}>
-                           {escalationData.riskDelta >= 0 && "+"}{escalationData.riskDelta}%
+                        <span className={cn("font-bold font-mono", escalationData.riskDelta > 0 ? "text-destructive" : "text-green-400")}>
+                           {escalationData.riskDelta >= 0 && "+"}{escalationData.riskDelta}
                         </span>
                     </p>
                     <p className="text-xs text-muted-foreground">Change in weighted override risk vs previous period.</p>
