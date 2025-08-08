@@ -3,6 +3,8 @@ import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/a
 import { getFirestore } from "firebase/firestore";
 import { servicesConfig } from "@/config/services";
 
+// Use the centralized configuration for Firebase.
+// This ensures that all parts of the app use the same settings.
 const firebaseConfig = servicesConfig.firebase;
 
 // Initialize Firebase

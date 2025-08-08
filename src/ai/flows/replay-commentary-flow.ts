@@ -78,7 +78,13 @@ const replayCommentaryFlow = ai.defineFlow(
     outputSchema: ReplayCommentaryOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await ai.generate({
+        prompt: await prompt.render(input),
+        model: 'googleai/gemini-1.5-flash',
+        output: {
+            schema: ReplayCommentaryOutputSchema,
+        }
+    });
     return output!;
   }
 );

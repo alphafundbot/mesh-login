@@ -38,7 +38,6 @@ const prompt = ai.definePrompt({
   name: 'suppressionForecastPrompt',
   input: {schema: SuppressionForecastInputSchema},
   output: {schema: SuppressionForecastOutputSchema},
-  model: 'googleai/gemini-1.5-flash',
   prompt: `You are a predictive analyst AI specializing in human-machine systems. Your task is to forecast "auto-action suppression," which is when a human strategist manually overrides an automated system protocol.
 
 You are given a history of action logs. Based on these logs, identify the domains most likely to experience high rates of strategist overrides in the next operational period.
@@ -67,7 +66,13 @@ const suppressionForecastFlow = ai.defineFlow(
     outputSchema: SuppressionForecastOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await ai.generate({
+        prompt: await prompt.render(input),
+        model: 'googleai/gemini-1.5-flash',
+        output: {
+            schema: SuppressionForecastOutputSchema,
+        }
+    });
     return output!;
   }
 );

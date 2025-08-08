@@ -160,7 +160,14 @@ const rationaleForecastFlow = ai.defineFlow(
     outputSchema: RationaleForecastOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await ai.generate({
+        prompt: await prompt.render(input),
+        model: 'googleai/gemini-1.5-flash',
+        tools: [getForecastPerformance],
+        output: {
+            schema: RationaleForecastOutputSchema,
+        }
+    });
     return output!;
   }
 );

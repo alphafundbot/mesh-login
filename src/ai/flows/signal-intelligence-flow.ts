@@ -86,7 +86,6 @@ const getFeedbackSummary = ai.defineTool(
 const prompt = ai.definePrompt({
   name: 'signalIntelligencePrompt',
   tools: [getFeedbackSummary],
-  model: 'googleai/gemini-1.5-flash',
   input: {schema: AnalyzeSignalHistoryInputSchema},
   output: {schema: z.object({
     summary: z.string().describe('A high-level summary of the strategist actions.'),
@@ -121,7 +120,14 @@ const signalIntelligenceFlow = ai.defineFlow(
     outputSchema: AnalyzeSignalHistoryOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await ai.generate({
+        prompt: await prompt.render(input),
+        model: 'googleai/gemini-1.5-flash',
+        tools: [getFeedbackSummary],
+        output: {
+            schema: AnalyzeSignalHistoryOutputSchema,
+        }
+    });
     
     if (!output) {
         throw new Error("Failed to get a response from the AI.");
