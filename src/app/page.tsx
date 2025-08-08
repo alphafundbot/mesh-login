@@ -16,6 +16,9 @@ import IntelligenceMap from "@/components/dashboard/IntelligenceMap";
 import { slugify } from "@/lib/utils";
 import VisualIntegrityDashboard from "@/components/dashboard/VisualIntegrityDashboard";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import RevenueMetrics from "@/components/dashboard/RevenueMetrics";
+import RevenueChart from "@/components/dashboard/RevenueChart";
+import ResourceAllocation from "@/components/dashboard/ResourceAllocation";
 
 const getStatusColor = (status: string) => {
   if (status.includes("Optimal")) return "bg-green-500";
@@ -35,6 +38,19 @@ export default function DashboardPage() {
           <RoleSelector />
         </div>
 
+        <div className="space-y-6">
+          <RevenueMetrics />
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+            <div className="lg:col-span-4">
+              <RevenueChart />
+            </div>
+             <div className="lg:col-span-3">
+              <ResourceAllocation />
+            </div>
+          </div>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-3">
                 <IntelligenceMap />
@@ -43,8 +59,6 @@ export default function DashboardPage() {
                 <VisualIntegrityDashboard />
             </div>
         </div>
-
-        <RecentActivity />
         
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-primary-foreground mb-4">Domains</h2>
@@ -86,6 +100,7 @@ export default function DashboardPage() {
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
         </div>
+        <RecentActivity />
       </div>
     </AppLayout>
   );

@@ -155,17 +155,13 @@ export default function RecentActivity() {
   );
 
   return (
-    <Card className="h-full transition-shadow duration-300 hover:shadow-xl">
+    <Card className="transition-shadow duration-300 hover:shadow-xl">
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           <Bot className="h-6 w-6 text-accent" />
           <CardTitle>Recent Activity (AI Summary)</CardTitle>
         </div>
-        <div className="flex items-center gap-4">
-          <Badge variant="outline" className="flex items-center gap-2">
-            <ShieldQuestion className="h-4 w-4"/>
-            Role: {user.role}
-          </Badge>
+        <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => handleRefresh(false)} disabled={loading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Simulate Event
