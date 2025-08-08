@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, Timestamp, addDoc, serverTimestamp } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,6 +30,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUser } from "@/hooks/use-user";
 
 
 interface ActionLog {
@@ -396,7 +397,9 @@ export default function HistoryClient() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
   const { toast } = useToast();
+  const { user } = useUser();
 
   useEffect(() => {
     const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
@@ -450,6 +453,7 @@ export default function HistoryClient() {
   const handleAnalysis = async () => {
     setLoadingAnalysis(true);
     setAnalysisResult(null);
+    setFeedbackGiven({});
     try {
       const logsString = filteredLogs
         .map(log => `[${log.timestamp.toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
@@ -476,6 +480,38 @@ export default function HistoryClient() {
       });
     } finally {
       setLoadingAnalysis(false);
+    }
+  };
+
+  const handleFeedback = async (recommendationId: string, rating: 'up' | 'down') => {
+    if (feedbackGiven[recommendationId]) return; // Prevent double voting
+
+    setFeedbackGiven(prev => ({...prev, [recommendationId]: rating }));
+    toast({
+        title: "Feedback Submitted",
+        description: "Thank you for helping improve the AI."
+    });
+
+    try {
+        await addDoc(collection(db, "feedback"), {
+            recommendationId,
+            rating,
+            strategist: user.name,
+            role: user.role,
+            timestamp: serverTimestamp()
+        });
+    } catch (error) {
+        console.error("Failed to submit feedback:", error);
+        toast({
+            variant: "destructive",
+            title: "Feedback Error",
+            description: "Could not save your feedback. Please try again."
+        });
+        setFeedbackGiven(prev => {
+            const newState = {...prev};
+            delete newState[recommendationId];
+            return newState;
+        });
     }
   };
   
@@ -615,11 +651,41 @@ export default function HistoryClient() {
             </div>
              <div className="border-t pt-4">
               <h3 className="font-semibold mb-2 flex items-center gap-2"><BrainCircuit className="h-5 w-5" />Patterns Detected</h3>
-              <p className="text-muted-foreground whitespace-pre-wrap">{analysisResult.patterns}</p>
+                <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                    {analysisResult.patterns.map((pattern, index) => (
+                        <li key={index}>{pattern}</li>
+                    ))}
+                </ul>
             </div>
              <div className="border-t pt-4">
               <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
-              <p className="text-muted-foreground whitespace-pre-wrap">{analysisResult.recommendations}</p>
+              <div className="space-y-4">
+                {analysisResult.recommendations.map((rec) => (
+                    <div key={rec.recommendationId} className="flex items-start justify-between">
+                        <p className="text-muted-foreground flex-1 pr-4">{rec.text}</p>
+                        <div className="flex gap-1">
+                            <Button 
+                                size="icon" 
+                                variant={feedbackGiven[rec.recommendationId] === 'up' ? "default" : "outline"}
+                                className="h-8 w-8"
+                                onClick={() => handleFeedback(rec.recommendationId, 'up')}
+                                disabled={!!feedbackGiven[rec.recommendationId]}
+                            >
+                                <ThumbsUp className="h-4 w-4" />
+                            </Button>
+                             <Button 
+                                size="icon" 
+                                variant={feedbackGiven[rec.recommendationId] === 'down' ? "destructive" : "outline"}
+                                className="h-8 w-8"
+                                onClick={() => handleFeedback(rec.recommendationId, 'down')}
+                                disabled={!!feedbackGiven[rec.recommendationId]}
+                            >
+                                <ThumbsDown className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
