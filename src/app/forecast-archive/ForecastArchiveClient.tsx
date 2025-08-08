@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -67,7 +66,6 @@ export default function ForecastArchiveClient() {
     const handleReplay = (timestamp: Date) => {
         const params = new URLSearchParams({
             time: "7d",
-            // We set the start time to the forecast creation time to view the period that was forecasted
             startTime: timestamp.toISOString(),
         });
         router.push(`/history?${params.toString()}`);

@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot, Timestamp, where, getDocs, limit, doc, updateDoc } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, Timestamp, where, getDocs, limit, doc, updateDoc, addDoc } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import {
   Table,
@@ -411,12 +410,10 @@ export default function HistoryClient() {
   const { user } = useUser();
   const searchParams = useSearchParams();
 
-  // State for Rationale Modal
   const [rationaleDialog, setRationaleDialog] = useState<RationaleDialogContent>(null);
   const [loadingRationales, setLoadingRationales] = useState(false);
   const [taggedRationales, setTaggedRationales] = useState<TaggedRationale[]>([]);
 
-  // State for Replay Commentary
   const [replayCommentary, setReplayCommentary] = useState<ReplayCommentaryOutput | null>(null);
   const [loadingReplay, setLoadingReplay] = useState(false);
 
@@ -491,8 +488,8 @@ export default function HistoryClient() {
 
   const openRationaleModal = useCallback((title: string, description: React.ReactNode, rationales: TaggedRationale[]) => {
         setLoadingRationales(true);
-        setTaggedRationales([]); // Clear previous
-        setRationaleDialog({ title, description, rationales: [] }); // Open dialog immediately with loading state
+        setTaggedRationales([]);
+        setRationaleDialog({ title, description, rationales: [] });
     
         const processRationales = async () => {
             try {
@@ -629,7 +626,6 @@ export default function HistoryClient() {
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                toast({ title: "Forecast not found", description: "Could not find the original forecast to generate commentary." });
                 setLoadingReplay(false);
                 return;
             }
@@ -638,34 +634,29 @@ export default function HistoryClient() {
             const forecastData = forecastDoc.data();
             const originalForecast = forecastData.forecast as RationaleForecastOutput;
 
-            // If commentary already exists, display it. Otherwise, generate and save it.
             if (forecastData.commentary) {
                 setReplayCommentary(forecastData.commentary);
-                setLoadingReplay(false);
-                return;
+            } else {
+                 const logsString = filteredLogs
+                    .map(log => `[${log.timestamp.toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
+                    .join("\n");
+
+                const commentary = await generateReplayCommentary({
+                    originalForecast: originalForecast,
+                    actualLogs: logsString,
+                });
+                
+                const forecastDocRef = doc(db, "forecast_analysis", forecastDoc.id);
+                await updateDoc(forecastDocRef, { commentary });
+
+                setReplayCommentary(commentary);
             }
-
-            const logsString = filteredLogs
-                .map(log => `[${log.timestamp.toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
-                .join("\n");
-
-            const commentary = await generateReplayCommentary({
-                originalForecast: originalForecast,
-                actualLogs: logsString,
-            });
-            
-            // Persist the newly generated commentary
-            const forecastDocRef = doc(db, "forecast_analysis", forecastDoc.id);
-            await updateDoc(forecastDocRef, { commentary: commentary });
-
-            setReplayCommentary(commentary);
-
         } catch (error) {
-            console.error("Failed to generate replay commentary:", error);
+            console.error("Failed to generate or fetch replay commentary:", error);
             toast({
                 variant: "destructive",
                 title: "Commentary Failed",
-                description: "Could not generate AI replay commentary for this forecast.",
+                description: "Could not generate or fetch AI replay commentary.",
             });
         } finally {
             setLoadingReplay(false);
@@ -979,5 +970,3 @@ export default function HistoryClient() {
     </div>
   );
 }
-
-    
