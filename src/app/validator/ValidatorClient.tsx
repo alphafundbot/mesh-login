@@ -10,7 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Bot } from "lucide-react";
+import { validateConfiguration } from "@/ai/flows/config-validator-flow";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ValidationResult = {
   status: "success" | "error";
@@ -19,26 +22,35 @@ type ValidationResult = {
 
 export default function ValidatorClient() {
   const [configText, setConfigText] = useState("");
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ValidationResult>(null);
+  const { toast } = useToast();
 
-  function handleValidate() {
+  async function handleValidate() {
+    setLoading(true);
+    setResult(null);
     if (!configText.trim()) {
       setResult({ status: "error", message: "Configuration cannot be empty." });
+      setLoading(false);
       return;
     }
 
     try {
-      JSON.parse(configText);
-      setResult({ status: "success", message: "Valid JSON configuration." });
-    } catch (error) {
-      if (error instanceof Error) {
-        setResult({
-          status: "error",
-          message: `Invalid JSON: ${error.message}`,
-        });
+      const aiResult = await validateConfiguration({ config: configText });
+      if (aiResult.isValid) {
+        setResult({ status: "success", message: aiResult.suggestions });
       } else {
-        setResult({ status: "error", message: "An unknown parsing error occurred." });
+        setResult({ status: "error", message: aiResult.suggestions });
       }
+    } catch (error) {
+      console.error("AI validation failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to validate configuration with AI. Please try again.",
+      });
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -54,22 +66,44 @@ export default function ValidatorClient() {
             className="min-h-[300px] font-mono"
             value={configText}
             onChange={(e) => setConfigText(e.target.value)}
+            disabled={loading}
           />
-          <Button onClick={handleValidate}>Validate</Button>
+          <Button onClick={handleValidate} disabled={loading}>
+            {loading ? "Validating with AI..." : "Validate"}
+          </Button>
         </CardContent>
       </Card>
 
+      {loading && (
+        <Alert>
+            <Bot className="h-4 w-4" />
+            <AlertTitle>AI Validator is thinking...</AlertTitle>
+            <AlertDescription>
+              <div className="space-y-2 mt-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </AlertDescription>
+        </Alert>
+      )}
+
       {result && (
-        <Alert variant={result.status === "error" ? "destructive" : "default"} className={result.status === 'success' ? 'border-green-500/50' : ''}>
+        <Alert
+          variant={result.status === "error" ? "destructive" : "default"}
+          className={result.status === "success" ? "border-green-500/50" : ""}
+        >
           {result.status === "success" ? (
             <CheckCircle className="h-4 w-4 text-green-500" />
           ) : (
             <XCircle className="h-4 w-4" />
           )}
           <AlertTitle>
-            {result.status === "success" ? "Validation Successful" : "Validation Failed"}
+            {result.status === "success"
+              ? "Validation Successful"
+              : "Validation Failed"}
           </AlertTitle>
-          <AlertDescription>{result.message}</AlertDescription>
+          <AlertDescription className="whitespace-pre-wrap">{result.message}</AlertDescription>
         </Alert>
       )}
     </div>
