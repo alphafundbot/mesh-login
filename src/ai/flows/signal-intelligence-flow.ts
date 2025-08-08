@@ -83,7 +83,7 @@ const getFeedbackSummary = ai.defineTool(
     }
 );
 
-const prompt = ai.definePrompt({
+const signalIntelligencePrompt = ai.definePrompt({
   name: 'signalIntelligencePrompt',
   tools: [getFeedbackSummary],
   input: {schema: AnalyzeSignalHistoryInputSchema},
@@ -120,7 +120,7 @@ const signalIntelligenceFlow = ai.defineFlow(
     outputSchema: AnalyzeSignalHistoryOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await signalIntelligencePrompt(input);
     
     if (!output) {
         throw new Error("Failed to get a response from the AI.");
@@ -158,4 +158,3 @@ export const submitFeedback = ai.defineFlow(
         });
     }
 );
-
