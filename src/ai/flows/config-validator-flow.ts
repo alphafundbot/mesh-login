@@ -32,6 +32,7 @@ const prompt = ai.definePrompt({
   name: 'configValidatorPrompt',
   input: {schema: ValidateConfigurationInputSchema},
   output: {schema: ValidateConfigurationOutputSchema},
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are a top-tier security and compliance analyst specializing in medical system configurations. Your task is to analyze the provided configuration, such as a compliance matrix, and determine if it is valid, secure, and compliant with standards like HIPAA and GDPR.
 
 The configuration should be valid JSON. More importantly, it must be secure and well-formed.

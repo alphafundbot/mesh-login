@@ -31,6 +31,7 @@ const prompt = ai.definePrompt({
   name: 'rationaleTaggingPrompt',
   input: {schema: RationaleTaggingInputSchema},
   output: {schema: RationaleTaggingOutputSchema},
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are a master systems analyst. Your task is to extract relevant, concise tags from a strategist's rationale for overriding a system protocol.
 
 The tags should be short (1-2 words) and capture the core concepts of the rationale. Generate between 3 and 5 tags.
