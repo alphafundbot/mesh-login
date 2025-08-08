@@ -14,14 +14,14 @@ config({ path: '.env.local' });
  */
 function getEnv(variableName: string, fallbackValue: string = ""): string {
     const value = process.env[variableName];
-    if (!value) {
-        if(fallbackValue) {
-            return fallbackValue;
-        }
-        console.warn(`Environment variable ${variableName} is not set.`);
-        return "";
+    if (value) {
+        return value;
     }
-    return value;
+    if(fallbackValue) {
+        return fallbackValue;
+    }
+    console.warn(`Environment variable ${variableName} is not set.`);
+    return "";
 }
 
 export interface FirebaseConfig {
@@ -55,6 +55,6 @@ const firebaseConfigValues = {
 export const servicesConfig: ServicesConfig = {
     firebase: firebaseConfigValues,
     gcp: {
-        geminiApiKey: getEnv('GEMINI_API_KEY', "YOUR_FIREBASE_API_KEY"),
+        geminiApiKey: getEnv('GEMINI_API_KEY', firebaseConfigValues.apiKey),
     }
 };
