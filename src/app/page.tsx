@@ -7,6 +7,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { domainData } from "@/lib/domains";
 import AppLayout from "@/components/layout/AppLayout";
+import RecentActivity from "@/components/dashboard/RecentActivity";
 
 export default function DashboardPage() {
   return (
@@ -14,9 +15,12 @@ export default function DashboardPage() {
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-primary-foreground">
-            Domain Dashboard
+            Strategist HUD
           </h1>
         </div>
+
+        <RecentActivity />
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {domainData.map((domain) => (
             <Card
