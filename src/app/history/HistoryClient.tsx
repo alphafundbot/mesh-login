@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -179,7 +178,7 @@ const DELTA_THRESHOLD = 10;
 function ClusterDelta({ currentScore, previousScore }: { currentScore: number; previousScore: number }) {
     const delta = currentScore - previousScore;
     
-    if (delta === 0) return <Badge variant="outline" className="gap-1 font-mono text-muted-foreground">⏸️ 0</Badge>;
+    if (delta === 0) return null;
     
     const Arrow = delta > 0 ? ArrowUp : ArrowDown;
     const isLargeDelta = Math.abs(delta) > DELTA_THRESHOLD;
@@ -907,7 +906,7 @@ export default function HistoryClient() {
                         </div>
                         <div className="space-y-4">
                             {filteredRecommendations.length > 0 ? filteredRecommendations.map((rec) => (
-                                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity")}>
+                                <div key={rec.recommendationId} className={cn("flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30 transition-opacity", rec.confidence < confidenceThreshold && 'opacity-50')}>
                                     <div className="flex-1 pr-4 space-y-2">
                                     <p className="text-muted-foreground">{rec.text}</p>
                                     <RecommendationConfidence rec={rec} />
@@ -957,7 +956,3 @@ export default function HistoryClient() {
     </div>
   );
 }
-
-
-
-    
