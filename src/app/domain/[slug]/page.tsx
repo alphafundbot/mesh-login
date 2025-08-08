@@ -1,7 +1,7 @@
 import AppLayout from "@/components/layout/AppLayout";
 import { domainData } from "@/lib/domains";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { notFound } from "next/navigation";
+import DomainClient from "./DomainClient";
 
 export default function DomainDetailPage({
   params,
@@ -25,32 +25,7 @@ export default function DomainDetailPage({
         </div>
         <p className="text-muted-foreground">{domain.status}</p>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Action History</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">Detailed action history will be displayed here.</p>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Configuration Diffs</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">Configuration changes and diffs will be displayed here.</p>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Tactical Recommendations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">AI-powered tactical recommendations will be displayed here.</p>
-                </CardContent>
-            </Card>
-        </div>
+        <DomainClient domain={domain} />
       </div>
     </AppLayout>
   );
