@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import {
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput } from "@/ai/flows/signal-intelligence-flow";
 import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, Check, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ActionLog {
   id: string;
@@ -29,16 +30,116 @@ interface ActionLog {
   timestamp: Date;
 }
 
-const parseDetails = (details: string) => {
+type Severity = "Warning" | "Critical" | "Catastrophic";
+
+interface ParsedDetails {
+    isOverride: boolean;
+    rationale: string;
+    action: string;
+    severity?: Severity;
+    domains?: string[];
+}
+
+const parseDetails = (details: string): ParsedDetails => {
     const isOverride = details.includes("Override: true");
     const rationaleMatch = details.match(/Rationale: "([^"]*)"/);
     const rationale = rationaleMatch ? rationaleMatch[1] : details;
 
     const actionMatch = details.match(/Action: ([A-Za-z_]+)/);
     const action = actionMatch ? actionMatch[1].replace(/_/g, " ") : "";
+
+    const severityMatch = details.match(/Severity: (Warning|Critical|Catastrophic)/);
+    const severity = severityMatch ? (severityMatch[1] as Severity) : undefined;
     
-    return { isOverride, rationale, action };
+    const domainsMatch = details.match(/involving (.*?)\. Action:/);
+    const domains = domainsMatch ? domainsMatch[1].split(', ') : undefined;
+
+    return { isOverride, rationale, action, severity, domains };
 }
+
+const getHeatmapColor = (count: number, max: number) => {
+    if (count === 0) return "bg-transparent";
+    const intensity = Math.min(1, count / (max || 1));
+    if (intensity > 0.8) return "bg-red-500/50";
+    if (intensity > 0.5) return "bg-orange-500/50";
+    if (intensity > 0.2) return "bg-yellow-500/50";
+    return "bg-yellow-500/20";
+};
+
+function OverrideHeatmap({ logs }: { logs: ActionLog[] }) {
+    const heatmapData = useMemo(() => {
+        const data: Record<string, Record<Severity, number>> = {};
+        let maxOverrides = 0;
+
+        logs.forEach(log => {
+            const { isOverride, domains, severity } = parseDetails(log.details);
+            if (isOverride && domains && severity) {
+                domains.forEach(domain => {
+                    if (!data[domain]) {
+                        data[domain] = { "Warning": 0, "Critical": 0, "Catastrophic": 0 };
+                    }
+                    data[domain][severity]++;
+                    if (data[domain][severity] > maxOverrides) {
+                        maxOverrides = data[domain][severity];
+                    }
+                });
+            }
+        });
+        return { data, maxOverrides };
+    }, [logs]);
+
+    const { data, maxOverrides } = heatmapData;
+    const domains = Object.keys(data);
+    const severities: Severity[] = ["Warning", "Critical", "Catastrophic"];
+
+    if (domains.length === 0) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Override Frequency Heatmap</CardTitle>
+                    <CardDescription>No override data available yet.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground text-center py-4">Overrides will be analyzed here once they are logged.</p>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Override Frequency Heatmap</CardTitle>
+                <CardDescription>Analysis of strategist overrides across domains and severity levels.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Domain</TableHead>
+                            {severities.map(s => <TableHead key={s} className="text-center">{s}</TableHead>)}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {domains.map(domain => (
+                            <TableRow key={domain}>
+                                <TableCell className="font-medium">{domain}</TableCell>
+                                {severities.map(severity => (
+                                    <TableCell key={severity} className="text-center">
+                                        <div className={cn("w-full h-8 flex items-center justify-center rounded-md", getHeatmapColor(data[domain][severity], maxOverrides))}>
+                                            {data[domain][severity]}
+                                        </div>
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+}
+
 
 export default function HistoryClient() {
   const [logs, setLogs] = useState<ActionLog[]>([]);
@@ -105,6 +206,7 @@ export default function HistoryClient() {
 
   return (
     <div className="space-y-6">
+        <OverrideHeatmap logs={logs} />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
