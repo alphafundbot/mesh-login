@@ -12,12 +12,16 @@ import {
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
-import { Eye, TrendingUp } from "lucide-react";
+import { Eye, TrendingUp, Settings } from "lucide-react";
 import { forecastSuppression, type SuppressionForecastOutput } from "@/ai/flows/suppression-forecast-flow";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
 import { z } from 'zod';
+import { Button } from "../ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Label } from "../ui/label";
+import { Slider } from "../ui/slider";
 
 const ForecastSchema = z.object({
     domain: z.string().describe('The domain being analyzed.'),
@@ -54,9 +58,9 @@ export default function HudForecastPanel() {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<SuppressionForecastOutput | null>(null);
   const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
-    if (typeof window === "undefined") return 0.5; // Default for SSR
+    if (typeof window === "undefined") return 0.5;
     const saved = localStorage.getItem("forecastConfidenceThreshold");
-    return saved !== null ? parseFloat(saved) : 0.5; // Default if not set
+    return saved !== null ? parseFloat(saved) : 0.5;
   });
   const { toast } = useToast();
 
@@ -161,10 +165,37 @@ export default function HudForecastPanel() {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Eye className="h-6 w-6 text-accent" />
-          Suppression Forecast
-        </CardTitle>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Eye className="h-6 w-6 text-accent" />
+                <CardTitle>Suppression Forecast</CardTitle>
+            </div>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                        <Settings className="h-4 w-4" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64">
+                    <div className="space-y-4">
+                        <Label htmlFor="forecast-threshold" className="text-sm">Certainty Threshold</Label>
+                        <div className="flex items-center gap-2">
+                            <Slider
+                                id="forecast-threshold"
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                value={[confidenceThreshold]}
+                                onValueChange={(value) => setConfidenceThreshold(value[0])}
+                                className="flex-grow"
+                            />
+                            <span className="text-sm font-mono w-10 text-center">{confidenceThreshold.toFixed(2)}</span>
+                        </div>
+                         <p className="text-xs text-muted-foreground">Only show forecasts with a predicted override rate above this value.</p>
+                    </div>
+                </PopoverContent>
+            </Popover>
+        </div>
         <CardDescription>
           AI-predicted zones of high strategist-automation friction.
         </CardDescription>
