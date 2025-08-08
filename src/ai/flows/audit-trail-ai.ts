@@ -32,7 +32,7 @@ const prompt = ai.definePrompt({
   name: 'auditTrailAISummarizationPrompt',
   input: {schema: AuditTrailAISummarizationInputSchema},
   output: {schema: AuditTrailAISummarizationOutputSchema},
-  model: "gemini-1.5-flash",
+  model: "googleai/gemini-1.5-flash",
   prompt: `You are a security analyst specializing in identifying unusual activity patterns.
 
 You will use the provided audit logs to identify and summarize the security events, and any unusual activity patterns.
