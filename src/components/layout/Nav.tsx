@@ -13,6 +13,7 @@ import {
   GitCompareArrows,
   Archive,
   Eye,
+  Brain,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/audit", label: "Audit Trail AI", icon: ShieldCheck },
   { href: "/validator", label: "Config Validator", icon: Binary },
   { href: "/history", label: "Signal Memory", icon: History },
+  { href: "/memory-map", label: "Memory Map", icon: Brain },
   { href: "/analysis-archive", label: "Analysis Archive", icon: Archive },
   { href: "/forecast-archive", label: "Forecast Archive", icon: Eye },
 ];
