@@ -162,12 +162,13 @@ export default function OverrideMomentum() {
 
     if(sortedClusters.length === 0) {
         return (
-             <Card className="transition-shadow duration-300 hover:shadow-xl">
+             <Card className="transition-shadow duration-300 hover:shadow-xl h-full">
                 <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                         <TrendingUp className="h-5 w-5 text-accent" />
                         Top Override Momentum
                     </CardTitle>
+                    <CardDescription className="text-xs">Clusters with the highest change in risk over the last 7 days.</CardDescription>
                 </CardHeader>
                  <CardContent>
                     <p className="text-sm text-muted-foreground text-center py-4">No significant override momentum detected.</p>
@@ -177,7 +178,7 @@ export default function OverrideMomentum() {
     }
 
     return (
-         <Card className="transition-shadow duration-300 hover:shadow-xl">
+         <Card className="transition-shadow duration-300 hover:shadow-xl h-full">
             <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-accent" />
