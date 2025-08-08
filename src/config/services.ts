@@ -5,7 +5,7 @@
 import { config } from 'dotenv';
 
 // Load variables from the single source of truth: .env
-config();
+config({ path: '.env' });
 
 
 /**
@@ -16,17 +16,11 @@ config();
  */
 function getEnv(variableName: string): string {
     const value = process.env[variableName];
-    if (value !== undefined && value.trim() !== '') {
-        return value;
+    if (!value) {
+        console.error(`Missing env var: ${variableName}`);
+        throw new Error(`FATAL ERROR: Environment variable ${variableName} is not set. Please ensure it is defined in your .env file.`);
     }
-    // For critical variables, we should fail fast if they're not set.
-    throw new Error(`
-        ================================================================================
-        FATAL ERROR: Environment variable ${variableName} is not set in your .env file.
-        Please ensure your .env file contains the following line:
-        ${variableName}=YOUR_SECRET_KEY
-        ================================================================================
-    `);
+    return value;
 }
 
 export interface FirebaseConfig {
