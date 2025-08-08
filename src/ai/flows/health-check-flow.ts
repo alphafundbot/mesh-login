@@ -20,7 +20,7 @@ export async function checkApiHealth(): Promise<HealthCheckOutput> {
   try {
     const { output } = await ai.generate({
       prompt: "Say 'Hello World'",
-      model: 'googleai/gemini-1.5-flash-latest',
+      model: 'googleai/gemini-1.5-flash',
       config: {
         temperature: 0,
       }
