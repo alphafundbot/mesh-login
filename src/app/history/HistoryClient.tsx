@@ -320,6 +320,53 @@ function OverrideHeatmap({ logs, onCellClick }: { logs: ActionLog[], onCellClick
     );
 }
 
+function GlobalClusterPanel({ clusters, previousLogs, onClusterClick }: { clusters: ClusterMap, previousLogs: ActionLog[], onClusterClick: (cluster: ClusterInfo) => void }) {
+    const sortedClusters = useMemo(() => Array.from(clusters.values()).sort((a, b) => b.riskScore - a.riskScore), [clusters]);
+    
+    if (sortedClusters.length === 0) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle>Global Rationale Clusters</CardTitle>
+                    <CardDescription>No override rationale clusters detected in the selected time window.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground text-center py-4">Awaiting strategist overrides...</p>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Global Rationale Clusters</CardTitle>
+                <CardDescription>Top override themes by calculated risk score. Click a cluster to investigate.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sortedClusters.map(cluster => (
+                    <Card 
+                        key={cluster.tag}
+                        className="p-3 hover:bg-muted/50 cursor-pointer"
+                        onClick={() => onClusterClick(cluster)}
+                    >
+                        <div className="flex items-start justify-between">
+                             <h4 className="font-semibold capitalize">{cluster.tag}</h4>
+                             <Badge variant={cluster.riskScore > 10 ? "destructive" : cluster.riskScore > 5 ? "secondary" : "default"} className="gap-1"><BarChart className="h-3 w-3" /> Risk: {cluster.riskScore}</Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                             {cluster.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{cluster.severities.Warning}</Badge>}
+                            {cluster.severities.Critical > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-orange-600"><ShieldAlert className="h-3 w-3" />{cluster.severities.Critical}</Badge>}
+                            {cluster.severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-red-800"><ShieldX className="h-3 w-3" />{cluster.severities.Catastrophic}</Badge>}
+                        </div>
+                        <ClusterDelta currentScore={cluster.riskScore} previousScore={useClusterMomentum(cluster, previousLogs).previousScore} />
+                    </Card>
+                ))}
+            </CardContent>
+        </Card>
+    )
+}
+
 type TimeFilter = "24h" | "7d" | "all";
 type ViewMode = "logs" | "feedback";
 
@@ -774,6 +821,8 @@ export default function HistoryClient() {
         {viewMode === 'logs' && (
             <>
                 <OverrideHeatmap logs={filteredLogs} onCellClick={handleHeatmapCellClick} />
+                
+                <GlobalClusterPanel clusters={globalClusters} previousLogs={previousPeriodLogs} onClusterClick={handleClusterClick} />
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
