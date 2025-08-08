@@ -152,7 +152,7 @@ export default function OverrideMomentum() {
             };
             const rationales = currentLogs.map(l => ({ ...l, parsed: parseDetails(l.details) }))
                 .filter(l => l.parsed.isOverride && l.parsed.rationale && l.parsed.severity)
-                .map(l => ({ rationale: l.parsed.rationale, tags: [], severity: l.parsed.severity!, domains: l.parsed.domains! }));
+                .map(l => ({ rationale: l.parsed.rationale!, tags: [], severity: l.parsed.severity!, domains: l.parsed.domains! }));
             
             try {
                 const tagged = await Promise.all(rationales.map(async r => {
