@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from 'next/link';
 import { ChevronRight, Lock } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 type Domain = {
   name: string;
   slug: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   modules: string[];
   status: string;
 };

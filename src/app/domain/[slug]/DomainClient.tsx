@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   analyzeSignalHistory,
@@ -10,7 +10,7 @@ import {
   submitFeedback,
 } from "@/ai/flows/signal-intelligence-flow";
 import { useToast } from "@/hooks/use-toast";
-import { Bot, BrainCircuit, Lightbulb, History, ThumbsUp, ThumbsDown, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, History, ThumbsUp, ThumbsDown, Sparkles, TrendingUp, HelpCircle, HardDrive, ChevronRight } from "lucide-react";
 import type { Recommendation } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,12 +19,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn, slugify } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { telecomSignalLogs } from "@/lib/telecom-signal-logs";
+import Link from 'next/link';
+
 
 type Domain = {
   name: string;
@@ -176,34 +178,18 @@ export default function DomainClient({ domain }: { domain: Domain }) {
 
   if (loading) {
     return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
+      <div className="space-y-6 mt-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><History className="h-5 w-5" />Action History Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-          </CardContent>
+            <CardHeader><CardTitle>Intelligence Feed</CardTitle></CardHeader>
+            <CardContent>
+                <Skeleton className="h-40 w-full" />
+            </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><BrainCircuit className="h-5 w-5" />Detected Patterns</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Lightbulb className="h-5 w-5" />Tactical Recommendations</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-4/5" />
-          </CardContent>
+         <Card>
+            <CardHeader><CardTitle>Domain Modules</CardTitle></CardHeader>
+            <CardContent>
+                <Skeleton className="h-20 w-full" />
+            </CardContent>
         </Card>
       </div>
     );
@@ -217,6 +203,28 @@ export default function DomainClient({ domain }: { domain: Domain }) {
 
   return (
     <div className="space-y-6 mt-6">
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-accent"><HardDrive className="h-5 w-5" />Domain Modules</CardTitle>
+                <CardDescription>Actionable components within the {domain.name} domain.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+               {domain.modules.map((moduleName) => (
+                   <Link key={moduleName} href={`/domain/${domain.slug}/${slugify(moduleName)}`}>
+                       <Card className="h-full hover:bg-muted/50 hover:border-accent transition-colors duration-200">
+                           <CardHeader className="p-4">
+                               <CardTitle className="text-base flex items-center justify-between">
+                                   {moduleName}
+                                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                               </CardTitle>
+                           </CardHeader>
+                       </Card>
+                   </Link>
+               ))}
+            </CardContent>
+        </Card>
+
+
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
