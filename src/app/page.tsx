@@ -52,7 +52,7 @@ export default function DashboardPage() {
           <Tabs defaultValue={domainData[0].slug} className="w-full">
             <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 lg:grid-cols-9">
               {domainData.map((domain) => (
-                <TabsTrigger key={domain.slug} value={domain.slug} className="text-xs">
+                <TabsTrigger key={domain.slug} value={domain.slug}>
                   <domain.icon className="mr-2 h-4 w-4 hidden md:block" /> {domain.name.split(' ')[1]}
                 </TabsTrigger>
               ))}
@@ -78,15 +78,14 @@ export default function DashboardPage() {
                      </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {domain.modules.map((module) => (
                         <Link key={module} href={`/domain/${domain.slug}/${slugify(module)}`} passHref>
-                          <Badge
-                            variant="secondary"
-                            className="font-normal hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-sm py-1"
+                          <div
+                            className="bg-card/50 p-3 rounded-lg hover:shadow-xl hover:bg-card transition-all duration-300 h-full flex flex-col justify-center border"
                           >
-                            {module}
-                          </Badge>
+                            <h3 className="font-semibold text-card-foreground">{module}</h3>
+                          </div>
                         </Link>
                       ))}
                     </div>
