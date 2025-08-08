@@ -19,6 +19,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
+import { snapshotRegistry } from "@/lib/snapshots";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -26,10 +27,6 @@ const navItems = [
   { href: "/validator", label: "Config Validator", icon: Binary },
   { href: "/history", label: "Signal Memory", icon: History },
 ];
-
-const snapshotItems = [
-    { href: "/snapshots/telecom-anomaly", label: "Telecom Anomaly 2025-08-08"},
-]
 
 export default function Nav() {
   const pathname = usePathname();
@@ -61,10 +58,10 @@ export default function Nav() {
             <span>Snapshots</span>
           </SidebarMenuButton>
           <SidebarMenuSub>
-            {snapshotItems.map((item) => (
-              <SidebarMenuSubItem key={item.href}>
-                <Link href={item.href} passHref legacyBehavior>
-                    <SidebarMenuSubButton asChild isActive={pathname === item.href}>
+            {snapshotRegistry.map((item) => (
+              <SidebarMenuSubItem key={item.slug}>
+                <Link href={`/snapshots/${item.slug}`} passHref legacyBehavior>
+                    <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/${item.slug}`}>
                         <a>{item.label}</a>
                     </SidebarMenuSubButton>
                 </Link>
