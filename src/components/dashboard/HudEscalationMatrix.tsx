@@ -98,15 +98,13 @@ export default function HudEscalationMatrix() {
         
         const topCriticalDomain = Object.entries(criticalOverrides).sort((a, b) => b[1] - a[1])[0];
         
-        const currentRisk = currentLogs.reduce((acc, log) => {
-            const { severity } = parseDetails(log.details);
-            return acc + (severity ? RISK_WEIGHTS[severity] : 0);
+        const calculateRisk = (logs: ActionLog[]) => logs.reduce((acc, log) => {
+            const { severity, isOverride } = parseDetails(log.details);
+            return acc + (isOverride && severity ? RISK_WEIGHTS[severity] : 0);
         }, 0);
-        
-        const previousRisk = previousLogs.reduce((acc, log) => {
-            const { severity } = parseDetails(log.details);
-            return acc + (severity ? RISK_WEIGHTS[severity] : 0);
-        }, 0);
+
+        const currentRisk = calculateRisk(currentLogs);
+        const previousRisk = calculateRisk(previousLogs);
 
         const delta = currentRisk - previousRisk;
         const percentChange = previousRisk > 0 ? Math.round((delta / previousRisk) * 100) : (currentRisk > 0 ? 100 : 0);
