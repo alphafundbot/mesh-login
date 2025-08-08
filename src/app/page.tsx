@@ -58,11 +58,11 @@ export default function DashboardPage() {
               ))}
             </TabsList>
             {domainData.map((domain) => (
-              <TabsContent key={domain.slug} value={domain.slug}>
-                <Card className="mt-4">
-                  <CardHeader>
+              <TabsContent key={domain.slug} value={domain.slug} className="mt-4">
+                <Card>
+                  <CardHeader className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm">
                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-3">
                           <domain.icon className="h-6 w-6 text-accent" />
                           {domain.name}
                         </CardTitle>
@@ -77,17 +77,20 @@ export default function DashboardPage() {
                         </Badge>
                      </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {domain.modules.map((module) => (
-                        <Link key={module} href={`/domain/${domain.slug}/${slugify(module)}`} passHref>
-                          <div
-                            className="bg-card/50 p-3 rounded-lg hover:shadow-xl hover:bg-card transition-all duration-300 h-full flex flex-col justify-center border"
-                          >
-                            <h3 className="font-semibold text-card-foreground">{module}</h3>
-                          </div>
-                        </Link>
-                      ))}
+                  <CardContent className="space-y-6">
+                    <div>
+                      <h3 className="font-semibold text-muted-foreground mb-2">Modules</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {domain.modules.map((module) => (
+                          <Link key={module} href={`/domain/${domain.slug}/${slugify(module)}`} passHref>
+                            <div
+                              className="bg-card/50 p-3 rounded-lg hover:shadow-xl hover:bg-card transition-all duration-300 h-full flex flex-col justify-center border"
+                            >
+                              <h3 className="font-semibold text-card-foreground">{module}</h3>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
