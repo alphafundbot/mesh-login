@@ -10,6 +10,7 @@ export default function ResourceAllocation() {
     const chartData = resourceAllocationData.map(item => ({
         ...item,
         utilization: (item.value / item.budget) * 100,
+        name: item.name.split('/')[0]
     }));
 
     return (
@@ -20,7 +21,7 @@ export default function ResourceAllocation() {
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={chartData} layout="vertical">
+                    <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
                         <XAxis
                             type="number"
                             stroke="hsl(var(--muted-foreground))"
@@ -32,8 +33,10 @@ export default function ResourceAllocation() {
                             dataKey="name"
                             type="category"
                             stroke="hsl(var(--muted-foreground))"
-                            fontSize={12}
-                            width={110}
+                            fontSize={10}
+                            width={70}
+                            axisLine={false}
+                            tickLine={false}
                         />
                         <Tooltip
                             contentStyle={{
@@ -47,12 +50,12 @@ export default function ResourceAllocation() {
                                 return [value, name];
                             }}
                         />
-                        <Legend />
+                        <Legend wrapperStyle={{ fontSize: "12px" }} />
                         <Bar
                             dataKey="utilization"
                             fill="hsl(var(--primary))"
                             radius={[0, 4, 4, 0]}
-                            background={{ fill: 'hsl(var(--muted))', radius: 4 }}
+                            background={{ fill: 'hsl(var(--muted)/0.5)', radius: 4 }}
                         />
                     </BarChart>
                 </ResponsiveContainer>
