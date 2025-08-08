@@ -359,7 +359,7 @@ function GlobalClusterPanel({ clusters, previousLogs, onClusterClick }: { cluste
                             {cluster.severities.Critical > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-orange-600"><ShieldAlert className="h-3 w-3" />{cluster.severities.Critical}</Badge>}
                             {cluster.severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-red-800"><ShieldX className="h-3 w-3" />{cluster.severities.Catastrophic}</Badge>}
                         </div>
-                        <ClusterDelta currentScore={cluster.riskScore} previousScore={useClusterMomentum(cluster, previousLogs).previousScore} />
+                        <ClusterDelta currentScore={cluster.riskScore} previousScore={useClusterMomentum(cluster, previousPeriodLogs).previousScore} />
                     </Card>
                 ))}
             </CardContent>
