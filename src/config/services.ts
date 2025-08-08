@@ -48,7 +48,6 @@ const firebaseConfigValues = {
     storageBucket: "stratagemai-xi7q8.appspot.com",
     messagingSenderId: "405937962472",
     appId: "1:405937962472:web:a9d3a7c6b9e5d4a1a3b2c1",
-    measurementId: getEnv('FIREBASE_MEASUREMENT_ID'),
 };
 
 

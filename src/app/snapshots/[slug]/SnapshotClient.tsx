@@ -90,55 +90,57 @@ export default function SnapshotClient({ snapshot }: { snapshot: Snapshot }) {
     </div>
   );
 
-  const renderContent = () => (
-     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Raw Signal History</CardTitle>
-          <CardDescription>{snapshot.description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <pre className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-lg overflow-x-auto">
-                <code>{snapshot.data.logs}</code>
-            </pre>
-        </CardContent>
-      </Card>
-      {result && (
+  const renderContent = () => {
+    return (
+      <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-accent">
-              <Bot className="h-6 w-6" /> AI Synthesis
-            </CardTitle>
-            <CardDescription>
-              AI-generated analysis of the signal history from this event.
-            </CardDescription>
-          </Header>
-          <CardContent className="space-y-6">
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2"><History className="h-5 w-5" />Summary</h3>
-              <p className="text-muted-foreground whitespace-pre-wrap">{result.summary}</p>
-            </div>
-            <div className="border-t pt-4">
-              <h3 className="font-semibold mb-2 flex items-center gap-2"><BrainCircuit className="h-5 w-5" />Patterns Detected</h3>
-              <ul className="list-disc pl-5 text-muted-foreground space-y-1">
-                {result.patterns.map((pattern, index) => (
-                  <li key={index}>{pattern}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="border-t pt-4">
-              <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
-              <ul className="list-disc pl-5 text-muted-foreground space-y-1">
-                  {result.recommendations.map(rec => (
-                      <li key={rec.recommendationId}>{rec.text}</li>
-                  ))}
-              </ul>
-            </div>
+            <CardTitle>Raw Signal History</CardTitle>
+            <CardDescription>{snapshot.description}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <pre className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-lg overflow-x-auto">
+              <code>{snapshot.data.logs}</code>
+            </pre>
           </CardContent>
         </Card>
-      )}
-    </div>
-  )
+        {result && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-accent">
+                <Bot className="h-6 w-6" /> AI Synthesis
+              </CardTitle>
+              <CardDescription>
+                AI-generated analysis of the signal history from this event.
+              </CardDescription>
+            </Header>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="font-semibold mb-2 flex items-center gap-2"><History className="h-5 w-5" />Summary</h3>
+                <p className="text-muted-foreground whitespace-pre-wrap">{result.summary}</p>
+              </div>
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-2 flex items-center gap-2"><BrainCircuit className="h-5 w-5" />Patterns Detected</h3>
+                <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                  {result.patterns.map((pattern, index) => (
+                    <li key={index}>{pattern}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
+                <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                    {result.recommendations.map(rec => (
+                        <li key={rec.recommendationId}>{rec.text}</li>
+                    ))}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
 
   return loading ? renderLoading() : renderContent();
 }

@@ -9,7 +9,9 @@
     pkgs.zulu
   ];
   # Sets environment variables in the workspace
-  env = {};
+  env = {
+    GEMINI_API_KEY = "AIzaSyA-b-vFxeHw9RFuIbNfIN9ORQIo6FQr2sc";
+  };
   # This adds a file watcher to startup the firebase emulators. The emulators will only start if
   # a firebase.json file is written into the user's directory
   services.firebase.emulators = {
