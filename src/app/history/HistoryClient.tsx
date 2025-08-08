@@ -37,6 +37,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 
 interface ActionLog {
@@ -431,6 +433,7 @@ export default function HistoryClient() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSignalHistoryOutput | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
+  const [showLowConfidence, setShowLowConfidence] = useState(true);
   const { toast } = useToast();
   const { user } = useUser();
 
@@ -560,11 +563,16 @@ export default function HistoryClient() {
 
   const sortedRecommendations = useMemo(() => {
     if (!analysisResult) return [];
+    
+    const filtered = showLowConfidence
+      ? analysisResult.recommendations
+      : analysisResult.recommendations.filter(rec => rec.confidence !== 'low');
+
     const confidenceOrder = ['high', 'medium', 'low'];
-    return [...analysisResult.recommendations].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
         return confidenceOrder.indexOf(a.confidence) - confidenceOrder.indexOf(b.confidence);
     });
-  }, [analysisResult]);
+  }, [analysisResult, showLowConfidence]);
 
   return (
     <div className="space-y-6">
@@ -699,7 +707,17 @@ export default function HistoryClient() {
                 </ul>
             </div>
              <div className="border-t pt-4">
-              <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold flex items-center gap-2"><Lightbulb className="h-5 w-5" />Recommendations</h3>
+                <div className="flex items-center space-x-2">
+                    <Switch
+                        id="show-low-confidence"
+                        checked={showLowConfidence}
+                        onCheckedChange={setShowLowConfidence}
+                    />
+                    <Label htmlFor="show-low-confidence" className="text-sm">Show Low-Confidence</Label>
+                </div>
+              </div>
               <div className="space-y-4">
                 {sortedRecommendations.map((rec) => (
                     <div key={rec.recommendationId} className="flex items-start justify-between p-3 rounded-lg bg-muted/20 border border-muted/30">
@@ -729,6 +747,9 @@ export default function HistoryClient() {
                         </div>
                     </div>
                 ))}
+                 {sortedRecommendations.length === 0 && (
+                    <p className="text-muted-foreground text-center py-4">No recommendations to display based on the current filter.</p>
+                 )}
               </div>
             </div>
           </CardContent>
