@@ -3,8 +3,7 @@
  * Simulated action logs for Telecom & IoT mesh latency analysis.
  * This log includes a resolution entry to provide a complete narrative.
  */
-export const telecomSignalLogs = `
-[2024-08-08T10:00:00Z] HEARTBEAT on module Signal Visualizer by Operator-01, latency: 15ms
+export const telecomSignalLogs = `[2024-08-08T10:00:00Z] HEARTBEAT on module Signal Visualizer by Operator-01, latency: 15ms
 [2024-08-08T10:00:05Z] HEARTBEAT on module Mesh Designer by Operator-01, latency: 12ms
 [2024-08-08T10:00:10Z] ROUTING_UPDATE on module Signal Sovereignty by Architect-02, details: "Re-routing traffic from node-C to node-D"
 [2024-08-08T10:01:00Z] API_ERROR on module Lidar Feed by System, error: "timeout", latency: 550ms
