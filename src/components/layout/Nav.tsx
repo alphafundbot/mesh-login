@@ -6,6 +6,7 @@ import {
   Binary,
   LayoutDashboard,
   ShieldCheck,
+  History,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -17,6 +18,7 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/audit", label: "Audit Trail AI", icon: ShieldCheck },
   { href: "/validator", label: "Config Validator", icon: Binary },
+  { href: "/history", label: "Signal Memory", icon: History },
 ];
 
 export default function Nav() {
