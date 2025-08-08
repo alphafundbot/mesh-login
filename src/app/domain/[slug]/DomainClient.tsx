@@ -99,14 +99,17 @@ export default function DomainClient({ domain }: { domain: Domain }) {
     null
   );
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
-  const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    const saved = localStorage.getItem("domainConfidenceThreshold");
-    return saved !== null ? parseFloat(saved) : 0;
-  });
+  const [confidenceThreshold, setConfidenceThreshold] = useState(0);
 
   const { toast } = useToast();
   const { user } = useUser();
+
+  useEffect(() => {
+    const saved = localStorage.getItem("domainConfidenceThreshold");
+    if (saved !== null) {
+        setConfidenceThreshold(parseFloat(saved));
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {

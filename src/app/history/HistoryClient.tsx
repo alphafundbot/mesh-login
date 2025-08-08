@@ -449,11 +449,7 @@ export default function HistoryClient() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("7d");
   const [viewMode, setViewMode] = useState<ViewMode>("logs" as ViewMode);
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
-  const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    const saved = localStorage.getItem("confidenceThreshold");
-    return saved !== null ? parseFloat(saved) : 0;
-  });
+  const [confidenceThreshold, setConfidenceThreshold] = useState(0);
   const { toast } = useToast();
   const { user } = useUser();
   const searchParams = useSearchParams();
@@ -472,6 +468,14 @@ export default function HistoryClient() {
         setTimeFilter(drilldownTime as TimeFilter);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("confidenceThreshold");
+    if (saved !== null) {
+        setConfidenceThreshold(parseFloat(saved));
+    }
+  }, []);
+
 
   useEffect(() => {
     if (typeof window !== "undefined") {

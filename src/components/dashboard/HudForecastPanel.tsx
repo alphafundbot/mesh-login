@@ -57,12 +57,15 @@ const getRiskLabel = (rate: number) => {
 export default function HudForecastPanel() {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<SuppressionForecastOutput | null>(null);
-  const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    const saved = localStorage.getItem("forecastConfidenceThreshold");
-    return saved !== null ? parseFloat(saved) : 0;
-  });
+  const [confidenceThreshold, setConfidenceThreshold] = useState(0);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const saved = localStorage.getItem("forecastConfidenceThreshold");
+    if (saved !== null) {
+      setConfidenceThreshold(parseFloat(saved));
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
