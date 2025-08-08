@@ -599,7 +599,7 @@ export default function HistoryClient() {
       
       const result = await analyzeSignalHistory({ actionLogs: logsString });
       setAnalysisResult(result);
-    } catch (error) => {
+    } catch (error) {
       console.error("AI analysis failed:", error);
       toast({
         variant: "destructive",
