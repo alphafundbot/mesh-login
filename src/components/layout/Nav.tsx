@@ -16,6 +16,7 @@ import {
   Brain,
   Wifi,
   Settings,
+  BarChartHorizontal,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -41,6 +42,7 @@ const navItems = [
 const systemItems = [
     { href: "/status", label: "API Status", icon: Wifi },
     { href: "/admin", label: "System Admin", icon: Settings },
+    { href: "/usage", label: "Usage Dashboard", icon: BarChartHorizontal },
 ];
 
 export default function Nav() {
