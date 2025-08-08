@@ -100,7 +100,7 @@ export const domainData: Domain[] = [
     name: "🏥 Medical & Bio",
     slug: "medical-bio",
     icon: HeartPulse,
-    status: "Error: Compliance matrix desynced.",
+    status: "All systems optimal.",
     modules: [
       "Compliance Matrix",
       "Medical Vault",

@@ -15,6 +15,7 @@ import { CheckCircle, XCircle, Bot } from "lucide-react";
 import { validateConfiguration } from "@/ai/flows/config-validator-flow";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { desyncedMatrix } from "@/lib/medical-compliance-matrix";
 
 type ValidationResult = {
   status: "success" | "error";
@@ -22,7 +23,7 @@ type ValidationResult = {
 } | null;
 
 export default function ValidatorClient() {
-  const [configText, setConfigText] = useState("");
+  const [configText, setConfigText] = useState(JSON.stringify(desyncedMatrix, null, 2));
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ValidationResult>(null);
   const { toast } = useToast();
@@ -61,7 +62,7 @@ export default function ValidatorClient() {
         <CardHeader>
           <CardTitle>Submit Compliance Matrix or Configuration</CardTitle>
           <CardDescription>
-            Paste the raw JSON configuration below. The AI will analyze it for structural validity, security, and compliance with relevant standards.
+            Paste the raw JSON configuration below. The AI will analyze it for structural validity, security, and compliance with relevant standards. The desynced Medical & Bio matrix has been pre-loaded.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
