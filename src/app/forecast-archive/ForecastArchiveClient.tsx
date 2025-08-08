@@ -80,7 +80,7 @@ export default function ForecastArchiveClient() {
                 <Skeleton className="h-24 w-full" />
                 <Skeleton className="h-24 w-full" />
             </div>
-        )
+        );
     }
 
     if (analyses.length === 0) {
@@ -89,12 +89,12 @@ export default function ForecastArchiveClient() {
                 <CardHeader>
                     <CardTitle>Archive Empty</CardTitle>
                     <CardDescription>No rationale forecasts have been saved yet.</CardDescription>
-                </Header>
+                </CardHeader>
                 <CardContent>
                     <p className="text-muted-foreground text-center py-4">Go to the main dashboard to generate forecasts, which will be archived here automatically.</p>
                 </CardContent>
             </Card>
-        )
+        );
     }
 
     return (

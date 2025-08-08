@@ -69,7 +69,7 @@ export default function ArchiveClient() {
                 <Skeleton className="h-24 w-full" />
                 <Skeleton className="h-24 w-full" />
             </div>
-        )
+        );
     }
 
     if (analyses.length === 0) {
@@ -80,10 +80,10 @@ export default function ArchiveClient() {
                     <CardDescription>No snapshot diff analyses have been saved yet.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground text-center py-4">Go to "Snapshots" > "Diff Snapshots" to create and archive an analysis.</p>
+                    <p className="text-muted-foreground text-center py-4">Go to "Snapshots" &gt; "Diff Snapshots" to create and archive an analysis.</p>
                 </CardContent>
             </Card>
-        )
+        );
     }
 
     return (
