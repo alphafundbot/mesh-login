@@ -12,11 +12,10 @@ import {
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
-import { TrendingUp, ShieldAlert, AlertCircle, ShieldX, BarChart, Tags } from "lucide-react";
+import { TrendingUp, ShieldAlert, BarChart } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "../ui/badge";
-import Link from "next/link";
 import { Button } from "../ui/button";
+import Link from "next/link";
 
 interface ActionLog {
   id: string;
@@ -99,8 +98,6 @@ export default function HudEscalationMatrix() {
         
         const topCriticalDomain = Object.entries(criticalOverrides).sort((a, b) => b[1] - a[1])[0];
         
-        // This is a simplified version of the History page's cluster analysis
-        // A full implementation would require AI, but we can simulate for the HUD
         const currentRisk = currentLogs.reduce((acc, log) => {
             const { severity } = parseDetails(log.details);
             return acc + (severity ? RISK_WEIGHTS[severity] : 0);
