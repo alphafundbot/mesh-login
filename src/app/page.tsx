@@ -5,7 +5,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { domainData } from "@/lib/domains";
@@ -53,31 +52,33 @@ export default function DashboardPage() {
             <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 lg:grid-cols-9">
               {domainData.map((domain) => (
                 <TabsTrigger key={domain.slug} value={domain.slug}>
-                  <domain.icon className="mr-2 h-4 w-4 hidden md:block" /> {domain.name.split(' ')[1]}
+                  <domain.icon className="mr-2 h-4 w-4 hidden md:block" /> {domain.name.split(' ')[1] || domain.name}
                 </TabsTrigger>
               ))}
             </TabsList>
             {domainData.map((domain) => (
               <TabsContent key={domain.slug} value={domain.slug} className="mt-4">
-                <Card>
-                  <CardHeader className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm">
-                     <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-3">
-                          <domain.icon className="h-6 w-6 text-accent" />
-                          {domain.name}
-                        </CardTitle>
-                        <Badge variant="outline" className="flex items-center gap-2">
-                           <span
-                              className={cn(
-                                "h-2 w-2 rounded-full",
-                                getStatusColor(domain.status)
-                              )}
-                            />
-                          <span>{domain.status}</span>
-                        </Badge>
+                <Card className="overflow-hidden">
+                  <CardHeader className="p-0 sticky top-0 z-10">
+                     <div className="bg-card/95 backdrop-blur-sm">
+                        <div className="flex items-center justify-between p-4">
+                            <CardTitle className="flex items-center gap-3">
+                              <domain.icon className="h-6 w-6 text-accent" />
+                              {domain.name}
+                            </CardTitle>
+                            <Badge variant="outline" className="flex items-center gap-2">
+                               <span
+                                  className={cn(
+                                    "h-2 w-2 rounded-full",
+                                    getStatusColor(domain.status)
+                                  )}
+                                />
+                              <span>{domain.status}</span>
+                            </Badge>
+                        </div>
                      </div>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 p-4">
                     <div>
                       <h3 className="font-semibold text-muted-foreground mb-2">Situational Insights</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
