@@ -47,5 +47,4 @@ export function useClusterMomentum(cluster: ClusterInfo | undefined, previousLog
 
     return momentum;
 }
-
     
