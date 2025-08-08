@@ -128,10 +128,10 @@ export default function DomainClient({ domain }: { domain: Domain }) {
     getAnalysis();
   }, [domain, toast]);
   
-  const handleFeedback = async (recommendationId: string, rating: 'up' | 'down') => {
-    if (feedbackGiven[recommendationId]) return; 
+  const handleFeedback = async (recommendation: Recommendation, rating: 'up' | 'down') => {
+    if (feedbackGiven[recommendation.recommendationId]) return; 
 
-    setFeedbackGiven(prev => ({...prev, [recommendationId]: rating }));
+    setFeedbackGiven(prev => ({...prev, [recommendation.recommendationId]: rating }));
     toast({
         title: "Feedback Submitted",
         description: "Thank you for helping improve the AI."
@@ -139,7 +139,8 @@ export default function DomainClient({ domain }: { domain: Domain }) {
 
     try {
         await addDoc(collection(db, "feedback"), {
-            recommendationId,
+            recommendationId: recommendation.recommendationId,
+            recommendationText: recommendation.text,
             rating,
             strategist: user.name,
             role: user.role,
@@ -154,7 +155,7 @@ export default function DomainClient({ domain }: { domain: Domain }) {
         });
         setFeedbackGiven(prev => {
             const newState = {...prev};
-            delete newState[recommendationId];
+            delete newState[recommendation.recommendationId];
             return newState;
         });
     }
@@ -268,7 +269,7 @@ export default function DomainClient({ domain }: { domain: Domain }) {
                             size="icon" 
                             variant={feedbackGiven[rec.recommendationId] === 'up' ? "default" : "outline"}
                             className="h-8 w-8"
-                            onClick={() => handleFeedback(rec.recommendationId, 'up')}
+                            onClick={() => handleFeedback(rec, 'up')}
                             disabled={!!feedbackGiven[rec.recommendationId]}
                         >
                             <ThumbsUp className="h-4 w-4" />
@@ -277,7 +278,7 @@ export default function DomainClient({ domain }: { domain: Domain }) {
                             size="icon" 
                             variant={feedbackGiven[rec.recommendationId] === 'down' ? "destructive" : "outline"}
                             className="h-8 w-8"
-                            onClick={() => handleFeedback(rec.recommendationId, 'down')}
+                            onClick={() => handleFeedback(rec, 'down')}
                             disabled={!!feedbackGiven[rec.recommendationId]}
                         >
                             <ThumbsDown className="h-4 w-4" />
@@ -292,3 +293,4 @@ export default function DomainClient({ domain }: { domain: Domain }) {
     </div>
   );
 }
+
