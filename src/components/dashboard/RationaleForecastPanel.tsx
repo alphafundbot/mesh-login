@@ -10,7 +10,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot, Timestamp, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, Timestamp, addDoc, serverTimestamp, getDocs, limit } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
 import { Lightbulb, ArrowUp, ArrowDown } from "lucide-react";
 import {
@@ -20,33 +20,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import type { ActionLog } from "@/app/history/HistoryClient";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
+import type { ActionLog, Severity, TaggedRationale } from "@/lib/types";
+import { parseDetails, RISK_WEIGHTS } from "@/lib/types";
 
-type Severity = "Warning" | "Critical" | "Catastrophic";
-
-interface TaggedRationale {
-    rationale: string;
-    tags: string[];
-    severity: Severity;
-    domains: string[];
-}
-
-const parseDetails = (details: string): { isOverride: boolean; rationale: string; severity?: Severity; domains?: string[] } => {
-    const isOverride = details.includes("Override: true");
-    const rationaleMatch = details.match(/Rationale: "([^"]*)"/);
-    const rationale = rationaleMatch ? rationaleMatch[1] : "";
-    let severity = (details.match(/Severity: (Warning|Critical|Catastrophic)/)?.[1] as Severity) || undefined;
-    if (!severity) {
-        const eventSeverityMatch = details.match(/Acknowledged (Warning|Critical|Catastrophic) event/);
-        if (eventSeverityMatch) severity = eventSeverityMatch[1] as Severity;
-    }
-    const domainsMatch = details.match(/involving (.*?)\./);
-    const domains = domainsMatch ? domainsMatch[1].split(', ') : [];
-    return { isOverride, rationale, severity, domains };
-};
-
-const RISK_WEIGHTS: Record<Severity, number> = { "Warning": 1, "Critical": 3, "Catastrophic": 5 };
 
 export default function RationaleForecastPanel() {
   const [loading, setLoading] = useState(true);
@@ -175,7 +152,7 @@ export default function RationaleForecastPanel() {
 
     return (
         <div className="space-y-3">
-            {sortedForecasts.map((forecast) => (
+            {sortedForecasts.slice(0,3).map((forecast) => (
                 <div key={forecast.rationaleTag} className="p-3 rounded-md bg-muted/30 transition-shadow duration-200 hover:shadow-md">
                     <div className="flex justify-between items-start">
                         <p className="font-semibold text-foreground capitalize">{forecast.rationaleTag}</p>

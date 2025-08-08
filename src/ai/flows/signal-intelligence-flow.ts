@@ -14,6 +14,8 @@ import {z} from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
 import { collection, getDocs, query, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import type { Recommendation } from '@/lib/types';
+
 
 const AnalyzeSignalHistoryInputSchema = z.object({
   actionLogs: z
@@ -28,7 +30,6 @@ const RecommendationSchema = z.object({
     confidence: z.number().min(0).max(1).describe("The AI's confidence in this recommendation, from 0.0 to 1.0."),
     basedOn: z.array(z.string()).describe('A list of recommendation IDs from past feedback that this new recommendation is based on.'),
 });
-export type Recommendation = z.infer<typeof RecommendationSchema>;
 
 const AnalyzeSignalHistoryOutputSchema = z.object({
   summary: z.string().describe('A high-level summary of the strategist actions.'),

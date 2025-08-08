@@ -11,7 +11,7 @@ import {
 } from "@/ai/flows/signal-intelligence-flow";
 import { useToast } from "@/hooks/use-toast";
 import { Bot, BrainCircuit, Lightbulb, History, ThumbsUp, ThumbsDown, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
-import type { Recommendation } from "@/ai/flows/signal-intelligence-flow";
+import type { Recommendation } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,

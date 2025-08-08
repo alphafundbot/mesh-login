@@ -22,13 +22,14 @@ export default function VisualIntegrityDashboard() {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6 auto-rows-max">
+    <div className="grid grid-cols-1 gap-6 auto-rows-fr">
       <motion.div
         initial="hidden"
         animate="visible"
         custom={0}
         variants={cardVariants}
         whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+        className="h-full"
       >
         <HudEscalationMatrix />
       </motion.div>
@@ -38,6 +39,7 @@ export default function VisualIntegrityDashboard() {
         custom={1}
         variants={cardVariants}
         whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+        className="h-full"
       >
         <OverrideMomentum />
       </motion.div>
@@ -47,6 +49,7 @@ export default function VisualIntegrityDashboard() {
         custom={2}
         variants={cardVariants}
         whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+        className="h-full"
       >
         <HudForecastPanel />
       </motion.div>
@@ -56,6 +59,7 @@ export default function VisualIntegrityDashboard() {
         custom={3}
         variants={cardVariants}
         whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+        className="h-full"
       >
         <RationaleForecastPanel />
       </motion.div>

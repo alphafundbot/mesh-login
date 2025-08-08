@@ -11,47 +11,10 @@ import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
 import { useClusterMomentum } from "@/hooks/use-cluster-momentum";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
-import type { ActionLog } from "@/app/history/HistoryClient";
 import { useRouter } from "next/navigation";
+import type { ActionLog, Severity, TaggedRationale, ClusterInfo, ClusterMap } from "@/lib/types";
+import { parseDetails, RISK_WEIGHTS } from "@/lib/types";
 
-
-type Severity = "Warning" | "Critical" | "Catastrophic";
-
-interface TaggedRationale {
-    rationale: string;
-    tags: string[];
-    severity: Severity;
-    domains: string[];
-}
-
-type ClusterInfo = {
-    tag: string;
-    items: TaggedRationale[];
-    severities: Record<Severity, number>;
-    domains: Record<string, any>;
-    riskScore: number;
-};
-
-
-type ClusterMap = Map<string, ClusterInfo>;
-
-
-const parseDetails = (details: string): { isOverride: boolean; rationale: string; severity?: Severity; domains?: string[] } => {
-    const isOverride = details.includes("Override: true");
-    const rationaleMatch = details.match(/Rationale: "([^"]*)"/);
-    const rationale = rationaleMatch ? rationaleMatch[1] : "";
-    const severityMatch = details.match(/Severity: (Warning|Critical|Catastrophic)/);
-    let severity = severityMatch ? (severityMatch[1] as Severity) : undefined;
-    if (!severity) {
-        const eventSeverityMatch = details.match(/Acknowledged (Warning|Critical|Catastrophic) event/);
-        if (eventSeverityMatch) severity = eventSeverityMatch[1] as Severity;
-    }
-    const domainsMatch = details.match(/involving (.*?)\./);
-    const domains = domainsMatch ? domainsMatch[1].split(', ') : [];
-    return { isOverride, rationale, severity, domains };
-};
-
-const RISK_WEIGHTS: Record<Severity, number> = { "Warning": 1, "Critical": 3, "Catastrophic": 5 };
 
 const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
     const clusters: ClusterMap = new Map();

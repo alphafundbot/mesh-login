@@ -16,40 +16,8 @@ import { TrendingUp, ShieldAlert, BarChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
-
-
-interface ActionLog {
-  id: string;
-  details: string;
-  timestamp: Date;
-}
-
-type Severity = "Warning" | "Critical" | "Catastrophic";
-
-interface ParsedDetails {
-    isOverride: boolean;
-    rationale: string;
-    severity?: Severity;
-    domains?: string[];
-}
-
-const parseDetails = (details: string): ParsedDetails => {
-    const isOverride = details.includes("Override: true");
-    const rationaleMatch = details.match(/Rationale: "([^"]*)"/);
-    const rationale = rationaleMatch ? rationaleMatch[1] : "";
-    const severityMatch = details.match(/Severity: (Warning|Critical|Catastrophic)/);
-    const severity = severityMatch ? (severityMatch[1] as Severity) : undefined;
-    const domainsMatch = details.match(/involving (.*?)\. Action:/);
-    const domains = domainsMatch ? domainsMatch[1].split(', ') : undefined;
-
-    return { isOverride, rationale, severity, domains };
-}
-
-const RISK_WEIGHTS: Record<Severity, number> = {
-    "Warning": 1,
-    "Critical": 3,
-    "Catastrophic": 5
-};
+import type { ActionLog, Severity } from "@/lib/types";
+import { parseDetails, RISK_WEIGHTS } from "@/lib/types";
 
 export default function HudEscalationMatrix() {
     const [logs, setLogs] = useState<ActionLog[]>([]);
@@ -63,6 +31,9 @@ export default function HudEscalationMatrix() {
                 const data = doc.data();
                 return {
                     id: doc.id,
+                    action: data.action,
+                    role: data.role,
+                    strategist: data.strategist,
                     details: data.details,
                     timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
                 };
@@ -166,7 +137,7 @@ export default function HudEscalationMatrix() {
         const hasCriticalOverrides = escalationData.topDomainCount > 0;
 
         return (
-            <div className={cn("space-y-4 rounded-lg p-4 transition-colors duration-300", isHighRisk ? "bg-red-900/30 border border-destructive/50" : "bg-muted/20")}>
+            <div className={cn("space-y-4 rounded-lg p-4 transition-colors duration-300 h-full flex flex-col justify-between", isHighRisk ? "bg-red-900/30 border border-destructive/50" : "bg-muted/20")}>
                 <div>
                      <p className="text-sm font-semibold flex items-center gap-2">
                         <TrendingUp className={cn("h-4 w-4", escalationData.riskDelta > 0 ? "text-destructive" : escalationData.riskDelta < 0 ? "text-green-400" : "text-muted-foreground")} />

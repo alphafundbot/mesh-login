@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput, type Recommendation, submitFeedback } from "@/ai/flows/signal-intelligence-flow";
+import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput, submitFeedback } from "@/ai/flows/signal-intelligence-flow";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
 import { generateReplayCommentary, type ReplayCommentaryOutput } from "@/ai/flows/replay-commentary-flow";
 import type { RationaleForecastOutput } from "@/ai/flows/rationale-forecast-flow";
@@ -44,97 +44,8 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import FeedbackDashboard from "@/components/dashboard/FeedbackDashboard";
 import { useClusterMomentum } from "@/hooks/use-cluster-momentum";
-
-
-export interface ActionLog {
-  id: string;
-  action: string;
-  role: string;
-  strategist: string;
-  details: string;
-  timestamp: Date;
-}
-
-type Severity = "Warning" | "Critical" | "Catastrophic";
-
-interface ParsedDetails {
-    isOverride: boolean;
-    rationale: string;
-    action: string;
-    severity?: Severity;
-    domains?: string[];
-}
-
-const parseDetails = (details: string): ParsedDetails => {
-    const isOverride = details.includes("Override: true");
-    const rationaleMatch = details.match(/Rationale: "([^"]*)"/);
-    const rationale = rationaleMatch ? rationaleMatch[1] : "";
-
-    let action = "";
-    const actionMatch = details.match(/Action: ([A-Za-z_]+)/);
-    if (actionMatch) {
-      action = actionMatch[1].replace(/_/g, " ");
-    } else if (details.startsWith("Event: Strategist Override Initiated")) {
-      action = "Override Initiated";
-    }
-
-    const severityMatch = details.match(/Severity: (Warning|Critical|Catastrophic)/);
-    let severity = severityMatch ? (severityMatch[1] as Severity) : undefined;
-    if (!severity) {
-        const eventSeverityMatch = details.match(/Acknowledged (Warning|Critical|Catastrophic) event/);
-        if (eventSeverityMatch) {
-            severity = eventSeverityMatch[1] as Severity;
-        }
-    }
-    
-    const domainsMatch = details.match(/involving (.*?)\./);
-    const domains = domainsMatch ? domainsMatch[1].split(', ') : undefined;
-
-    return { isOverride, rationale, action, severity, domains };
-}
-
-const getHeatmapColor = (count: number, max: number) => {
-    if (count === 0) return "bg-transparent";
-    const intensity = Math.min(1, count / (max || 1));
-    if (intensity > 0.8) return "bg-red-500/50";
-    if (intensity > 0.5) return "bg-orange-500/50";
-    if (intensity > 0.2) return "bg-yellow-500/50";
-    return "bg-yellow-500/20";
-};
-
-type TaggedRationale = {
-    rationale: string;
-    tags: string[];
-    severity: Severity;
-    domains: string[];
-}
-
-type RationaleDialogContent = {
-    title: string;
-    description: React.ReactNode;
-    rationales: TaggedRationale[];
-} | null;
-
-const RISK_WEIGHTS: Record<Severity, number> = {
-    "Warning": 1,
-    "Critical": 3,
-    "Catastrophic": 5
-};
-
-type DomainMetrics = { 
-    count: number; 
-    severities: Record<Severity, number>;
-};
-
-type ClusterInfo = {
-    tag: string;
-    items: TaggedRationale[];
-    severities: Record<Severity, number>;
-    domains: Record<string, DomainMetrics>;
-    riskScore: number;
-};
-
-type ClusterMap = Map<string, ClusterInfo>;
+import type { ActionLog, Severity, ParsedDetails, TaggedRationale, Recommendation, ClusterInfo, ClusterMap, DomainMetrics } from "@/lib/types";
+import { parseDetails, RISK_WEIGHTS } from "@/lib/types";
 
 
 const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
@@ -255,6 +166,13 @@ function DialogClusterItem({ cluster, previousLogs }: { cluster: ClusterInfo, pr
     );
 }
 
+type RationaleDialogContent = {
+    title: string;
+    description: React.ReactNode;
+    rationales: TaggedRationale[];
+} | null;
+
+
 function RationaleDialog({ 
     content, 
     onOpenChange, 
@@ -311,6 +229,15 @@ function RationaleDialog({
         </Dialog>
     )
 }
+
+const getHeatmapColor = (count: number, max: number) => {
+    if (count === 0) return "bg-transparent";
+    const intensity = Math.min(1, count / (max || 1));
+    if (intensity > 0.8) return "bg-red-500/50";
+    if (intensity > 0.5) return "bg-orange-500/50";
+    if (intensity > 0.2) return "bg-yellow-500/50";
+    return "bg-yellow-500/20";
+};
 
 function OverrideHeatmap({ logs, onCellClick }: { logs: ActionLog[], onCellClick: (domain: string, severity: Severity) => void }) {
     const heatmapData = useMemo(() => {
