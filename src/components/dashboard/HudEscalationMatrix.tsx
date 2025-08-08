@@ -78,7 +78,12 @@ export default function HudEscalationMatrix() {
     }, []);
 
     const escalationData = useMemo(() => {
-        if (logs.length === 0) return null;
+        if (logs.length === 0) return {
+            topDomain: "None",
+            topDomainCount: 0,
+            topDomainSeverity: undefined,
+            riskDelta: 0,
+        };
 
         const now = Date.now();
         const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
@@ -153,33 +158,38 @@ export default function HudEscalationMatrix() {
             );
         }
 
-        if (!escalationData || (escalationData.topDomainCount === 0 && escalationData.riskDelta === 0)) {
-            return <p className="text-muted-foreground text-center py-4">No significant escalation patterns detected in the last 7 days. System nominal.</p>;
+        if (!escalationData) {
+             return <p className="text-muted-foreground text-center py-4">Awaiting data...</p>;
         }
         
         const isHighRisk = escalationData.riskDelta > 10 || escalationData.topDomainCount > 5;
+        const hasCriticalOverrides = escalationData.topDomainCount > 0;
 
         return (
             <div className={cn("space-y-4 rounded-lg p-4", isHighRisk ? "bg-red-900/30 border border-destructive/50" : "bg-muted/20")}>
                 <div>
                      <p className="text-sm font-semibold flex items-center gap-2">
-                        <TrendingUp className={cn("h-4 w-4", escalationData.riskDelta > 0 ? "text-destructive" : "text-green-400")} />
+                        <TrendingUp className={cn("h-4 w-4", escalationData.riskDelta > 0 ? "text-destructive" : escalationData.riskDelta < 0 ? "text-green-400" : "text-muted-foreground")} />
                         7-Day Risk Delta: 
-                        <span className={cn("font-bold font-mono", escalationData.riskDelta > 0 ? "text-destructive" : "text-green-400")}>
+                        <span className={cn("font-bold font-mono", escalationData.riskDelta > 0 ? "text-destructive" : escalationData.riskDelta < 0 ? "text-green-400" : "text-muted-foreground")}>
                            {escalationData.riskDelta >= 0 && "+"}{escalationData.riskDelta}
                         </span>
                     </p>
                     <p className="text-xs text-muted-foreground">Change in weighted override risk vs previous period.</p>
                 </div>
-                <div className="cursor-pointer" onClick={handleInvestigate}>
-                    <p className="text-sm font-semibold flex items-center gap-2">
-                        <ShieldAlert className="h-4 w-4 text-orange-400" />
-                        Top Stress Zone: 
-                        <span className="font-bold text-orange-400 hover:underline">{escalationData.topDomain}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">Domain with the most Critical/Catastrophic overrides.</p>
-                </div>
-                 <Button onClick={handleInvestigate} variant="secondary" size="sm" className="w-full">
+                
+                {hasCriticalOverrides && (
+                    <div className="cursor-pointer" onClick={handleInvestigate}>
+                        <p className="text-sm font-semibold flex items-center gap-2">
+                            <ShieldAlert className="h-4 w-4 text-orange-400" />
+                            Top Stress Zone: 
+                            <span className="font-bold text-orange-400 hover:underline">{escalationData.topDomain}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">Domain with the most Critical/Catastrophic overrides.</p>
+                    </div>
+                )}
+
+                 <Button onClick={handleInvestigate} variant="secondary" size="sm" className="w-full" disabled={!hasCriticalOverrides}>
                     Investigate in Signal Memory
                 </Button>
             </div>
