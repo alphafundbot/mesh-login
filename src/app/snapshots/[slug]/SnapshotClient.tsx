@@ -43,52 +43,54 @@ export default function SnapshotClient({ snapshot }: { snapshot: Snapshot }) {
     getAnalysis();
   }, [snapshot, toast]);
 
-  const renderLoading = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Raw Signal History</CardTitle>
-          <CardDescription>{snapshot.description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-40 w-full" />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-accent">
-            <Bot className="h-6 w-6" /> AI Synthesis
-          </CardTitle>
-          <CardDescription>
-            The AI is analyzing the historical data to provide insights.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <h3 className="font-semibold flex items-center gap-2">
-              <History className="h-5 w-5" /> Summary
-            </h3>
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold flex items-center gap-2">
-              <BrainCircuit className="h-5 w-5" /> Patterns Detected
-            </h3>
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-4/5" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Lightbulb className="h-5 w-5" /> Recommendations
-            </h3>
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  const renderLoading = () => {
+    return (
+        <div className="space-y-6">
+        <Card>
+            <CardHeader>
+            <CardTitle>Raw Signal History</CardTitle>
+            <CardDescription>{snapshot.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+            <Skeleton className="h-40 w-full" />
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-accent">
+                <Bot className="h-6 w-6" /> AI Synthesis
+            </CardTitle>
+            <CardDescription>
+                The AI is analyzing the historical data to provide insights.
+            </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+            <div className="space-y-2">
+                <h3 className="font-semibold flex items-center gap-2">
+                <History className="h-5 w-5" /> Summary
+                </h3>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+            </div>
+            <div className="space-y-2">
+                <h3 className="font-semibold flex items-center gap-2">
+                <BrainCircuit className="h-5 w-5" /> Patterns Detected
+                </h3>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+            </div>
+            <div className="space-y-2">
+                <h3 className="font-semibold flex items-center gap-2">
+                <Lightbulb className="h-5 w-5" /> Recommendations
+                </h3>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+            </div>
+            </CardContent>
+        </Card>
+        </div>
+    );
+  }
 
   const renderContent = () => {
     return (
