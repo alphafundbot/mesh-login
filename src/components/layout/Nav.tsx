@@ -11,6 +11,7 @@ import {
   Palette,
   Camera,
   GitCompareArrows,
+  Archive,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -27,6 +28,7 @@ const navItems = [
   { href: "/audit", label: "Audit Trail AI", icon: ShieldCheck },
   { href: "/validator", label: "Config Validator", icon: Binary },
   { href: "/history", label: "Signal Memory", icon: History },
+  { href: "/analysis-archive", label: "Analysis Archive", icon: Archive },
 ];
 
 export default function Nav() {
