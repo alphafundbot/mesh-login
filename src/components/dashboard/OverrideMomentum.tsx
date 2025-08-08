@@ -98,7 +98,7 @@ function ClusterMomentumItem({ cluster, previousLogs }: { cluster: ClusterInfo, 
     }
 
     return (
-        <div className="flex items-center justify-between p-2 rounded-md bg-muted/40 hover:bg-muted/80 cursor-pointer" onClick={handleInvestigate}>
+        <div className="flex items-center justify-between p-2 rounded-md bg-muted/40 hover:bg-muted/80 cursor-pointer transition-colors duration-200" onClick={handleInvestigate}>
             <span className="capitalize font-semibold text-sm">{cluster.tag}</span>
             <Badge variant="outline" className={cn("gap-1 font-mono text-xs", color)}>
                 <Arrow className="h-3 w-3" />
@@ -199,7 +199,7 @@ export default function OverrideMomentum() {
 
     if(sortedClusters.length === 0) {
         return (
-             <Card>
+             <Card className="transition-shadow duration-300 hover:shadow-xl">
                 <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                         <TrendingUp className="h-5 w-5 text-accent" />
@@ -214,7 +214,7 @@ export default function OverrideMomentum() {
     }
 
     return (
-         <Card>
+         <Card className="transition-shadow duration-300 hover:shadow-xl">
             <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-accent" />

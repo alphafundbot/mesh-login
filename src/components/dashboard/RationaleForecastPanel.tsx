@@ -125,11 +125,15 @@ export default function RationaleForecastPanel() {
             
             // Persist the forecast to Firestore
             if (output && output.forecasts.length > 0) {
-              await addDoc(collection(db, "forecast_analysis"), {
-                forecast: output,
-                inputs: { clusterMomentumVectors, feedbackSummary },
-                timestamp: serverTimestamp(),
-              });
+              const latestForecastQuery = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"), limit(1));
+              const latestForecastSnapshot = await getDocs(latestForecastQuery);
+              if (latestForecastSnapshot.empty || JSON.stringify(latestForecastSnapshot.docs[0].data().forecast) !== JSON.stringify(output)) {
+                  await addDoc(collection(db, "forecast_analysis"), {
+                    forecast: output,
+                    inputs: { clusterMomentumVectors, feedbackSummary },
+                    timestamp: serverTimestamp(),
+                  });
+              }
             }
 
           } catch (error) {
@@ -172,7 +176,7 @@ export default function RationaleForecastPanel() {
     return (
         <div className="space-y-3">
             {sortedForecasts.map((forecast) => (
-                <div key={forecast.rationaleTag} className="p-3 rounded-md bg-muted/30">
+                <div key={forecast.rationaleTag} className="p-3 rounded-md bg-muted/30 transition-shadow duration-200 hover:shadow-md">
                     <div className="flex justify-between items-start">
                         <p className="font-semibold text-foreground capitalize">{forecast.rationaleTag}</p>
                         <div className="flex gap-2">
@@ -194,7 +198,7 @@ export default function RationaleForecastPanel() {
   }
 
   return (
-    <Card className="h-full">
+    <Card className="h-full transition-shadow duration-300 hover:shadow-xl">
       <CardHeader>
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

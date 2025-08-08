@@ -58,7 +58,7 @@ export default function HudForecastPanel() {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<SuppressionForecastOutput | null>(null);
   const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
-    if (typeof window === "undefined") return 0.5;
+    if (typeof window === "undefined") return 0;
     const saved = localStorage.getItem("forecastConfidenceThreshold");
     return saved !== null ? parseFloat(saved) : 0;
   });
@@ -136,17 +136,19 @@ export default function HudForecastPanel() {
       return <p className="text-muted-foreground text-center py-4">No significant suppression patterns detected. Automation nominal.</p>;
     }
     
-    const sortedForecasts = (result.forecasts || []).sort((a,b) => b.predictedOverrideRate - a.predictedOverrideRate);
+    const sortedForecasts = (result.forecasts || [])
+        .filter(f => f.predictedOverrideRate >= confidenceThreshold)
+        .sort((a,b) => b.predictedOverrideRate - a.predictedOverrideRate);
 
     if (sortedForecasts.length === 0) {
-        return <p className="text-muted-foreground text-center py-4">No suppression forecasts available at this time.</p>;
+        return <p className="text-muted-foreground text-center py-4">No suppression forecasts meet the current certainty threshold.</p>;
     }
 
 
     return (
         <div className="space-y-3">
             {sortedForecasts.slice(0, 3).map((forecast) => (
-                <div key={forecast.domain} className={cn("p-3 rounded-md bg-muted/30")}>
+                <div key={forecast.domain} className={cn("p-3 rounded-md bg-muted/30 transition-shadow duration-200 hover:shadow-md")}>
                     <div className="flex justify-between items-start">
                         <p className="font-semibold text-foreground">{forecast.domain}</p>
                          <Badge variant="outline" className={cn("gap-1.5", getRiskColor(forecast.predictedOverrideRate))}>
@@ -162,7 +164,7 @@ export default function HudForecastPanel() {
   }
 
   return (
-    <Card className="h-full">
+    <Card className="h-full transition-shadow duration-300 hover:shadow-xl">
       <CardHeader>
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -190,7 +192,7 @@ export default function HudForecastPanel() {
                             />
                             <span className="text-sm font-mono w-10 text-center">{confidenceThreshold.toFixed(2)}</span>
                         </div>
-                         <p className="text-xs text-muted-foreground">Forecasts below this certainty will be dimmed.</p>
+                         <p className="text-xs text-muted-foreground">Forecasts below this certainty will not be shown.</p>
                     </div>
                 </PopoverContent>
             </Popover>

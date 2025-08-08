@@ -323,7 +323,7 @@ export default function IntelligenceMap() {
 
   return (
     <>
-      <Card className="h-full">
+      <Card className="h-full transition-shadow duration-300 hover:shadow-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-6 w-6 text-accent" />
@@ -484,5 +484,3 @@ export default function IntelligenceMap() {
     </>
   );
 }
-
-    

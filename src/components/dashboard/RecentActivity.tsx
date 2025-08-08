@@ -138,7 +138,7 @@ export default function RecentActivity() {
   );
 
   return (
-    <Card className="h-full">
+    <Card className="h-full transition-shadow duration-300 hover:shadow-xl">
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           <Bot className="h-6 w-6 text-accent" />

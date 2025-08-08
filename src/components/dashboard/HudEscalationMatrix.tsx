@@ -166,7 +166,7 @@ export default function HudEscalationMatrix() {
         const hasCriticalOverrides = escalationData.topDomainCount > 0;
 
         return (
-            <div className={cn("space-y-4 rounded-lg p-4", isHighRisk ? "bg-red-900/30 border border-destructive/50" : "bg-muted/20")}>
+            <div className={cn("space-y-4 rounded-lg p-4 transition-colors duration-300", isHighRisk ? "bg-red-900/30 border border-destructive/50" : "bg-muted/20")}>
                 <div>
                      <p className="text-sm font-semibold flex items-center gap-2">
                         <TrendingUp className={cn("h-4 w-4", escalationData.riskDelta > 0 ? "text-destructive" : escalationData.riskDelta < 0 ? "text-green-400" : "text-muted-foreground")} />
@@ -179,11 +179,11 @@ export default function HudEscalationMatrix() {
                 </div>
                 
                 {hasCriticalOverrides && (
-                    <div className="cursor-pointer" onClick={handleInvestigate}>
+                    <div className="cursor-pointer group" onClick={handleInvestigate}>
                         <p className="text-sm font-semibold flex items-center gap-2">
                             <ShieldAlert className="h-4 w-4 text-orange-400" />
                             Top Stress Zone: 
-                            <span className="font-bold text-orange-400 hover:underline">{escalationData.topDomain}</span>
+                            <span className="font-bold text-orange-400 group-hover:underline">{escalationData.topDomain}</span>
                         </p>
                         <p className="text-xs text-muted-foreground">Domain with the most Critical/Catastrophic overrides.</p>
                     </div>
@@ -197,7 +197,7 @@ export default function HudEscalationMatrix() {
     }
 
     return (
-        <Card className="h-full">
+        <Card className="h-full transition-shadow duration-300 hover:shadow-xl">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <BarChart className="h-6 w-6 text-accent" />
