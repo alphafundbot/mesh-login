@@ -3,6 +3,9 @@
  * Loads credentials from environment variables and provides a typed object.
  */
 
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+
 /**
  * Returns the value of an environment variable or a placeholder if it's not set.
  * @param variableName The name of the environment variable.

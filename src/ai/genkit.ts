@@ -4,6 +4,6 @@ import { servicesConfig } from '@/config/services';
 
 export const ai = genkit({
   plugins: [googleAI({
-    apiKey: servicesConfig.firebase.apiKey,
+    apiKey: servicesConfig.gcp.geminiApiKey,
   })],
 });
