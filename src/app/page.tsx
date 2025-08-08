@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import IntelligenceMap from "@/components/dashboard/IntelligenceMap";
 import { slugify } from "@/lib/utils";
 import VisualIntegrityDashboard from "@/components/dashboard/VisualIntegrityDashboard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const getStatusColor = (status: string) => {
   if (status.includes("Optimal")) return "bg-green-500";
@@ -48,48 +49,52 @@ export default function DashboardPage() {
         
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-primary-foreground mb-4">Domains</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Tabs defaultValue={domainData[0].slug} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 lg:grid-cols-9">
+              {domainData.map((domain) => (
+                <TabsTrigger key={domain.slug} value={domain.slug} className="text-xs">
+                  <domain.icon className="mr-2 h-4 w-4 hidden md:block" /> {domain.name.split(' ')[1]}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             {domainData.map((domain) => (
-                <Card
-                  key={domain.slug}
-                  className="bg-card border-border flex flex-col h-full"
-                >
-                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                    <div className="flex-1">
-                      <Link href={`/domain/${domain.slug}`} key={domain.slug}>
-                        <CardTitle className="text-lg font-medium text-primary-foreground hover:text-accent transition-colors">
+              <TabsContent key={domain.slug} value={domain.slug}>
+                <Card className="mt-4">
+                  <CardHeader>
+                     <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <domain.icon className="h-6 w-6 text-accent" />
                           {domain.name}
                         </CardTitle>
-                      </Link>
-                      <CardDescription className="flex items-center gap-2 pt-2 text-xs">
-                         <span
-                            className={cn(
-                              "h-2 w-2 rounded-full",
-                              getStatusColor(domain.status)
-                            )}
-                          />
-                        <span>{domain.status}</span>
-                      </CardDescription>
-                    </div>
-                    <domain.icon className="h-6 w-6 text-accent" />
+                        <Badge variant="outline" className="flex items-center gap-2">
+                           <span
+                              className={cn(
+                                "h-2 w-2 rounded-full",
+                                getStatusColor(domain.status)
+                              )}
+                            />
+                          <span>{domain.status}</span>
+                        </Badge>
+                     </div>
                   </CardHeader>
-                  <CardContent className="flex-grow flex flex-col justify-end">
-                    <div className="flex flex-wrap gap-2 mt-4">
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
                       {domain.modules.map((module) => (
                         <Link key={module} href={`/domain/${domain.slug}/${slugify(module)}`} passHref>
-                           <Badge
-                              variant="secondary"
-                              className="font-normal hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
-                            >
-                              {module}
-                            </Badge>
+                          <Badge
+                            variant="secondary"
+                            className="font-normal hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-sm py-1"
+                          >
+                            {module}
+                          </Badge>
                         </Link>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
+              </TabsContent>
             ))}
-          </div>
+          </Tabs>
         </div>
       </div>
     </AppLayout>
