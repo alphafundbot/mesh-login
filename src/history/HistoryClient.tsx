@@ -540,7 +540,7 @@ export default function HistoryClient() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if(!isBrowser()) setLoading(false);
+        setLoading(false);
         return;
     }
 
@@ -700,10 +700,8 @@ export default function HistoryClient() {
   useEffect(() => {
     const startTimeParam = searchParams.get('startTime');
     if (!isBrowser() || !user || filteredLogs.length === 0 || !startTimeParam) {
-      if (!isBrowser()) {
-        setReplayCommentary(null);
-        setLoadingReplay(false);
-      }
+      setReplayCommentary(null);
+      setLoadingReplay(false);
       return;
     };
     

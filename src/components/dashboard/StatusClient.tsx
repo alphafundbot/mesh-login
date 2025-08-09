@@ -34,7 +34,7 @@ export default function StatusClient() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if (!isBrowser()) setLoadingHistory(false);
+        setLoadingHistory(false);
         return;
     }; 
 
@@ -60,6 +60,7 @@ export default function StatusClient() {
   }, [user]);
 
   async function handleTest() {
+    if (!isBrowser() || !user) return;
     setLoading(true);
     setResult(null);
     const apiResult = await checkApiHealth();
