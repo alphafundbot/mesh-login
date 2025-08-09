@@ -2,18 +2,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { auth } from "@/lib/firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BrainCircuit } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -23,9 +21,8 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const router = useRouter();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const { signIn, loading } = useAuth();
 
   const {
     register,
@@ -36,23 +33,18 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    setLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
-      toast({
-        title: "Authentication Successful",
-        description: "Redirecting to dashboard...",
-      });
-      router.push("/");
-    } catch (error: any) {
-      console.error("Login failed:", error);
+    const error = await signIn(data.email, data.password);
+    if (error) {
       toast({
         variant: "destructive",
         title: "Authentication Failed",
         description: error.message || "Please check your credentials and try again.",
       });
-    } finally {
-      setLoading(false);
+    } else {
+      toast({
+        title: "Authentication Successful",
+        description: "Redirecting to dashboard...",
+      });
     }
   };
 

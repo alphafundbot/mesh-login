@@ -4,8 +4,7 @@
 import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
 import { ROLES, Role } from '@/lib/roles';
 import { auth } from '@/lib/firebaseConfig';
-import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
 interface User {
   uid: string;
@@ -18,7 +17,6 @@ interface UserContextType {
   user: User | null;
   loading: boolean;
   setUserRole: (role: Role) => void;
-  logout: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -26,7 +24,6 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   const getRoleForUser = (firebaseUser: FirebaseUser): Role => {
     if (firebaseUser.email?.startsWith('nehemie')) {
@@ -66,16 +63,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = useCallback(async () => {
-    try {
-        await signOut(auth);
-        router.push('/login');
-    } catch (error) {
-        console.error("Logout failed:", error);
-    }
-  }, [router]);
-
-  const contextValue = useMemo(() => ({ user, loading, setUserRole, logout }), [user, loading, logout]);
+  const contextValue = useMemo(() => ({ user, loading, setUserRole }), [user, loading]);
 
   return (
     <UserContext.Provider value={contextValue}>

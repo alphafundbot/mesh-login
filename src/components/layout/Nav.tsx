@@ -33,6 +33,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { snapshotRegistry } from "@/lib/snapshots";
+import { useAuth } from "@/hooks/use-auth";
 import { useUser } from "@/hooks/use-user";
 
 const navItems = [
@@ -69,7 +70,8 @@ const SidebarGroupLabel = ({children}: {children: React.ReactNode}) => (
 
 export default function Nav() {
   const pathname = usePathname();
-  const { user, logout } = useUser();
+  const { user } = useUser();
+  const { logOut } = useAuth();
 
   return (
     <SidebarMenu>
@@ -99,8 +101,8 @@ export default function Nav() {
                     <SidebarMenuSub>
                         {snapshotRegistry.map((item) => (
                         <SidebarMenuSubItem key={item.slug}>
-                            <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/${item.slug}`}>
-                                <Link href={`/snapshots/${item.slug}`}>
+                            <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/\${item.slug}`}>
+                                <Link href={\`/snapshots/\${item.slug}\`}>
                                     {item.label}
                                 </Link>
                             </SidebarMenuSubButton>
@@ -180,7 +182,7 @@ export default function Nav() {
                  <SidebarSeparator className="my-2" />
                  <SidebarMenuItem>
                     <SidebarMenuButton
-                        onClick={logout}
+                        onClick={logOut}
                         tooltip={{ children: "Logout" }}
                     >
                         <LogOut />

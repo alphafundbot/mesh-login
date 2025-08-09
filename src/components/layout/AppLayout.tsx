@@ -12,9 +12,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import Nav from "./Nav";
-import { Button, buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "../ui/skeleton";
+import { buttonVariants } from "../ui/button";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useUser();
