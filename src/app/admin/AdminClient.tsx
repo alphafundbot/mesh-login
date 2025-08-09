@@ -29,18 +29,26 @@ import {
 import type { RationaleForecastOutput } from "@/ai/flows/rationale-forecast-flow";
 import type { ActionLog } from "@/lib/types";
 import { Progress } from "@/components/ui/progress";
+import { useUser } from "@/hooks/use-user";
+import { isBrowser } from "@/lib/env-check";
 
 export default function AdminClient() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const { toast } = useToast();
+  const { user } = useUser();
 
   const addLog = (message: string) => {
     setLogs((prev) => [`[${new Date().toLocaleTimeString()}] ${message}`, ...prev]);
   };
 
   const handleBackfill = async () => {
+    if (!user || !isBrowser()) {
+        toast({ title: "Error", description: "You must be logged in to perform this action."});
+        return;
+    }
+
     setLoading(true);
     setProgress(0);
     setLogs([]);
@@ -93,7 +101,7 @@ export default function AdminClient() {
         }
         
         const logsString = relevantLogs
-            .map(log => `[${(log.timestamp as any).toDate().toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
+            .map(log => `[${(log.timestamp as any)?.toDate()?.toISOString() || ''}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
             .join("\n");
         
         addLog(`Found ${relevantLogs.length} logs. Generating AI commentary...`);
@@ -167,5 +175,3 @@ export default function AdminClient() {
     </div>
   );
 }
-
-    

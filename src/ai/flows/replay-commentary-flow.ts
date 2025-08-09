@@ -20,7 +20,7 @@ const ForecastedRationaleSchema = z.object({
     justification: z.string(),
 });
 
-const ReplayCommentaryInputSchema = z.object({
+export const ReplayCommentaryInputSchema = z.object({
   originalForecast: z.object({
     forecasts: z.array(ForecastedRationaleSchema),
   }),
@@ -29,7 +29,7 @@ const ReplayCommentaryInputSchema = z.object({
 export type ReplayCommentaryInput = z.infer<typeof ReplayCommentaryInputSchema>;
 
 
-const ReplayCommentaryOutputSchema = z.object({
+export const ReplayCommentaryOutputSchema = z.object({
     accuracyScore: z.number().min(0).max(1).describe("A score from 0.0 to 1.0 indicating the overall accuracy of the forecast."),
     divergenceMap: z.array(z.object({
         rationaleTag: z.string().describe("The rationale cluster that was being forecasted."),
@@ -87,5 +87,3 @@ const replayCommentaryFlow = ai.defineFlow(
     return output;
   }
 );
-
-    
