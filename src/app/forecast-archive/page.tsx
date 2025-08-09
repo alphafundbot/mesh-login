@@ -1,3 +1,4 @@
+
 import AppLayout from "@/components/layout/AppLayout";
 import ForecastArchiveClient from "./ForecastArchiveClient";
 

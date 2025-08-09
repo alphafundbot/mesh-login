@@ -104,6 +104,17 @@ export default function Nav() {
               </SidebarMenuSubItem>
           </SidebarMenuSub>
         </SidebarMenuItem>
+       <SidebarMenuItem>
+          <Link href="/forecast-archive">
+            <SidebarMenuButton
+              isActive={pathname === "/forecast-archive"}
+              tooltip={{ children: "Forecast Archive" }}
+            >
+              <Eye />
+              <span>Forecast Archive</span>
+            </SidebarMenuButton>
+          </Link>
+        </SidebarMenuItem>
 
         <SidebarSeparator className="my-2" />
         <SidebarGroupLabel>Analysis</SidebarGroupLabel>
