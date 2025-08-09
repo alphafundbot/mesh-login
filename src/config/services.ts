@@ -1,11 +1,9 @@
-
 /**
  * @fileoverview Centralized configuration for all external services.
  * Loads credentials from environment variables and provides a typed object.
  * This is the single source of truth for all service configurations.
  */
 import { config } from 'dotenv';
-import { isBrowser } from '@/lib/env-check';
 
 // Load variables from the single source of truth: .env
 config({ path: '.env' });
@@ -22,8 +20,8 @@ function getEnv(variableName: string): string {
     const value = process.env[variableName];
 
     // On the server, variables are available during the build process.
-    // If a variable is missing, it's a critical configuration error.
-    if (typeof window === 'undefined' && !value) {
+    // If a variable is missing and it's not a NEXT_PUBLIC_ variable, it's a critical configuration error.
+    if (typeof window === 'undefined' && !value && !variableName.startsWith('NEXT_PUBLIC_')) {
         const errorMessage = `FATAL ERROR: Environment variable ${variableName} is not set. This is required for server-side operations and build processes.`;
         console.error(errorMessage);
         throw new Error(errorMessage);
