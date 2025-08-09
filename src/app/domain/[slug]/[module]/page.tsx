@@ -17,10 +17,12 @@ export default function ModuleDetailPage({
     notFound();
   }
 
+  const { icon, ...serializableDomain } = domain;
+
   return (
     <AppLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <ModuleClient domain={domain} moduleName={module} />
+        <ModuleClient domain={serializableDomain} moduleName={module} />
       </div>
     </AppLayout>
   );
