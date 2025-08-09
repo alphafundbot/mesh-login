@@ -246,10 +246,11 @@ export default function IntelligenceMap() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if (!isBrowser()) setLoading(false);
+        if (!user) setLoading(false);
         return;
     }
 
+    setLoading(true);
     const fetchCachedAnalysis = async () => {
         const docRef = doc(db, "intelligence_map_cache", "latest");
         try {
@@ -257,13 +258,14 @@ export default function IntelligenceMap() {
             if (docSnap.exists()) {
                 const latestCache = docSnap.data().analysis as CrossDomainIntelligenceOutput;
                 processAnalysis(latestCache);
-                setLoading(false);
             } else {
-                getAnalysis();
+                await getAnalysis();
             }
         } catch (error) {
             console.error("Failed to fetch cached analysis", error);
-            getAnalysis();
+            await getAnalysis();
+        } finally {
+            setLoading(false);
         }
     };
 

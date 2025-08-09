@@ -45,7 +45,7 @@ export default function ForecastMemoryMap() {
 
     useEffect(() => {
         if (!isBrowser() || !user) {
-            if(!isBrowser()) setLoading(false);
+            if (!user) setLoading(false);
             return;
         } 
 

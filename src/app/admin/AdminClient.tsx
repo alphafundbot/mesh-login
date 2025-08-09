@@ -147,7 +147,7 @@ export default function AdminClient() {
           </CardTitle>
           <CardDescription>
             Automatically generate and persist replay commentary for all
-            historical forecasts that lack it.
+            historical forecasts that lack it. This requires an authenticated session.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -157,6 +157,7 @@ export default function AdminClient() {
             />
             {loading ? "Backfilling..." : "Start Backfill"}
           </Button>
+           {!user && <p className="text-xs text-muted-foreground mt-2">Please log in to enable this feature.</p>}
         </CardContent>
       </Card>
         

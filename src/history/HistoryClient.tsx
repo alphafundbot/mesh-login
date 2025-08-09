@@ -541,7 +541,7 @@ export default function HistoryClient() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if(!isBrowser()) setLoading(false);
+        if (!user) setLoading(false);
         return;
     }
 
@@ -670,30 +670,28 @@ export default function HistoryClient() {
 
         if (autoStart !== 'true') return;
 
+        const runAnalysisAndOpen = async () => {
+             if (!user) return;
+            const untagged = filteredLogs
+                .map(l => ({ ...l, parsed: parseDetails(l.details) }))
+                .filter(l => l.parsed.isOverride && l.parsed.rationale && l.parsed.severity && l.parsed.domains);
+
+            if (untagged.length === 0) return;
+
+            const tagged = await Promise.all(untagged.map(async l => {
+                const { tags } = await tagRationale({ rationale: l.parsed.rationale! });
+                return { rationale: l.parsed.rationale!, tags, severity: l.parsed.severity!, domains: l.parsed.domains! };
+            }));
+            const clusters = calculateClusters(tagged);
+            const targetCluster = clusters.get(clusterTag);
+            if (targetCluster) {
+                handleClusterClick(targetCluster);
+            }
+        };
+
         if (domain && severity) {
             handleHeatmapCellClick(domain, severity);
         } else if (clusterTag) {
-            // This requires clusters to be pre-analyzed.
-            // For a robust implementation, the analysis might need to run automatically on load.
-            // For now, we assume if a cluster drilldown is triggered, we should analyze first.
-            const runAnalysisAndOpen = async () => {
-                if (!user) return;
-                const untagged = filteredLogs
-                    .map(l => ({ ...l, parsed: parseDetails(l.details) }))
-                    .filter(l => l.parsed.isOverride && l.parsed.rationale && l.parsed.severity && l.parsed.domains);
-
-                if (untagged.length > 0) {
-                     const tagged = await Promise.all(untagged.map(async l => {
-                        const { tags } = await tagRationale({ rationale: l.parsed.rationale! });
-                        return { rationale: l.parsed.rationale!, tags, severity: l.parsed.severity!, domains: l.parsed.domains! };
-                    }));
-                    const clusters = calculateClusters(tagged);
-                    const targetCluster = clusters.get(clusterTag);
-                    if (targetCluster) {
-                        handleClusterClick(targetCluster);
-                    }
-                }
-            }
             runAnalysisAndOpen();
         }
 
@@ -703,7 +701,7 @@ export default function HistoryClient() {
   useEffect(() => {
     const startTimeParam = searchParams.get('startTime');
     if (!isBrowser() || !user || filteredLogs.length === 0 || !startTimeParam) {
-      if(!isBrowser()) setReplayCommentary(null);
+      if (!user) setReplayCommentary(null);
       return;
     };
     

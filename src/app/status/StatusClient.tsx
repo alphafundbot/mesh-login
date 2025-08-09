@@ -33,7 +33,7 @@ export default function StatusClient() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if (!isBrowser()) setLoadingHistory(false);
+        if (!user) setLoadingHistory(false);
         return;
     }
 
@@ -74,13 +74,14 @@ export default function StatusClient() {
           <CardHeader>
             <CardTitle>API Connection Status</CardTitle>
             <CardDescription>
-              Click the button below to perform a live test of the connection to the Gemini API using your configured API key.
+              Click the button below to perform a live test of the connection to the Gemini API using your configured API key. This requires an authenticated session.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={handleTest} disabled={loading || !user}>
               {loading ? "Testing..." : "Test API Connection"}
             </Button>
+            {!user && <p className="text-xs text-muted-foreground mt-2">Please log in to run health checks.</p>}
           </CardContent>
         </Card>
 
@@ -143,7 +144,7 @@ export default function StatusClient() {
                         ))}
                     </div>
                 ) : (
-                    <p className="text-xs text-muted-foreground text-center py-4">No historical data.</p>
+                    <p className="text-xs text-muted-foreground text-center py-4">{!user ? "Login to see history." : "No historical data."}</p>
                 )}
             </CardContent>
         </Card>

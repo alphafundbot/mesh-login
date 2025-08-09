@@ -110,7 +110,9 @@ export default function VolatilityAnomalyDetector() {
                     </div>
                 )}
                 
-                {result && !loading && (
+                {!user && !loading ? (
+                    <p className="text-xs text-center text-muted-foreground py-2">Please log in to use this tool.</p>
+                ) : result && !loading ? (
                     <div className="space-y-2 pt-4">
                         {result.anomalies.length > 0 ? (
                             result.anomalies.map(anomaly => (
@@ -132,7 +134,7 @@ export default function VolatilityAnomalyDetector() {
                             <p className="text-sm text-muted-foreground text-center py-4">No significant anomalies detected in the last 50 forecasts.</p>
                         )}
                     </div>
-                )}
+                ) : null}
             </CardContent>
         </Card>
     );

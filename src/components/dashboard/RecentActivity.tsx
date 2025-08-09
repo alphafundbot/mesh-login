@@ -65,7 +65,7 @@ export default function RecentActivity() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-      if(!isBrowser()) setLoadingLogs(false);
+      if(!userLoading) setLoadingLogs(false);
       return;
     }
 
@@ -99,7 +99,7 @@ export default function RecentActivity() {
     });
 
     return () => unsubscribe();
-  }, [user, toast]);
+  }, [user, toast, userLoading]);
 
   const handleAnalysis = async () => {
     if (!latestLog) {
