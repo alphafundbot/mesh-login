@@ -37,7 +37,7 @@ const prompt = ai.definePrompt({
 The tags should be short (1-2 words) and capture the core concepts of the rationale. Generate between 3 and 5 tags.
 
 Rationale:
-"{{rationale}}"
+"{{{rationale}}}"
 
 Extract the key tags.`,
 });
