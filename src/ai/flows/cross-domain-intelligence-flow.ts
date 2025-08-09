@@ -10,6 +10,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { firestore } from '@/lib/firebaseConfig';
+
 
 const CrossDomainIntelligenceInputSchema = z.object({
     domainLogs: z.record(z.string()).describe('A record where keys are domain names and values are their corresponding logs.'),
@@ -30,7 +33,33 @@ export type CrossDomainIntelligenceOutput = z.infer<typeof CrossDomainIntelligen
 
 
 export async function analyzeCrossDomainIntelligence(input: CrossDomainIntelligenceInput): Promise<CrossDomainIntelligenceOutput> {
-  return crossDomainIntelligenceFlow(input);
+  const cacheRef = doc(firestore, "intelligence_map_cache", "latest");
+  try {
+    const cacheDoc = await getDoc(cacheRef);
+    if (cacheDoc.exists()) {
+        const cacheData = cacheDoc.data();
+        const cacheTime = cacheData.timestamp.toDate();
+        // Cache is valid for 1 hour
+        if (new Date().getTime() - cacheTime.getTime() < 60 * 60 * 1000) {
+            return cacheData.analysis as CrossDomainIntelligenceOutput;
+        }
+    }
+  } catch (error) {
+    console.error("Failed to read from intelligence cache:", error);
+  }
+  
+  const result = await crossDomainIntelligenceFlow(input);
+
+  try {
+    await setDoc(cacheRef, {
+        analysis: result,
+        timestamp: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Failed to write to intelligence cache:", error);
+  }
+
+  return result;
 }
 
 const prompt = ai.definePrompt({

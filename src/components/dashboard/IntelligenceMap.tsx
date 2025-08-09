@@ -36,7 +36,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { firestore } from "@/lib/firebaseConfig";
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import {
   Dialog,
@@ -225,19 +225,15 @@ export default function IntelligenceMap() {
       }
 
       const output = await analyzeCrossDomainIntelligence({ domainLogs });
-      
-      await setDoc(doc(firestore, "intelligence_map_cache", "latest"), {
-          analysis: output,
-          timestamp: serverTimestamp(),
-      });
       processAnalysis(output);
       
     } catch (error) {
       console.error("AI cross-domain analysis failed:", error);
+      const errorMessage = error instanceof Error ? error.message : "Could not get AI analysis for the intelligence map.";
       toast({
         variant: "destructive",
         title: "Analysis Failed",
-        description: "Could not get AI analysis for the intelligence map.",
+        description: errorMessage,
       });
     } finally {
         setLoading(false);
@@ -250,35 +246,8 @@ export default function IntelligenceMap() {
         setLoading(false);
         return;
     }
-
-    setLoading(true);
-    const fetchCachedAnalysis = async () => {
-        const docRef = doc(firestore, "intelligence_map_cache", "latest");
-        try {
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const latestCacheData = docSnap.data();
-                const cacheTimestamp = (latestCacheData.timestamp as Timestamp)?.toDate();
-                // Cache is valid for 1 hour to prevent stale data
-                if (cacheTimestamp && new Date().getTime() - cacheTimestamp.getTime() < 3600000) {
-                    processAnalysis(latestCacheData.analysis as CrossDomainIntelligenceOutput);
-                } else {
-                     await getAnalysis();
-                }
-            } else {
-                await getAnalysis();
-            }
-        } catch (error) {
-            console.error("Failed to fetch cached analysis", error);
-            await getAnalysis();
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    fetchCachedAnalysis();
-
-  }, [processAnalysis, user, getAnalysis]);
+    getAnalysis();
+  }, [getAnalysis, user]);
 
 
   const handleActionClick = (action: string) => {
@@ -444,7 +413,7 @@ export default function IntelligenceMap() {
             </ResponsiveContainer>
           ) : (
              <div className="flex justify-center items-center h-full">
-                <p className="text-muted-foreground">No intelligence data available. Click "Synthesize" to generate.</p>
+                <p className="text-muted-foreground">{!user ? "Login to synthesize intelligence." : "No data. Click 'Synthesize' to generate."}</p>
             </div>
           )}
         </CardContent>
@@ -464,7 +433,7 @@ export default function IntelligenceMap() {
                 {escalation.severity} Escalation Protocol
               </DialogTitle>
                 <DialogDescription>
-                  The system has detected anomalies in {escalation.anomalousDomains.length} domains, requiring strategist attention.
+                  The system has detected anomalies in ${escalation.anomalousDomains.length} domains, requiring strategist attention.
                 </DialogDescription>
             </DialogHeader>
 
