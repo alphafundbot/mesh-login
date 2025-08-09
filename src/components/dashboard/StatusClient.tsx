@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle, XCircle, Bot, History, Clock } from "lucide-react";
 import { checkApiHealth, type HealthCheckOutput } from "@/ai/flows/health-check-flow";
 import { Skeleton } from "@/components/ui/skeleton";
-import { db, auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, orderBy, limit, onSnapshot, Timestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
@@ -33,7 +33,7 @@ export default function StatusClient() {
   const { user } = useUser();
 
   useEffect(() => {
-    if (!user || !isBrowser()) {
+    if (!isBrowser() || !user) {
         if (!isBrowser()) setLoadingHistory(false);
         return;
     }; 
@@ -78,9 +78,10 @@ export default function StatusClient() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={handleTest} disabled={loading}>
+            <Button onClick={handleTest} disabled={loading || !user}>
               {loading ? "Testing..." : "Test API Connection"}
             </Button>
+             {!user && <p className="text-xs text-muted-foreground mt-2">Please log in to run health checks.</p>}
           </CardContent>
         </Card>
 

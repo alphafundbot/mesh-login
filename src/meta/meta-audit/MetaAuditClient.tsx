@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback }from "react";
@@ -35,6 +36,7 @@ const flowFiles = Object.keys(ALL_FILES).filter(path => path.startsWith('/src/ai
 
 export default function MetaAuditClient() {
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [auditResults, setAuditResults] = useState<Record<string, AuditResult>>({});
   const [progress, setProgress] = useState(0);
 
@@ -42,8 +44,11 @@ export default function MetaAuditClient() {
   const { user } = useUser();
 
   const fetchResults = useCallback(async () => {
-    if (!isBrowser() || !user) return;
-    setLoading(true);
+    if (!isBrowser() || !user) {
+        if (!isBrowser()) setFetching(false);
+        return;
+    }
+    setFetching(true);
     try {
         const results = await getAuditResults();
         setAuditResults(results);
@@ -51,7 +56,7 @@ export default function MetaAuditClient() {
         console.error("Failed to fetch audit results", error);
         toast({ variant: "destructive", title: "Fetch Error", description: "Could not load prior audit results." });
     } finally {
-        setLoading(false);
+        setFetching(false);
     }
   }, [user, toast]);
   
@@ -107,7 +112,9 @@ export default function MetaAuditClient() {
   
   const formatDate = (date: Date | undefined) => {
     if (!date) return "Never";
-    return new Date(date).toLocaleString();
+    const d = new Date(date);
+    if(isNaN(d.getTime())) return 'Invalid Date';
+    return d.toLocaleString();
   }
 
   return (
@@ -134,7 +141,7 @@ export default function MetaAuditClient() {
                 <CardDescription>Persisted analysis for each AI flow module in the mesh.</CardDescription>
             </CardHeader>
             <CardContent>
-                {loading && !Object.keys(auditResults).length ? (
+                {fetching ? (
                     <Skeleton className="h-48 w-full" />
                 ) : (
                 <Accordion type="multiple" className="w-full space-y-2">

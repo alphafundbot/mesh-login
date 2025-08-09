@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -35,7 +36,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, setDoc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import {
   Dialog,
@@ -246,7 +247,7 @@ export default function IntelligenceMap() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if (!user) setLoading(false);
+        if (!isBrowser()) setLoading(false);
         return;
     }
 
@@ -256,8 +257,14 @@ export default function IntelligenceMap() {
         try {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                const latestCache = docSnap.data().analysis as CrossDomainIntelligenceOutput;
-                processAnalysis(latestCache);
+                const latestCacheData = docSnap.data();
+                const cacheTimestamp = (latestCacheData.timestamp as Timestamp)?.toDate();
+                // Cache is valid for 1 hour to prevent stale data
+                if (cacheTimestamp && new Date().getTime() - cacheTimestamp.getTime() < 3600000) {
+                    processAnalysis(latestCacheData.analysis as CrossDomainIntelligenceOutput);
+                } else {
+                     await getAnalysis();
+                }
             } else {
                 await getAnalysis();
             }
@@ -457,9 +464,7 @@ export default function IntelligenceMap() {
                 {escalation.severity} Escalation Protocol
               </DialogTitle>
                 <DialogDescription>
-                  The system has detected anomalies in{" "}
-                  {escalation.anomalousDomains.length} domains, requiring
-                  strategist attention.
+                  The system has detected anomalies in {escalation.anomalousDomains.length} domains, requiring strategist attention.
                 </DialogDescription>
             </DialogHeader>
 

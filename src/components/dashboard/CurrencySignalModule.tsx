@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -12,14 +13,18 @@ import type { CurrencyVolatilityOutput } from '@/lib/types/currency';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { generateCurrencyData } from '@/lib/financial-data';
+import { useUser } from '@/hooks/use-user';
+import { isBrowser } from '@/lib/env-check';
 
 
 export default function CurrencySignalModule() {
     const [loading, setLoading] = useState(true);
     const [analysisResult, setAnalysisResult] = useState<CurrencyVolatilityOutput | null>(null);
     const { toast } = useToast();
+    const { user } = useUser();
 
     const handleAnalysis = useCallback(async () => {
+        if (!isBrowser() || !user) return;
         setLoading(true);
         try {
             // Generate fresh data for every analysis request to simulate live data
@@ -38,11 +43,15 @@ export default function CurrencySignalModule() {
         } finally {
             setLoading(false);
         }
-    }, [toast]);
+    }, [toast, user]);
     
     useEffect(() => {
+        if (!isBrowser() || !user) {
+            if (!isBrowser()) setLoading(false);
+            return;
+        }
         handleAnalysis();
-    }, [handleAnalysis]);
+    }, [handleAnalysis, user]);
 
     const renderLoading = () => (
         <CardContent>
@@ -62,7 +71,7 @@ export default function CurrencySignalModule() {
         if (!analysisResult) {
             return (
                 <CardContent>
-                    <p className="text-muted-foreground text-center py-4">No analysis data available.</p>
+                    <p className="text-muted-foreground text-center py-4">No analysis data available. {!user && 'Login to fetch data.'}</p>
                 </CardContent>
             )
         }
@@ -89,7 +98,7 @@ export default function CurrencySignalModule() {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5 text-accent" />Currency Signals</CardTitle>
-                    <Button onClick={handleAnalysis} disabled={loading} size="icon" variant="ghost" className="h-8 w-8">
+                    <Button onClick={handleAnalysis} disabled={loading || !user} size="icon" variant="ghost" className="h-8 w-8">
                         <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
                     </Button>
                 </div>

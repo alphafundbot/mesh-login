@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -129,7 +130,7 @@ export default function VisualIntegrityDashboard() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if (!user) setLoadingLogs(false);
+        if (!isBrowser()) setLoadingLogs(false);
         return;
     }
     const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
@@ -151,7 +152,7 @@ export default function VisualIntegrityDashboard() {
     return () => unsubscribe();
   }, [user]);
 
-  const handleGenerateForecasts = async () => {
+  const handleGenerateForecasts = useCallback(async () => {
     if (!isBrowser() || !user) return;
     setLoading(true);
     setSuppressionForecast(null);
@@ -219,8 +220,7 @@ export default function VisualIntegrityDashboard() {
     } finally {
         setLoading(false);
     }
-  };
-
+  }, [currentLogs, previousPeriodLogs, toast, user]);
 
    const escalationData = useMemo(() => {
     if (allLogs.length === 0) return {

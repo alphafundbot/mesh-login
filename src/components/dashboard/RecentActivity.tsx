@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -65,7 +66,7 @@ export default function RecentActivity() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-      if(!userLoading) setLoadingLogs(false);
+      if (!isBrowser()) setLoadingLogs(false);
       return;
     }
 
@@ -225,7 +226,7 @@ export default function RecentActivity() {
       <CardContent className="space-y-4">
         {loadingLogs ? (
           <Skeleton className="h-24 w-full" />
-        ) : (
+        ) : latestLog ? (
           <div>
             <pre className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-lg overflow-x-auto">
                 <code>{latestLog}</code>
@@ -234,6 +235,8 @@ export default function RecentActivity() {
                 {loading ? "Analyzing..." : "Analyze with AI"}
             </Button>
           </div>
+        ) : (
+            <p className="text-center text-muted-foreground py-4">No logs found. {!user && 'Login to see activity.'}</p>
         )}
 
         {loading && (
