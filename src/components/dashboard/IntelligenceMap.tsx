@@ -50,6 +50,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { isBrowser } from "@/lib/env-check";
 
 // Generates sample logs for a given domain to simulate fetching real data
 const generateDomainLogs = (domainName: string) => {
@@ -209,11 +210,13 @@ export default function IntelligenceMap() {
             .join(", ")}.`
         );
       }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleLogAction]);
 
   useEffect(() => {
-    if (!user) return; // Wait for user to be authenticated
+    if (!user || !isBrowser()) {
+        if (!isBrowser()) setLoading(false);
+        return;
+    }
 
     const q = doc(db, "intelligence_map_cache", "latest");
     const unsubscribe = onSnapshot(q, (doc) => {
@@ -247,8 +250,6 @@ export default function IntelligenceMap() {
           analysis: output,
           timestamp: serverTimestamp(),
       });
-      
-      // The onSnapshot listener will pick up the new cache and update the UI
       
     } catch (error) {
       console.error("AI cross-domain analysis failed:", error);

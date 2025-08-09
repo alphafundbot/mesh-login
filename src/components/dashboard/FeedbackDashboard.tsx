@@ -9,6 +9,7 @@ import { Skeleton } from '../ui/skeleton';
 import { ThumbsUp, ThumbsDown, BarChart2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useUser } from '@/hooks/use-user';
+import { isBrowser } from '@/lib/env-check';
 
 interface Feedback {
     id: string;
@@ -30,7 +31,10 @@ export default function FeedbackDashboard() {
     const { user } = useUser();
 
     useEffect(() => {
-        if (!user) return; // Wait for user to be authenticated
+        if (!user || !isBrowser()) {
+            if (!isBrowser()) setLoading(false);
+            return;
+        }
 
         const q = query(collection(db, 'feedback'), orderBy("timestamp", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -191,5 +195,3 @@ export default function FeedbackDashboard() {
         </div>
     );
 }
-
-    

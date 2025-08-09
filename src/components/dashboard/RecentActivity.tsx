@@ -22,6 +22,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { canUserPerform, type Action } from "@/lib/roles";
+import { isBrowser } from "@/lib/env-check";
 
 const generateSampleLogs = (isStressTest: boolean = false) => {
   const users = ['admin', 'strategist', 'guest'];
@@ -64,7 +65,10 @@ export default function RecentActivity() {
   
 
   useEffect(() => {
-    if (!user) return; // Wait for user to be authenticated
+    if (!user || !isBrowser()) {
+        if (!isBrowser()) setLoadingLogs(false);
+        return;
+    }
 
     const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(1));
     const unsubscribe = onSnapshot(q, async (logSnapshot) => {

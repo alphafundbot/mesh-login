@@ -17,6 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { db, auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, orderBy, limit, onSnapshot, Timestamp } from "firebase/firestore";
+import { useUser } from "@/hooks/use-user";
+import { isBrowser } from "@/lib/env-check";
 
 type HistoricalCheck = HealthCheckOutput & {
   id: string;
@@ -28,35 +30,34 @@ export default function StatusClient() {
   const [result, setResult] = useState<HealthCheckOutput | null>(null);
   const [history, setHistory] = useState<HistoricalCheck[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const { user } = useUser();
 
   useEffect(() => {
-    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-        if(user) {
-            const q = query(collection(db, "health_checks"), orderBy("timestamp", "desc"), limit(10));
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-                const historicalData = snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        status: data.status,
-                        message: data.message,
-                        timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
-                    }
-                });
-                setHistory(historicalData);
-                setLoadingHistory(false);
-            }, (error) => {
-                console.error("Could not fetch health check history", error);
-                setLoadingHistory(false);
-            });
+    if (!user || !isBrowser()) {
+        if (!isBrowser()) setLoadingHistory(false);
+        return;
+    }; 
 
-            return () => unsubscribe();
-        } else {
-            setLoadingHistory(false);
-        }
+    const q = query(collection(db, "health_checks"), orderBy("timestamp", "desc"), limit(10));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const historicalData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                status: data.status,
+                message: data.message,
+                timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
+            }
+        });
+        setHistory(historicalData);
+        setLoadingHistory(false);
+    }, (error) => {
+        console.error("Could not fetch health check history", error);
+        setLoadingHistory(false);
     });
-    return () => authUnsubscribe();
-  }, []);
+
+    return () => unsubscribe();
+  }, [user]);
 
   async function handleTest() {
     setLoading(true);

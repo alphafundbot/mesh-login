@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
 import { useUser } from "@/hooks/use-user";
+import { isBrowser } from "@/lib/env-check";
 
 interface Epoch {
     id: string;
@@ -35,7 +36,10 @@ export default function OmegaEpochStream() {
   const { user } = useUser();
 
   useEffect(() => {
-    if (!user) return; // Wait for user to be authenticated
+    if (!user || !isBrowser()) {
+        if (!isBrowser()) setLoading(false);
+        return;
+    }
 
     const q = query(
       collection(db, 'omega_epochs'),

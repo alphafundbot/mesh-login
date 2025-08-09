@@ -14,6 +14,7 @@ import { Timer, DatabaseZap } from "lucide-react";
 import { db, auth } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { isBrowser } from "@/lib/env-check";
 
 export default function MeshHydrationAudit() {
   const [mountTime, setMountTime] = useState<number | null>(null);
@@ -21,12 +22,14 @@ export default function MeshHydrationAudit() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isBrowser()) {
+        setLoading(false);
+        return;
+    }
     setMountTime(Math.round(performance.now()));
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Now that we have a user, it's safe to assume Firebase is initialized and online.
-        // Proceed with the Firestore ping.
         try {
           const startTime = performance.now();
           const docRef = doc(db, "intelligence_map_cache", "latest");
@@ -35,13 +38,11 @@ export default function MeshHydrationAudit() {
           setPingTime(Math.round(endTime - startTime));
         } catch (error) {
           console.error("Firestore ping failed:", error);
-          setPingTime(null); // Explicitly set to null on error
+          setPingTime(null);
         } finally {
           setLoading(false);
         }
       } else {
-        // Handle the case where the user is not logged in.
-        // We can't ping Firestore, so we stop loading and show an appropriate state.
         setLoading(false);
         setPingTime(null);
       }
