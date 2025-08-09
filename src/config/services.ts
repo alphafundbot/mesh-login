@@ -26,8 +26,9 @@ function getEnv(variableName: string): string {
     // On the server, we expect the variable to be loaded from .env
     const value = process.env[variableName];
     if (!value) {
-        console.error(`FATAL ERROR: Environment variable ${variableName} is not set. Please ensure it is defined in your .env file.`);
-        throw new Error(`FATAL ERROR: Environment variable ${variableName} is not set. Please ensure it is defined in your .env file.`);
+        const errorMessage = `FATAL ERROR: Environment variable ${variableName} is not set. Please ensure it is defined in your .env file.`;
+        console.error(errorMessage);
+        throw new Error(errorMessage);
     }
     return value;
 }

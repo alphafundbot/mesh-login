@@ -2,10 +2,22 @@ import {genkit, type GenkitErrorCode, type GenkitError} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 import {servicesConfig} from '@/config/services';
 
+// This function safely retrieves the API key, handling client-side vs. server-side.
+const getApiKey = () => {
+  try {
+    return servicesConfig.gcp.geminiApiKey;
+  } catch (e) {
+    // On the client, if the key is not exposed via next.config.ts, it will fail.
+    // We return an empty string to avoid crashing the app, features will be disabled.
+    console.warn("GEMINI_API_KEY not available. AI features may be disabled on the client.");
+    return "";
+  }
+}
+
 export const ai = genkit({
   plugins: [
     googleAI({
-      apiKey: servicesConfig.gcp.geminiApiKey,
+      apiKey: getApiKey(),
     }),
   ],
   // The default behavior is to swallow errors and log them to the trace.
