@@ -82,7 +82,7 @@ export default function SimulationClient() {
     }
 
     const handleSaveAnalysis = async () => {
-        if (!result || !lastInput) return;
+        if (!result || !lastInput || !firestore) return;
         setIsSaving(true);
         try {
           await addDoc(collection(firestore, "simulation_analysis"), {
