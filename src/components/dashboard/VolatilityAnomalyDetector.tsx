@@ -54,6 +54,12 @@ export default function VolatilityAnomalyDetector() {
                 })
                 .filter((item): item is ForecastData => item !== null);
 
+            if (historicalData.length < 2) {
+                toast({ title: "Not Enough Data", description: "Need at least two historical forecasts with volatility scores to detect anomalies." });
+                setLoading(false);
+                return;
+            }
+
             const aiResult = await detectVolatilityAnomalies({ historicalData });
             setResult(aiResult);
              toast({ title: "Detection Complete", description: `Found ${aiResult.anomalies.length} potential anomalies.` });
