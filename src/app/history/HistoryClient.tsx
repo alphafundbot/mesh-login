@@ -335,6 +335,7 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
 
             if (untagged.length === 0) {
                 toast({ title: "No Rationales", description: "No overrides with rationales found in this period." });
+                setLoading(false);
                 return;
             }
 
@@ -342,9 +343,10 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
                 const { tags } = await tagRationale({ rationale: l.parsed.rationale! });
                 return { rationale: l.parsed.rationale!, tags, severity: l.parsed.severity!, domains: l.parsed.domains! };
             }));
-
-            setClusters(calculateClusters(tagged));
-            toast({ title: "Analysis Complete", description: `Identified ${clusters.size} rationale clusters.` });
+            
+            const newClusters = calculateClusters(tagged);
+            setClusters(newClusters);
+            toast({ title: "Analysis Complete", description: `Identified ${newClusters.size} rationale clusters.` });
 
         } catch (error) {
             console.error("Error analyzing clusters", error);
@@ -352,7 +354,7 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
         } finally {
             setLoading(false);
         }
-    }, [logs, toast, clusters.size]);
+    }, [logs, toast]);
     
     const sortedClusters = useMemo(() => Array.from(clusters.values()).sort((a, b) => b.riskScore - a.riskScore), [clusters]);
     
@@ -573,38 +575,34 @@ export default function HistoryClient() {
     return { filteredLogs: currentLogs, previousPeriodLogs: previousLogs };
   }, [allLogs, timeFilter, searchParams]);
 
-  const openRationaleModal = useCallback((title: string, description: React.ReactNode, rationales: TaggedRationale[]) => {
+  const openRationaleModal = useCallback(async (title: string, description: React.ReactNode, rationales: Omit<TaggedRationale, 'tags'>[]) => {
         setLoadingRationales(true);
         setTaggedRationales([]);
         setRationaleDialog({ title, description, rationales: [] });
     
-        const processRationales = async () => {
-            try {
-                const processed = await Promise.all(rationales.map(async (r) => {
-                    if (r.tags.length > 0) return r;
-                    const { tags } = await tagRationale({ rationale: r.rationale });
-                    return { ...r, tags };
-                }));
+        try {
+            const processed = await Promise.all(rationales.map(async (r) => {
+                const { tags } = await tagRationale({ rationale: r.rationale });
+                return { ...r, tags };
+            }));
 
-                setTaggedRationales(processed);
-                setRationaleDialog({ title, description, rationales: processed });
-            } catch (error) {
-                 console.error("Failed to process rationales:", error);
-                 toast({
-                    variant: "destructive",
-                    title: "Processing Failed",
-                    description: "Could not process rationales for viewing."
-                });
-                setRationaleDialog(null);
-            } finally {
-                setLoadingRationales(false);
-            }
-        };
-        processRationales();
+            setTaggedRationales(processed);
+            setRationaleDialog({ title, description, rationales: processed });
+        } catch (error) {
+             console.error("Failed to process rationales:", error);
+             toast({
+                variant: "destructive",
+                title: "Processing Failed",
+                description: "Could not process rationales for viewing."
+            });
+            setRationaleDialog(null);
+        } finally {
+            setLoadingRationales(false);
+        }
 
     }, [toast]);
 
-    const handleHeatmapCellClick = useCallback(async (domain: string, severity: Severity) => {
+    const handleHeatmapCellClick = useCallback((domain: string, severity: Severity) => {
         const relevantLogs = filteredLogs.filter(log => {
             const d = parseDetails(log.details);
             return d.isOverride && d.severity === severity && d.domains?.includes(domain)
@@ -614,7 +612,7 @@ export default function HistoryClient() {
         
         const untaggedRationales = relevantLogs.map(log => {
             const d = parseDetails(log.details);
-            return { rationale: d.rationale!, tags: [], severity: d.severity!, domains: d.domains! };
+            return { rationale: d.rationale!, severity: d.severity!, domains: d.domains! };
         });
 
         const title = `Override Rationales for ${domain}`;
@@ -627,8 +625,13 @@ export default function HistoryClient() {
      const handleClusterClick = useCallback((cluster: ClusterInfo) => {
         const title = `Rationale Cluster: "${cluster.tag}"`;
         const description = <>Showing {cluster.items.length} rationales related to this cluster.</>;
-        openRationaleModal(title, description, cluster.items);
-    }, [openRationaleModal]);
+        
+        // Items in ClusterInfo are already tagged
+        setLoadingRationales(false);
+        setTaggedRationales(cluster.items);
+        setRationaleDialog({ title, description, rationales: cluster.items });
+
+    }, []);
     
     useEffect(() => {
         const autoStart = searchParams.get('autostart');

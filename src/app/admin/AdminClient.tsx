@@ -76,12 +76,13 @@ export default function AdminClient() {
         addLog(`Processing forecast ${forecastId} from ${forecastTimestamp.toLocaleString()}...`);
         
         const sevenDays = 7 * 24 * 60 * 60 * 1000;
-        const logStartTime = new Date(forecastTimestamp.getTime() - sevenDays);
+        const logStartTime = new Date(forecastTimestamp.getTime());
+        const logEndTime = new Date(logStartTime.getTime() + sevenDays);
         
         const logsQuery = query(
             collection(db, "hud_actions"),
             where("timestamp", ">=", logStartTime),
-            where("timestamp", "<", forecastTimestamp)
+            where("timestamp", "<", logEndTime)
         );
 
         const logsSnapshot = await getDocs(logsQuery);
