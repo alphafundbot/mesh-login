@@ -27,6 +27,7 @@ import { TrendingUp, Coins, Shield, BarChartHorizontal } from 'lucide-react';
 import RevenueMetrics from "@/components/dashboard/RevenueMetrics";
 import RevenueChart from "@/components/dashboard/RevenueChart";
 import CurrencySignalModule from "@/components/dashboard/CurrencySignalModule";
+import PortAudit from "@/components/dashboard/PortAudit";
 
 
 const getStatusColor = (status: string) => {
@@ -144,7 +145,10 @@ export default function DashboardPage() {
               <CarouselNext className="absolute right-[-20px] top-1/2 -translate-y-1/2" />
             </Carousel>
         </div>
-        <RecentActivity />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+            <RecentActivity />
+            <PortAudit />
+        </div>
       </div>
     </AppLayout>
   );

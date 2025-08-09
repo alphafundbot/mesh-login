@@ -7,6 +7,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Bot, AlertTriangle, CornerDownRight, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
@@ -174,21 +175,26 @@ export default function RecentActivity() {
 
   return (
     <Card className="transition-shadow duration-300 hover:shadow-xl">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Bot className="h-6 w-6 text-accent" />
-          <CardTitle>Recent Activity Log</CardTitle>
+      <CardHeader>
+        <div className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Bot className="h-6 w-6 text-accent" />
+                <CardTitle>Recent Activity Log</CardTitle>
+            </div>
+            <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => handleRefresh(false)} disabled={loadingLogs}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${loadingLogs ? 'animate-spin' : ''}`} />
+                Simulate Event
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => handleRefresh(true)} disabled={loadingLogs}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${loadingLogs ? 'animate-spin' : ''}`} />
+                Stress Test
+            </Button>
+            </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleRefresh(false)} disabled={loadingLogs}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loadingLogs ? 'animate-spin' : ''}`} />
-            Simulate Event
-          </Button>
-          <Button variant="destructive" size="sm" onClick={() => handleRefresh(true)} disabled={loadingLogs}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loadingLogs ? 'animate-spin' : ''}`} />
-            Stress Test
-          </Button>
-        </div>
+        <CardDescription>
+          Live feed of system events. Use the AI to analyze for unusual activity.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {loadingLogs ? (
