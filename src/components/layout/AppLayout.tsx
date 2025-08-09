@@ -28,6 +28,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, loading, router, pathname]);
   
   if (loading || !user) {
+    // Do not show a skeleton loader if we are on the login page
+    if (pathname === "/login") {
+      return <>{children}</>;
+    }
     return (
        <div className="flex min-h-screen items-center justify-center">
           <div className="space-y-4">
