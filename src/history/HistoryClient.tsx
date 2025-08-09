@@ -2,8 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { db, auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp, where, getDocs, limit, doc, updateDoc, addDoc } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import {
@@ -326,6 +325,7 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
     const [clusters, setClusters] = useState<ClusterMap>(new Map());
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
+    const { user } = useUser();
 
     const handleAnalyzeClusters = useCallback(async () => {
         setLoading(true);
@@ -368,7 +368,7 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
                         <CardTitle>Global Rationale Clusters</CardTitle>
                         <CardDescription>Top override themes by calculated risk score. Click a cluster to investigate.</CardDescription>
                     </div>
-                     <Button onClick={handleAnalyzeClusters} disabled={loading || logs.length === 0}>
+                     <Button onClick={handleAnalyzeClusters} disabled={loading || logs.length === 0 || !user}>
                         {loading ? "Analyzing..." : "Analyze All Rationales"}
                     </Button>
                 </div>
@@ -509,15 +509,17 @@ export default function HistoryClient() {
   }, [searchParams]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("confidenceThreshold");
-    if (saved !== null) {
-        setConfidenceThreshold(parseFloat(saved));
+    if (isBrowser()) {
+        const saved = localStorage.getItem("confidenceThreshold");
+        if (saved !== null) {
+            setConfidenceThreshold(parseFloat(saved));
+        }
     }
   }, []);
 
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (isBrowser()) {
       localStorage.setItem("confidenceThreshold", String(confidenceThreshold));
     }
   }, [confidenceThreshold]);
@@ -641,6 +643,8 @@ export default function HistoryClient() {
     }, []);
     
     useEffect(() => {
+        if (!user || !isBrowser()) return;
+
         const autoStart = searchParams.get('autostart');
         const domain = searchParams.get('domain');
         const severity = searchParams.get('severity') as Severity;
@@ -650,12 +654,17 @@ export default function HistoryClient() {
         if (domain && severity) {
             handleHeatmapCellClick(domain, severity);
         }
-    }, [searchParams, filteredLogs, handleHeatmapCellClick]);
+    }, [searchParams, filteredLogs, handleHeatmapCellClick, user]);
 
 
   useEffect(() => {
+    if (!user || !isBrowser() || filteredLogs.length === 0) {
+      if(!isBrowser()) setReplayCommentary(null);
+      return;
+    };
+    
     const startTimeParam = searchParams.get('startTime');
-    if (!startTimeParam || filteredLogs.length === 0) {
+    if (!startTimeParam) {
       setReplayCommentary(null);
       return;
     }
@@ -710,7 +719,7 @@ export default function HistoryClient() {
         }
     }
     fetchCommentary();
-  }, [searchParams, filteredLogs, toast]);
+  }, [searchParams, filteredLogs, toast, user]);
 
   const handleAnalysis = async () => {
     setLoadingAnalysis(true);
@@ -830,7 +839,7 @@ export default function HistoryClient() {
                         <CardTitle>Action History</CardTitle>
                         <CardDescription>A persistent log of all strategist actions in the selected time window.</CardDescription>
                     </div>
-                    <Button onClick={handleAnalysis} disabled={loading || loadingAnalysis || filteredLogs.length === 0}>
+                    <Button onClick={handleAnalysis} disabled={loading || loadingAnalysis || filteredLogs.length === 0 || !user}>
                         {loadingAnalysis ? "Analyzing..." : "Analyze with AI"}
                     </Button>
                     </CardHeader>

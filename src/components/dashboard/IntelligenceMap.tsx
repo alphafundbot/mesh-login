@@ -155,7 +155,7 @@ export default function IntelligenceMap() {
   const { user } = useUser();
 
   const handleLogAction = useCallback(async (action: string, details: string) => {
-    if (!user) return;
+    if (!user || !isBrowser()) return;
     try {
       await addDoc(collection(db, "hud_actions"), {
         action,

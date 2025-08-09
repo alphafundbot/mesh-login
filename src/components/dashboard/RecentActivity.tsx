@@ -91,7 +91,7 @@ export default function RecentActivity() {
     });
 
     return () => unsubscribe();
-  }, [toast, user]);
+  }, [user]);
 
   const handleAnalysis = async () => {
     if (!latestLog) {

@@ -151,7 +151,7 @@ export default function AdminClient() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={handleBackfill} disabled={loading}>
+          <Button onClick={handleBackfill} disabled={loading || !user}>
             <RefreshCw
               className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
             />
