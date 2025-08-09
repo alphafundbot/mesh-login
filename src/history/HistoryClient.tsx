@@ -654,8 +654,6 @@ export default function HistoryClient() {
 
 
   useEffect(() => {
-    if (!isBrowser() || !user) return;
-
     const startTimeParam = searchParams.get('startTime');
     if (!startTimeParam || filteredLogs.length === 0) {
       setReplayCommentary(null);
@@ -712,7 +710,7 @@ export default function HistoryClient() {
         }
     }
     fetchCommentary();
-  }, [searchParams, filteredLogs, toast, user]);
+  }, [searchParams, filteredLogs, toast]);
 
   const handleAnalysis = async () => {
     setLoadingAnalysis(true);
