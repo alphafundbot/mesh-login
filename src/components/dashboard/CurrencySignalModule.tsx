@@ -15,7 +15,7 @@ import { generateCurrencyData } from '@/lib/financial-data';
 
 
 export default function CurrencySignalModule() {
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [analysisResult, setAnalysisResult] = useState<CurrencyVolatilityOutput | null>(null);
     const { toast } = useToast();
 

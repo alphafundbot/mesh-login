@@ -5,10 +5,10 @@ import { servicesConfig } from "@/config/services";
 
 // Use the centralized configuration for Firebase.
 // This ensures that all parts of the app use the same settings.
-const firebaseConfig = servicesConfig.firebase;
+const firebaseConfig = servicesConfig.firebase as FirebaseOptions;
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig as FirebaseOptions) : getApp();
+// Initialize Firebase using a singleton pattern
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 export { app, db };
