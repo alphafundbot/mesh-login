@@ -22,30 +22,40 @@ import { firestore } from '@/lib/firebaseConfig';
 
 
 export async function analyzeCurrencyVolatility(input: CurrencyVolatilityInput): Promise<CurrencyVolatilityOutput> {
+  // This check is important because this flow can be called from server components
+  // where the client-side Firebase SDK (and thus `firestore`) is not initialized.
   if (!firestore) {
     console.warn("Firestore is not initialized. Skipping cache check for currency volatility.");
     return currencyVolatilityFlow(input);
   }
   
   const cacheRef = doc(firestore, "currency_volatility_cache", "latest_analysis");
-  const cacheDoc = await getDoc(cacheRef);
-
-  if (cacheDoc.exists()) {
-    const cacheData = cacheDoc.data();
-    const now = new Date();
-    const cacheTime = cacheData.timestamp.toDate();
-    // Cache is valid for 1 hour
-    if (now.getTime() - cacheTime.getTime() < 60 * 60 * 1000) {
-      return cacheData.analysis as CurrencyVolatilityOutput;
+  try {
+    const cacheDoc = await getDoc(cacheRef);
+    if (cacheDoc.exists()) {
+        const cacheData = cacheDoc.data();
+        const now = new Date();
+        const cacheTime = cacheData.timestamp.toDate();
+        // Cache is valid for 1 hour
+        if (now.getTime() - cacheTime.getTime() < 60 * 60 * 1000) {
+            return cacheData.analysis as CurrencyVolatilityOutput;
+        }
     }
+  } catch (error) {
+    console.error("Failed to read from volatility cache:", error);
+    // Proceed to generate new data if cache read fails
   }
 
   const result = await currencyVolatilityFlow(input);
 
-  await setDoc(cacheRef, {
-    analysis: result,
-    timestamp: serverTimestamp()
-  });
+  try {
+    await setDoc(cacheRef, {
+        analysis: result,
+        timestamp: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Failed to write to volatility cache:", error);
+  }
 
   return result;
 }
