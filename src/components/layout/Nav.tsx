@@ -18,7 +18,6 @@ import {
   Settings,
   BarChartHorizontal,
   FileClock,
-  ClipboardList,
   TestTube,
 } from "lucide-react";
 import {
