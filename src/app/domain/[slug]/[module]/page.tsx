@@ -17,6 +17,8 @@ export default function ModuleDetailPage({
     notFound();
   }
 
+  // Destructure icon to avoid passing non-serializable props to the client component.
+  // This resolves the React Server Component boundary violation.
   const { icon, ...serializableDomain } = domain;
 
   return (
