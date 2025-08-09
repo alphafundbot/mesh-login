@@ -9,11 +9,9 @@ import {
 import Nav from "./Nav";
 import { Button, buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
-import ClientOnly from "./ClientOnly";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClientOnly>
       <div className="flex min-h-screen">
         <Sidebar collapsible="icon">
           <SidebarHeader>
@@ -41,6 +39,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <main className="flex-1 overflow-auto">{children}</main>
         </SidebarInset>
       </div>
-    </ClientOnly>
   );
 }
