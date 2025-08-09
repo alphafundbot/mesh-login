@@ -21,29 +21,30 @@ export default function MeshHydrationAudit() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set mount time immediately as it doesn't depend on external services
     setMountTime(Math.round(performance.now()));
 
-    // Wait for the auth state to be confirmed before attempting a firestore read.
-    // This acts as a reliable signal that the Firebase client is initialized and online.
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-        const checkFirestore = async () => {
-          setLoading(true);
-          try {
-            const startTime = performance.now();
-            const docRef = doc(db, "intelligence_map_cache", "latest");
-            await getDoc(docRef);
-            const endTime = performance.now();
-            setPingTime(Math.round(endTime - startTime));
-          } catch (error) {
-            console.error("Firestore ping failed:", error);
-            setPingTime(null);
-          } finally {
-            setLoading(false);
-          }
-        };
-        
-        checkFirestore();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Now that we have a user, it's safe to assume Firebase is initialized and online.
+        // Proceed with the Firestore ping.
+        try {
+          const startTime = performance.now();
+          const docRef = doc(db, "intelligence_map_cache", "latest");
+          await getDoc(docRef);
+          const endTime = performance.now();
+          setPingTime(Math.round(endTime - startTime));
+        } catch (error) {
+          console.error("Firestore ping failed:", error);
+          setPingTime(null); // Explicitly set to null on error
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // Handle the case where the user is not logged in.
+        // We can't ping Firestore, so we stop loading and show an appropriate state.
+        setLoading(false);
+        setPingTime(null);
+      }
     });
 
     return () => unsubscribe();
