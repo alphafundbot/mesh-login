@@ -26,7 +26,7 @@ import { domainFinancials } from "@/lib/financial-data";
 import { TrendingUp, Coins, Shield, BarChartHorizontal } from 'lucide-react';
 import RevenueMetrics from "@/components/dashboard/RevenueMetrics";
 import RevenueChart from "@/components/dashboard/RevenueChart";
-import ResourceAllocation from "@/components/dashboard/ResourceAllocation";
+import CurrencySignalModule from "@/components/dashboard/CurrencySignalModule";
 
 
 const getStatusColor = (status: string) => {
@@ -59,7 +59,7 @@ export default function DashboardPage() {
               <RevenueChart />
             </div>
              <div className="lg:col-span-3">
-              <ResourceAllocation />
+              <CurrencySignalModule />
             </div>
           </div>
         </div>

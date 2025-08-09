@@ -41,3 +41,35 @@ export const domainFinancials: Record<string, { revenue: number; cost: number; a
     "security-privacy": { revenue: 750000, cost: 85000, assets: 750000, roi: 8.8 },
     "planetary-eco": { revenue: 400000, cost: 40000, assets: 1500000, roi: 10.0 },
 };
+
+export const generateCurrencyData = () => {
+    const baseCurrency = "USD";
+    const currencies = ["EUR", "INR", "JPY", "GBP", "AUD", "CAD", "CHF"];
+    const baseRates: { [key: string]: number } = {
+        EUR: 0.92,
+        INR: 83.5,
+        JPY: 157.0,
+        GBP: 0.78,
+        AUD: 1.5,
+        CAD: 1.37,
+        CHF: 0.9,
+    };
+
+    const currentRates = currencies.map(currency => ({
+        currency,
+        rate: baseRates[currency] * (1 + (Math.random() - 0.5) * 0.02) // up to 1% fluctuation
+    }));
+
+    const historicalRates = [
+        {
+            date: "2025-08-16",
+            rates: currencies.map(currency => ({ currency, rate: baseRates[currency] * (1 + (Math.random() - 0.5) * 0.05) }))
+        },
+        {
+            date: "2025-08-15",
+            rates: currencies.map(currency => ({ currency, rate: baseRates[currency] * (1 + (Math.random() - 0.5) * 0.05) }))
+        }
+    ];
+
+    return { baseCurrency, currentRates, historicalRates };
+};
