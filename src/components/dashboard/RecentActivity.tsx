@@ -18,7 +18,7 @@ import {
 } from "@/ai/flows/audit-trail-ai";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { canUserPerform, type Action } from "@/lib/roles";
@@ -71,12 +71,12 @@ export default function RecentActivity() {
     }
 
     setLoadingLogs(true);
-    const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(1));
+    const q = query(collection(firestore, "audit_logs"), orderBy("timestamp", "desc"), limit(1));
     const unsubscribe = onSnapshot(q, async (logSnapshot) => {
       if (logSnapshot.empty) {
         const initialLogs = generateSampleLogs();
         try {
-            await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+            await addDoc(collection(firestore, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
         } catch (e) {
             console.error("Failed to add initial audit log", e);
         }
@@ -143,7 +143,7 @@ export default function RecentActivity() {
     setResult(null);
     const newLogs = generateSampleLogs(isStressTest);
     try {
-      await addDoc(collection(db, "audit_logs"), { logs: newLogs, timestamp: serverTimestamp() });
+      await addDoc(collection(firestore, "audit_logs"), { logs: newLogs, timestamp: serverTimestamp() });
     } catch (error) {
       console.error("Error adding new log:", error);
       toast({
@@ -162,7 +162,7 @@ export default function RecentActivity() {
       description: `${action} protocol has been initiated by ${user.role}.`,
     });
     try {
-      await addDoc(collection(db, "hud_actions"), {
+      await addDoc(collection(firestore, "hud_actions"), {
         action,
         role: user.role,
         strategist: user.name,

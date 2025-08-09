@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
+import { firestore } from '@/lib/firebaseConfig';
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import {
   Card,
@@ -48,7 +48,7 @@ export default function ForecastArchiveClient() {
         }
 
         setLoading(true);
-        const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"));
+        const q = query(collection(firestore, "forecast_analysis"), orderBy("timestamp", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const fetchedAnalyses = snapshot.docs.map((doc) => {
                 const data = doc.data();

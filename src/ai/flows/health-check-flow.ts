@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from '@/lib/firebase';
+import { firestore } from '@/lib/firebaseConfig';
 
 const HealthCheckOutputSchema = z.object({
   status: z.string().describe("The status of the API call, either 'OK' or 'Error'."),
@@ -43,7 +43,7 @@ export async function checkApiHealth(): Promise<HealthCheckOutput> {
   }
 
   try {
-    await addDoc(collection(db, "health_checks"), {
+    await addDoc(collection(firestore, "health_checks"), {
       ...result,
       timestamp: serverTimestamp(),
     });

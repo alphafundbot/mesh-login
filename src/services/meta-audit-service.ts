@@ -4,7 +4,7 @@
  * @fileOverview A service for interacting with the meta-audit results in Firestore.
  */
 
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import type { CodeAnalysisOutput } from "@/ai/flows/code-intelligence-flow";
 import {
   collection,
@@ -41,7 +41,7 @@ export async function updateAuditResult(
   analysis: CodeAnalysisOutput
 ): Promise<void> {
   const docId = sanitizeDocId(filePath);
-  const docRef = doc(db, "meta_audit_results", docId);
+  const docRef = doc(firestore, "meta_audit_results", docId);
   await setDoc(docRef, {
     analysis,
     filePath, // Store original path
@@ -54,7 +54,7 @@ export async function updateAuditResult(
  * @returns A record mapping file paths to their audit results.
  */
 export async function getAuditResults(): Promise<Record<string, AuditResult>> {
-  const collectionRef = collection(db, "meta_audit_results");
+  const collectionRef = collection(firestore, "meta_audit_results");
   const snapshot = await getDocs(collectionRef);
   
   const results: Record<string, AuditResult> = {};

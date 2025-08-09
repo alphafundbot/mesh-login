@@ -12,7 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { collection, query, getDocs, orderBy } from "firebase/firestore";
-import { db } from '@/lib/firebase';
+import { firestore } from '@/lib/firebaseConfig';
 
 const ForecastAnalysisSchema = z.object({
     id: z.string(),

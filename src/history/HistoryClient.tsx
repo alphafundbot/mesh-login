@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { collection, query, orderBy, onSnapshot, Timestamp, where, getDocs, limit, doc, updateDoc, addDoc } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import {
@@ -546,7 +545,7 @@ export default function HistoryClient() {
     }
 
     setLoading(true);
-    const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
+    const q = query(collection(firestore, "hud_actions"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedLogs = snapshot.docs.map((doc) => {
         const data = doc.data();
@@ -715,7 +714,7 @@ export default function HistoryClient() {
         try {
             const forecastTimestamp = new Date(startTimeParam);
             const q = query(
-                collection(db, "forecast_analysis"),
+                collection(firestore, "forecast_analysis"),
                 where("timestamp", "==", Timestamp.fromDate(forecastTimestamp)),
                 limit(1)
             );
@@ -747,7 +746,7 @@ export default function HistoryClient() {
                     actualLogs: logsString,
                 });
                 
-                const forecastDocRef = doc(db, "forecast_analysis", forecastDoc.id);
+                const forecastDocRef = doc(firestore, "forecast_analysis", forecastDoc.id);
                 await updateDoc(forecastDocRef, { commentary });
 
                 setReplayCommentary(commentary);

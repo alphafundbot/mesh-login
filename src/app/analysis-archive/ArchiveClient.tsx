@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import {
   Card,
@@ -74,8 +74,8 @@ export default function ArchiveClient() {
         } 
 
         setLoading(true);
-        const diffQuery = query(collection(db, "diff_analysis"), orderBy("timestamp", "desc"));
-        const simQuery = query(collection(db, "simulation_analysis"), orderBy("timestamp", "desc"));
+        const diffQuery = query(collection(firestore, "diff_analysis"), orderBy("timestamp", "desc"));
+        const simQuery = query(collection(firestore, "simulation_analysis"), orderBy("timestamp", "desc"));
 
         const unsubDiff = onSnapshot(diffQuery, (snapshot) => {
             const diffs = snapshot.docs.map(doc => {

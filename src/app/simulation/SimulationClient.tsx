@@ -37,7 +37,7 @@ import { simulateOverride, type PredictiveOverrideOutput, type PredictiveOverrid
 import { domainData } from "@/lib/domains";
 import { cn } from "@/lib/utils";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 
 
 const formSchema = z.object({
@@ -85,7 +85,7 @@ export default function SimulationClient() {
         if (!result || !lastInput) return;
         setIsSaving(true);
         try {
-          await addDoc(collection(db, "simulation_analysis"), {
+          await addDoc(collection(firestore, "simulation_analysis"), {
             input: lastInput,
             output: result,
             timestamp: serverTimestamp(),

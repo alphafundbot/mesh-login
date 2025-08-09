@@ -11,7 +11,7 @@ import {
   updateDoc,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -57,7 +57,7 @@ export default function AdminClient() {
     try {
       addLog("Querying for forecasts without commentary...");
       const forecastsQuery = query(
-        collection(db, "forecast_analysis"),
+        collection(firestore, "forecast_analysis"),
         where("commentary", "==", null)
       );
       const forecastsSnapshot = await getDocs(forecastsQuery);
@@ -86,7 +86,7 @@ export default function AdminClient() {
         const logEndTime = new Date(logStartTime.getTime() + sevenDays);
         
         const logsQuery = query(
-            collection(db, "hud_actions"),
+            collection(firestore, "hud_actions"),
             where("timestamp", ">=", logStartTime),
             where("timestamp", "<", logEndTime)
         );
@@ -111,7 +111,7 @@ export default function AdminClient() {
             actualLogs: logsString,
         });
 
-        const forecastDocRef = doc(db, "forecast_analysis", forecastId);
+        const forecastDocRef = doc(firestore, "forecast_analysis", forecastId);
         await updateDoc(forecastDocRef, { commentary });
         
         addLog(`Successfully generated and saved commentary for forecast ${forecastId}.`);

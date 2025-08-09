@@ -11,7 +11,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { collection, query, orderBy, onSnapshot, Timestamp, addDoc, serverTimestamp, getDocs, limit } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
 import { Eye, TrendingUp, Settings, Lightbulb, ArrowUp, ArrowDown, BarChart, ShieldAlert, RefreshCw } from "lucide-react";
@@ -133,7 +133,7 @@ export default function VisualIntegrityDashboard() {
         if (!isBrowser()) setLoadingLogs(false);
         return;
     }
-    const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
+    const q = query(collection(firestore, "hud_actions"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         setLoadingLogs(true);
         if (snapshot.empty) {
@@ -181,7 +181,7 @@ export default function VisualIntegrityDashboard() {
       const clusters = calculateClusters(taggedRationales);
       setGlobalClusters(clusters);
       
-      const feedbackQuery = query(collection(db, 'feedback'));
+      const feedbackQuery = query(collection(firestore, 'feedback'));
       const feedbackSnapshot = await getDocs(feedbackQuery);
       const feedbackSummary: Record<string, { up: number, down: number }> = {};
       feedbackSnapshot.forEach(doc => {
@@ -201,10 +201,10 @@ export default function VisualIntegrityDashboard() {
       setRationaleForecast(rationaleOutput);
       
        if (rationaleOutput && rationaleOutput.forecasts.length > 0) {
-          const latestForecastQuery = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"), limit(1));
+          const latestForecastQuery = query(collection(firestore, "forecast_analysis"), orderBy("timestamp", "desc"), limit(1));
           const latestForecastSnapshot = await getDocs(latestForecastQuery);
           if (latestForecastSnapshot.empty || JSON.stringify(latestForecastSnapshot.docs[0].data().forecast) !== JSON.stringify(rationaleOutput)) {
-              await addDoc(collection(db, "forecast_analysis"), {
+              await addDoc(collection(firestore, "forecast_analysis"), {
                 forecast: rationaleOutput,
                 inputs: { clusterMomentumVectors, feedbackSummary },
                 timestamp: serverTimestamp(),

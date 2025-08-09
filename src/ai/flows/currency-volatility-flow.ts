@@ -18,11 +18,11 @@ import {
     CurrencyVolatilityOutputSchema
 } from '@/lib/types/currency';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { firestore } from '@/lib/firebaseConfig';
 
 
 export async function analyzeCurrencyVolatility(input: CurrencyVolatilityInput): Promise<CurrencyVolatilityOutput> {
-  const cacheRef = doc(db, "currency_volatility_cache", "latest_analysis");
+  const cacheRef = doc(firestore, "currency_volatility_cache", "latest_analysis");
   const cacheDoc = await getDoc(cacheRef);
 
   if (cacheDoc.exists()) {

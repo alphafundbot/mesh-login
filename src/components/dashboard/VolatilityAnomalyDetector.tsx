@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { collection, query, orderBy, getDocs, Timestamp, limit } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ export default function VolatilityAnomalyDetector() {
         setResult(null);
         try {
             const q = query(
-                collection(db, "forecast_analysis"), 
+                collection(firestore, "forecast_analysis"), 
                 orderBy("timestamp", "asc"),
                 // Limit to recent 50 to avoid overly large payloads
                 // A real-world app might use pagination or more complex server-side aggregation

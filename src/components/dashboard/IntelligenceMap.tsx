@@ -35,7 +35,7 @@ import {
   ShieldX,
   RefreshCw,
 } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, setDoc, getDoc, Timestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import {
@@ -158,7 +158,7 @@ export default function IntelligenceMap() {
   const handleLogAction = useCallback(async (action: string, details: string) => {
     if (!isBrowser() || !user) return;
     try {
-      await addDoc(collection(db, "hud_actions"), {
+      await addDoc(collection(firestore, "hud_actions"), {
         action,
         role: user.role,
         strategist: user.name,
@@ -226,7 +226,7 @@ export default function IntelligenceMap() {
 
       const output = await analyzeCrossDomainIntelligence({ domainLogs });
       
-      await setDoc(doc(db, "intelligence_map_cache", "latest"), {
+      await setDoc(doc(firestore, "intelligence_map_cache", "latest"), {
           analysis: output,
           timestamp: serverTimestamp(),
       });
@@ -253,7 +253,7 @@ export default function IntelligenceMap() {
 
     setLoading(true);
     const fetchCachedAnalysis = async () => {
-        const docRef = doc(db, "intelligence_map_cache", "latest");
+        const docRef = doc(firestore, "intelligence_map_cache", "latest");
         try {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {

@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 import { BrainCircuit } from "lucide-react";
@@ -43,7 +43,7 @@ export default function OmegaEpochStream() {
 
     setLoading(true);
     const q = query(
-      collection(db, 'omega_epochs'),
+      collection(firestore, 'omega_epochs'),
       orderBy('epoch', 'desc')
     );
 

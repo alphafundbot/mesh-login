@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Timer, DatabaseZap } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { isBrowser } from "@/lib/env-check";
@@ -38,7 +38,7 @@ export default function MeshHydrationAudit() {
         try {
           const startTime = performance.now();
           // Use a document that is very likely to exist, like the intelligence map cache
-          const docRef = doc(db, "intelligence_map_cache", "latest");
+          const docRef = doc(firestore, "intelligence_map_cache", "latest");
           await getDoc(docRef);
           const endTime = performance.now();
           setPingTime(Math.round(endTime - startTime));

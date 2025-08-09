@@ -26,7 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bot, GitCompareArrows, ChevronsRight, FileText, Save } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function SnapshotDiffClient() {
@@ -82,7 +82,7 @@ export default function SnapshotDiffClient() {
     if (!result || !snapshotA || !snapshotB) return;
     setIsSaving(true);
     try {
-      await addDoc(collection(db, "diff_analysis"), {
+      await addDoc(collection(firestore, "diff_analysis"), {
         snapshotA: snapshotA.label,
         snapshotB: snapshotB.label,
         analysis: result,

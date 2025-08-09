@@ -13,7 +13,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
 import { collection, getDocs, query, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { firestore } from '@/lib/firebaseConfig';
 import type { Recommendation } from '@/lib/types';
 
 
@@ -54,7 +54,7 @@ const getFeedbackSummary = ai.defineTool(
         })).describe("An object where keys are recommendation IDs and values are their feedback counts and original text."),
     },
     async () => {
-        const feedbackQuery = query(collection(db, 'feedback'));
+        const feedbackQuery = query(collection(firestore, 'feedback'));
         const snapshot = await getDocs(feedbackQuery);
         
         if (snapshot.empty) {
@@ -156,7 +156,7 @@ export const submitFeedback = ai.defineFlow(
         outputSchema: z.void(),
     },
     async (feedback) => {
-        await addDoc(collection(db, "feedback"), {
+        await addDoc(collection(firestore, "feedback"), {
             ...feedback,
             timestamp: serverTimestamp()
         });

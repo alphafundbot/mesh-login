@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,7 +50,7 @@ export default function ForecastMemoryMap() {
         } 
 
         setLoading(true);
-        const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "asc"));
+        const q = query(collection(firestore, "forecast_analysis"), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const fetchedAnalyses = snapshot.docs.map((doc) => {
                 const data = doc.data();

@@ -12,7 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { collection, query, getDocs, orderBy, limit } from "firebase/firestore";
-import { db } from '@/lib/firebase';
+import { firestore } from '@/lib/firebaseConfig';
 
 const ClusterMomentumVectorSchema = z.object({
     tag: z.string().describe('The tag identifying the rationale cluster.'),
@@ -62,7 +62,7 @@ const getForecastPerformance = ai.defineTool(
     },
     async ({ limit }) => {
         const q = query(
-            collection(db, "forecast_analysis"),
+            collection(firestore, "forecast_analysis"),
             orderBy("timestamp", "desc"),
             limit(limit)
         );

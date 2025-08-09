@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { db } from '@/lib/firebase';
+import { firestore } from '@/lib/firebaseConfig';
 import { collection, query, onSnapshot, Timestamp, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
@@ -37,7 +37,7 @@ export default function FeedbackDashboard() {
         }
 
         setLoading(true);
-        const q = query(collection(db, 'feedback'), orderBy("timestamp", "desc"));
+        const q = query(collection(firestore, 'feedback'), orderBy("timestamp", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             if (snapshot.empty) {
                 setLoading(false);

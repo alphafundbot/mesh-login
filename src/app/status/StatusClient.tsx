@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle, XCircle, Bot, History, Clock } from "lucide-react";
 import { checkApiHealth, type HealthCheckOutput } from "@/ai/flows/health-check-flow";
 import { Skeleton } from "@/components/ui/skeleton";
-import { db } from "@/lib/firebase";
+import { firestore } from "@/lib/firebaseConfig";
 import { collection, query, orderBy, limit, onSnapshot, Timestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { isBrowser } from "@/lib/env-check";
@@ -38,7 +38,7 @@ export default function StatusClient() {
     }
 
     setLoadingHistory(true);
-    const q = query(collection(db, "health_checks"), orderBy("timestamp", "desc"), limit(10));
+    const q = query(collection(firestore, "health_checks"), orderBy("timestamp", "desc"), limit(10));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const historicalData = snapshot.docs.map(doc => {
             const data = doc.data();
@@ -82,7 +82,7 @@ export default function StatusClient() {
             <Button onClick={handleTest} disabled={loading || !user}>
               {loading ? "Testing..." : "Test API Connection"}
             </Button>
-            {!user && <p className="text-xs text-muted-foreground mt-2">Please log in to run health checks.</p>}
+            {!user && <p className="text-xs text-muted-foreground mt-2">Please log in to enable this feature.</p>}
           </CardContent>
         </Card>
 
