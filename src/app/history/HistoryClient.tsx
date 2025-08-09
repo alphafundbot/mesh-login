@@ -148,7 +148,7 @@ function DialogClusterItem({ cluster, previousLogs }: { cluster: ClusterInfo, pr
                                     <div key={domain} className="text-xs p-2 rounded-md bg-muted/30">
                                         <div className="flex items-center justify-between font-semibold">
                                             <span className="text-foreground">{domain}</span>
-                                            <Badge variant="secondary">{metrics.count} total</Badge>
+                                            <Badge variant="secondary">{metrics.count} total}</Badge>
                                         </div>
                                         <div className="flex gap-2 mt-1.5">
                                             {metrics.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{metrics.severities.Warning}</Badge>}
@@ -320,51 +320,83 @@ function OverrideHeatmap({ logs, onCellClick }: { logs: ActionLog[], onCellClick
     );
 }
 
-function GlobalClusterPanel({ clusters, previousLogs, onClusterClick }: { clusters: ClusterMap, previousLogs: ActionLog[], onClusterClick: (cluster: ClusterInfo) => void }) {
+function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: ActionLog[], previousLogs: ActionLog[], onClusterClick: (cluster: ClusterInfo) => void }) {
+    const [clusters, setClusters] = useState<ClusterMap>(new Map());
+    const [loading, setLoading] = useState(false);
+    const { toast } = useToast();
+
+    const handleAnalyzeClusters = useCallback(async () => {
+        setLoading(true);
+        setClusters(new Map());
+        try {
+            const untagged = logs
+                .map(l => ({ ...l, parsed: parseDetails(l.details) }))
+                .filter(l => l.parsed.isOverride && l.parsed.rationale && l.parsed.severity && l.parsed.domains);
+
+            if (untagged.length === 0) {
+                toast({ title: "No Rationales", description: "No overrides with rationales found in this period." });
+                return;
+            }
+
+            const tagged = await Promise.all(untagged.map(async l => {
+                const { tags } = await tagRationale({ rationale: l.parsed.rationale! });
+                return { rationale: l.parsed.rationale!, tags, severity: l.parsed.severity!, domains: l.parsed.domains! };
+            }));
+
+            setClusters(calculateClusters(tagged));
+            toast({ title: "Analysis Complete", description: `Identified ${clusters.size} rationale clusters.` });
+
+        } catch (error) {
+            console.error("Error analyzing clusters", error);
+            toast({ variant: "destructive", title: "Analysis Failed", description: "Could not tag and cluster rationales." });
+        } finally {
+            setLoading(false);
+        }
+    }, [logs, toast, clusters.size]);
+    
     const sortedClusters = useMemo(() => Array.from(clusters.values()).sort((a, b) => b.riskScore - a.riskScore), [clusters]);
     
-    if (sortedClusters.length === 0) {
-        return (
-             <Card>
-                <CardHeader>
-                    <CardTitle>Global Rationale Clusters</CardTitle>
-                    <CardDescription>No override rationale clusters detected in the selected time window.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground text-center py-4">Awaiting strategist overrides...</p>
-                </CardContent>
-            </Card>
-        )
-    }
-
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Global Rationale Clusters</CardTitle>
-                <CardDescription>Top override themes by calculated risk score. Click a cluster to investigate.</CardDescription>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Global Rationale Clusters</CardTitle>
+                        <CardDescription>Top override themes by calculated risk score. Click a cluster to investigate.</CardDescription>
+                    </div>
+                     <Button onClick={handleAnalyzeClusters} disabled={loading || logs.length === 0}>
+                        {loading ? "Analyzing..." : "Analyze All Rationales"}
+                    </Button>
+                </div>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sortedClusters.map(cluster => {
-                    const { previousScore } = useClusterMomentum(cluster, previousLogs);
-                    return (
-                        <Card 
-                            key={cluster.tag}
-                            className="p-3 hover:bg-muted/50 cursor-pointer"
-                            onClick={() => onClusterClick(cluster)}
-                        >
-                            <div className="flex items-start justify-between">
-                                 <h4 className="font-semibold capitalize">{cluster.tag}</h4>
-                                 <Badge variant={cluster.riskScore > 10 ? "destructive" : cluster.riskScore > 5 ? "secondary" : "default"} className="gap-1"><BarChart className="h-3 w-3" /> Risk: {cluster.riskScore.toFixed(0)}</Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                                 {cluster.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{cluster.severities.Warning}</Badge>}
-                                {cluster.severities.Critical > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-orange-600"><ShieldAlert className="h-3 w-3" />{cluster.severities.Critical}</Badge>}
-                                {cluster.severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-red-800"><ShieldX className="h-3 w-3" />{cluster.severities.Catastrophic}</Badge>}
-                            </div>
-                            <ClusterDelta currentScore={cluster.riskScore} previousScore={previousScore} />
-                        </Card>
-                    );
-                })}
+            <CardContent>
+                {sortedClusters.length > 0 ? (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {sortedClusters.map(cluster => {
+                            const { previousScore } = useClusterMomentum(cluster, previousLogs);
+                            return (
+                                <Card 
+                                    key={cluster.tag}
+                                    className="p-3 hover:bg-muted/50 cursor-pointer"
+                                    onClick={() => onClusterClick(cluster)}
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <h4 className="font-semibold capitalize">{cluster.tag}</h4>
+                                        <Badge variant={cluster.riskScore > 10 ? "destructive" : cluster.riskScore > 5 ? "secondary" : "default"} className="gap-1"><BarChart className="h-3 w-3" /> Risk: {cluster.riskScore.toFixed(0)}</Badge>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                                        {cluster.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{cluster.severities.Warning}</Badge>}
+                                        {cluster.severities.Critical > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-orange-600"><ShieldAlert className="h-3 w-3" />{cluster.severities.Critical}</Badge>}
+                                        {cluster.severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-red-800"><ShieldX className="h-3 w-3" />{cluster.severities.Catastrophic}</Badge>}
+                                    </div>
+                                    <ClusterDelta currentScore={cluster.riskScore} previousScore={previousScore} />
+                                </Card>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <p className="text-muted-foreground text-center py-4">Click "Analyze All Rationales" to identify and score clusters.</p>
+                )}
             </CardContent>
         </Card>
     )
@@ -598,67 +630,17 @@ export default function HistoryClient() {
         openRationaleModal(title, description, cluster.items);
     }, [openRationaleModal]);
     
-    const allTaggedRationales = useMemo(() => {
-      return filteredLogs
-        .map((l) => ({ ...l, parsed: parseDetails(l.details) }))
-        .filter(
-          (l) =>
-            l.parsed.isOverride &&
-            l.parsed.rationale &&
-            l.parsed.severity &&
-            l.parsed.domains &&
-            l.parsed.domains.length > 0
-        )
-        .map((l) => {
-          return {
-            rationale: l.parsed.rationale,
-            tags: [],
-            severity: l.parsed.severity!,
-            domains: l.parsed.domains!,
-          };
-        });
-    }, [filteredLogs]);
-    
-    const [globalClusters, setGlobalClusters] = useState<ClusterMap>(new Map());
-    useEffect(() => {
-        const tagAndCluster = async () => {
-            if (allTaggedRationales.length === 0) {
-                setGlobalClusters(new Map());
-                return;
-            };
-            try {
-              const tagged = await Promise.all(allTaggedRationales.map(async r => {
-                  const { tags } = await tagRationale({ rationale: r.rationale });
-                  return {...r, tags};
-              }));
-              setGlobalClusters(calculateClusters(tagged));
-            } catch (e) {
-              console.error("Failed to tag and cluster rationales", e);
-              setGlobalClusters(new Map());
-            }
-        }
-        tagAndCluster();
-    }, [allTaggedRationales]);
-
-    const sortedGlobalClusters = useMemo(() => Array.from(globalClusters.values()).sort((a, b) => b.riskScore - a.riskScore), [globalClusters]);
-
     useEffect(() => {
         const autoStart = searchParams.get('autostart');
         const domain = searchParams.get('domain');
         const severity = searchParams.get('severity') as Severity;
-        const clusterTag = searchParams.get('cluster');
 
         if (autoStart !== 'true' || filteredLogs.length === 0) return;
 
         if (domain && severity) {
             handleHeatmapCellClick(domain, severity);
-        } else if (clusterTag && globalClusters.size > 0) {
-            const cluster = globalClusters.get(clusterTag);
-            if (cluster) {
-                handleClusterClick(cluster);
-            }
         }
-    }, [searchParams, filteredLogs, handleHeatmapCellClick, handleClusterClick, globalClusters]);
+    }, [searchParams, filteredLogs, handleHeatmapCellClick]);
 
 
   useEffect(() => {
@@ -829,7 +811,7 @@ export default function HistoryClient() {
             <>
                 <OverrideHeatmap logs={filteredLogs} onCellClick={handleHeatmapCellClick} />
                 
-                <GlobalClusterPanel clusters={globalClusters} previousLogs={previousPeriodLogs} onClusterClick={handleClusterClick} />
+                <GlobalClusterPanel logs={filteredLogs} previousLogs={previousPeriodLogs} onClusterClick={handleClusterClick} />
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
@@ -1027,3 +1009,5 @@ export default function HistoryClient() {
     </div>
   );
 }
+
+    
