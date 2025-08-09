@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableNetwork } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -12,8 +12,18 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+let app;
+let firestore;
+let auth;
 
-export const firebaseApp = app;
-export const firestore = getFirestore(app);
-export const auth = getAuth(app);
+if (typeof window !== 'undefined') {
+    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    firestore = getFirestore(app);
+    auth = getAuth(app);
+    enableNetwork(firestore).catch(() => {
+        // This can be ignored. If network is already enabled, it will reject.
+        // If it fails for other reasons, Firestore will retry on next operation.
+    });
+}
+
+export { firebaseApp, firestore, auth };

@@ -334,7 +334,7 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
     const { user } = useUser();
 
     const handleAnalyzeClusters = useCallback(async () => {
-        if (!isBrowser() || !user) return;
+        if (!isBrowser() || !user || !firestore) return;
         setLoading(true);
         setClusters(new Map());
         try {
@@ -539,7 +539,7 @@ export default function HistoryClient() {
   }, [confidenceThreshold]);
 
   useEffect(() => {
-    if (!isBrowser() || !user) {
+    if (!isBrowser() || !user || !firestore) {
         setLoading(false);
         return;
     }
@@ -600,7 +600,7 @@ export default function HistoryClient() {
   }, [allLogs, timeFilter, searchParams]);
 
   const openRationaleModal = useCallback(async (title: string, description: React.ReactNode, rationales: Omit<TaggedRationale, 'tags'>[]) => {
-        if (!isBrowser() || !user) return;
+        if (!isBrowser() || !user || !firestore) return;
         setLoadingRationales(true);
         setTaggedRationales([]);
         setRationaleDialog({ title, description, rationales: [] });
@@ -659,7 +659,7 @@ export default function HistoryClient() {
     }, []);
     
     useEffect(() => {
-        if (!isBrowser() || !user || filteredLogs.length === 0) return;
+        if (!isBrowser() || !user || filteredLogs.length === 0 || !firestore) return;
 
         const autoStart = searchParams.get('autostart');
         const domain = searchParams.get('domain');
@@ -669,29 +669,28 @@ export default function HistoryClient() {
 
         if (autoStart !== 'true') return;
 
+        const runAnalysisAndOpen = async () => {
+             if (!user) return;
+            const untagged = filteredLogs
+                .map(l => ({ ...l, parsed: parseDetails(l.details) }))
+                .filter(l => l.parsed.isOverride && l.parsed.rationale && l.parsed.severity && l.parsed.domains);
+
+            if (untagged.length === 0) return;
+
+            const tagged = await Promise.all(untagged.map(async l => {
+                const { tags } = await tagRationale({ rationale: l.parsed.rationale! });
+                return { rationale: l.parsed.rationale!, tags, severity: l.parsed.severity!, domains: l.parsed.domains! };
+            }));
+            const clusters = calculateClusters(tagged);
+            const targetCluster = clusters.get(clusterTag);
+            if (targetCluster) {
+                handleClusterClick(targetCluster);
+            }
+        };
+
         if (domain && severity) {
             handleHeatmapCellClick(domain, severity);
         } else if (clusterTag) {
-            // This requires clusters to be pre-analyzed.
-            // For a robust implementation, the analysis might need to run automatically on load.
-            // For now, we assume if a cluster drilldown is triggered, we should analyze first.
-            const runAnalysisAndOpen = async () => {
-                const untagged = filteredLogs
-                    .map(l => ({ ...l, parsed: parseDetails(l.details) }))
-                    .filter(l => l.parsed.isOverride && l.parsed.rationale && l.parsed.severity && l.parsed.domains);
-
-                if (untagged.length > 0) {
-                     const tagged = await Promise.all(untagged.map(async l => {
-                        const { tags } = await tagRationale({ rationale: l.parsed.rationale! });
-                        return { rationale: l.parsed.rationale!, tags, severity: l.parsed.severity!, domains: l.parsed.domains! };
-                    }));
-                    const clusters = calculateClusters(tagged);
-                    const targetCluster = clusters.get(clusterTag);
-                    if (targetCluster) {
-                        handleClusterClick(targetCluster);
-                    }
-                }
-            }
             runAnalysisAndOpen();
         }
 
@@ -699,19 +698,15 @@ export default function HistoryClient() {
 
 
   useEffect(() => {
-    if (!isBrowser() || !user || filteredLogs.length === 0) {
+    const startTimeParam = searchParams.get('startTime');
+    if (!isBrowser() || !user || filteredLogs.length === 0 || !startTimeParam || !firestore) {
       setReplayCommentary(null);
+      setLoadingReplay(false);
       return;
     };
     
-    const startTimeParam = searchParams.get('startTime');
-    if (!startTimeParam) {
-      setReplayCommentary(null);
-      return;
-    }
-
     const fetchCommentary = async () => {
-        if (!isBrowser() || !user) return;
+        if (!user) return;
         setLoadingReplay(true);
         setReplayCommentary(null);
         try {
@@ -769,7 +764,7 @@ export default function HistoryClient() {
   }, [searchParams, filteredLogs, toast, user]);
 
   const handleAnalysis = async () => {
-    if (!isBrowser() || !user) return;
+    if (!isBrowser() || !user || !firestore) return;
     setLoadingAnalysis(true);
     setAnalysisResult(null);
     setFeedbackGiven({});
@@ -803,7 +798,7 @@ export default function HistoryClient() {
   };
 
   const handleFeedback = async (recommendation: Recommendation, rating: 'up' | 'down') => {
-    if (!isBrowser() || !user) return;
+    if (!isBrowser() || !user || !firestore) return;
     if (feedbackGiven[recommendation.recommendationId]) return; 
 
     setFeedbackGiven(prev => ({...prev, [recommendation.recommendationId]: rating }));
