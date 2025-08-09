@@ -22,7 +22,7 @@ import { analyzeSignalHistory, type AnalyzeSignalHistoryOutput, submitFeedback }
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
 import { generateReplayCommentary, type ReplayCommentaryOutput } from "@/ai/flows/replay-commentary-flow";
 import type { RationaleForecastOutput } from "@/ai/flows/rationale-forecast-flow";
-import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown, Sparkles, HelpCircle, TrendingUp, GitCompareArrows, ChevronsRight, FileText } from "lucide-react";
+import { Bot, BrainCircuit, Lightbulb, MessageSquareQuote, AlertTriangle, Tags, ShieldAlert, ShieldX, Globe, AlertCircle, BarChart, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown, Sparkles, HelpCircle, TrendingUp, GitCompareArrows, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -344,24 +344,27 @@ function GlobalClusterPanel({ clusters, previousLogs, onClusterClick }: { cluste
                 <CardDescription>Top override themes by calculated risk score. Click a cluster to investigate.</CardDescription>
             </CardHeader>
             <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sortedClusters.map(cluster => (
-                    <Card 
-                        key={cluster.tag}
-                        className="p-3 hover:bg-muted/50 cursor-pointer"
-                        onClick={() => onClusterClick(cluster)}
-                    >
-                        <div className="flex items-start justify-between">
-                             <h4 className="font-semibold capitalize">{cluster.tag}</h4>
-                             <Badge variant={cluster.riskScore > 10 ? "destructive" : cluster.riskScore > 5 ? "secondary" : "default"} className="gap-1"><BarChart className="h-3 w-3" /> Risk: {cluster.riskScore.toFixed(0)}</Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                             {cluster.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{cluster.severities.Warning}</Badge>}
-                            {cluster.severities.Critical > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-orange-600"><ShieldAlert className="h-3 w-3" />{cluster.severities.Critical}</Badge>}
-                            {cluster.severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-red-800"><ShieldX className="h-3 w-3" />{cluster.severities.Catastrophic}</Badge>}
-                        </div>
-                        <ClusterDelta currentScore={cluster.riskScore} previousScore={useClusterMomentum(cluster, previousPeriodLogs).previousScore} />
-                    </Card>
-                ))}
+                {sortedClusters.map(cluster => {
+                    const { previousScore } = useClusterMomentum(cluster, previousLogs);
+                    return (
+                        <Card 
+                            key={cluster.tag}
+                            className="p-3 hover:bg-muted/50 cursor-pointer"
+                            onClick={() => onClusterClick(cluster)}
+                        >
+                            <div className="flex items-start justify-between">
+                                 <h4 className="font-semibold capitalize">{cluster.tag}</h4>
+                                 <Badge variant={cluster.riskScore > 10 ? "destructive" : cluster.riskScore > 5 ? "secondary" : "default"} className="gap-1"><BarChart className="h-3 w-3" /> Risk: {cluster.riskScore.toFixed(0)}</Badge>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                                 {cluster.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{cluster.severities.Warning}</Badge>}
+                                {cluster.severities.Critical > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-orange-600"><ShieldAlert className="h-3 w-3" />{cluster.severities.Critical}</Badge>}
+                                {cluster.severities.Catastrophic > 0 && <Badge variant="destructive" className="gap-1 text-xs bg-red-800"><ShieldX className="h-3 w-3" />{cluster.severities.Catastrophic}</Badge>}
+                            </div>
+                            <ClusterDelta currentScore={cluster.riskScore} previousScore={previousScore} />
+                        </Card>
+                    );
+                })}
             </CardContent>
         </Card>
     )

@@ -199,6 +199,8 @@ export default function VisualIntegrityDashboard() {
                 forecast: rationaleOutput,
                 inputs: { clusterMomentumVectors, feedbackSummary },
                 timestamp: serverTimestamp(),
+                commentary: null,
+                volatilityScore: null,
               });
           }
         }

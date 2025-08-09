@@ -89,6 +89,7 @@ const getForecastPerformance = ai.defineTool(
 
         const divergenceCounts: Record<string, { predicted: string, actual: string, count: number }> = {};
         commentaries.forEach(c => {
+            if (!c.divergenceMap) return;
             c.divergenceMap.forEach((div: any) => {
                 const key = `${div.rationaleTag}-${div.predicted}-${div.actual}`;
                 if (!divergenceCounts[key]) {
@@ -164,4 +165,3 @@ const rationaleForecastFlow = ai.defineFlow(
     return output!;
   }
 );
-
