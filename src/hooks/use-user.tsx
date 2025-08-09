@@ -36,6 +36,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   useEffect(() => {
+    // Guard against running on the server
+    if (typeof window === 'undefined') {
+        setLoading(false);
+        return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         const role = getRoleForUser(firebaseUser);

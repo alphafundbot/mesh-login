@@ -1,6 +1,9 @@
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, enableNetwork, type Firestore } from 'firebase/firestore';
 import { getAuth, type Auth } from 'firebase/auth';
+import { isBrowser } from './env-check';
+
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,7 +19,7 @@ let app: FirebaseApp;
 let firestore: Firestore;
 let auth: Auth;
 
-if (typeof window !== 'undefined') {
+if (isBrowser()) {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     firestore = getFirestore(app);
     auth = getAuth(app);

@@ -40,6 +40,9 @@ export async function updateAuditResult(
   filePath: string,
   analysis: CodeAnalysisOutput
 ): Promise<void> {
+  if (!firestore) {
+    throw new Error("Firestore is not initialized. Cannot update meta-audit result.");
+  }
   const docId = sanitizeDocId(filePath);
   const docRef = doc(firestore, "meta_audit_results", docId);
   await setDoc(docRef, {
@@ -54,6 +57,10 @@ export async function updateAuditResult(
  * @returns A record mapping file paths to their audit results.
  */
 export async function getAuditResults(): Promise<Record<string, AuditResult>> {
+   if (!firestore) {
+    console.warn("Firestore not initialized. Returning empty audit results.");
+    return {};
+  }
   const collectionRef = collection(firestore, "meta_audit_results");
   const snapshot = await getDocs(collectionRef);
   
