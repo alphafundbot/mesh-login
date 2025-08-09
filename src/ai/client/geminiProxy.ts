@@ -5,9 +5,18 @@ export async function proxyGemini(prompt: string): Promise<any> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt })
   });
-  const data = await res.json();
+  
   if (!res.ok) {
-    throw new Error(data.error || 'Failed to proxy Gemini request');
+    let errorData;
+    try {
+        errorData = await res.json();
+    } catch (e) {
+        errorData = { error: "An unknown error occurred with the proxy." };
+    }
+    console.error("Proxy Gemini Error:", errorData);
+    throw new Error(errorData.error || `Failed to proxy Gemini request with status: ${res.status}`);
   }
+  
+  const data = await res.json();
   return data.output;
 }
