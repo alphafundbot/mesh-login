@@ -36,14 +36,14 @@ type CardTitleProps = React.HTMLAttributes<HTMLHeadingElement> & {
 
 
 const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
+  HTMLHeadingElement,
   CardTitleProps
 >(({ className, as: Component = "h3", ...props }, ref) => (
   <Component
     ref={ref}
     className={cn(
       "font-semibold leading-none tracking-tight",
-      Component === "h3" && "text-2xl",
+       Component === "h3" && "text-lg",
       className
     )}
     {...props}
