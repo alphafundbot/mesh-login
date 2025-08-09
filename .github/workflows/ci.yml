@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: npm ci
+      - name: MCP environment check
+        run: npx -y firebase-tools@latest experimental:mcp --dir . firebase_get_environment
+      - name: Type-check & Lint
+        run: npm run lint && npm run type-check
+      - name: Unit Tests
+        run: npm test
+      - name: Vertex Pipeline Dry-Run
+        run: |
+          pip install google-cloud-aiplatform
+          python - <<EOF
+from google.cloud import aiplatform
+# dry-run your pipeline here
+EOF
+      - name: Deploy to Firebase (main only)
+        if: github.ref == 'refs/heads/main'
+        run: npx -y firebase-tools deploy --only firestore,storage,auth

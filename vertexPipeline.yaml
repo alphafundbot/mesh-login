@@ -1,112 +1,35 @@
-# Strategist-Grade Machine Learning Orchestration Manifest
-# Defines the training and deployment pipeline for Stratagem.ai models.
-# This pipeline orchestrates data movement from Firestore to BigQuery,
-# trains a model using Vertex AI, and deploys it for real-time inference.
+pipeline:
+  name: strategist-signal-orchestrator
+  description: Full-mesh override synthesis + deployment
+  steps:
+    - name: fetchFirebaseConfig
+      tool: firebase_get_sdk_config
+      params:
+        platform: web
+      output: firebaseConfig.json
 
-apiVersion: "pipelines.kubeflow.org/v1alpha1"
-kind: "Pipeline"
-metadata:
-  name: "strategist-signal-synthesis-pipeline"
-  description: "A pipeline to train a model on strategist signals and deploy it."
+    - name: fetchSignals
+      tool: firestore_query_collection
+      params:
+        path: strategist/signals
+      output: signals.json
 
-spec:
-  entrypoint: "signal-synthesis"
-  templates:
-    - name: "signal-synthesis"
-      dag:
-        tasks:
-          - name: "export-signals-to-bigquery"
-            template: "export-firestore-to-bq"
-            arguments:
-              parameters:
-                - name: "project_id"
-                  value: "{{workflow.parameters.project_id}}"
-                - name: "firestore_collection"
-                  value: "hud_actions"
-                - name: "bq_dataset"
-                  value: "strategist_signals_dataset"
-                - name: "bq_table"
-                  value: "signals_raw"
+    - name: synthesizeOverrides
+      tool: vertex_pipeline
+      model: override-synthesizer
+      input: signals.json
+      output: overrides.json
 
-          - name: "train-synthesis-model"
-            template: "train-vertex-model"
-            dependencies: ["export-signals-to-bigquery"]
-            arguments:
-              parameters:
-                - name: "project_id"
-                  value: "{{workflow.parameters.project_id}}"
-                - name: "bq_input_uri"
-                  value: "bq://{{workflow.parameters.project_id}}.strategist_signals_dataset.signals_raw"
-                - name: "model_display_name"
-                  value: "strategist-override-synthesis-model"
+    - name: deployOverrides
+      tool: firebase_init
+      params:
+        features: firestore,storage,auth
 
-          - name: "deploy-model-to-endpoint"
-            template: "deploy-to-vertex-endpoint"
-            dependencies: ["train-synthesis-model"]
-            arguments:
-              parameters:
-                - name: "project_id"
-                  value: "{{workflow.parameters.project_id}}"
-                - name: "model_display_name"
-                  value: "strategist-override-synthesis-model"
-                - name: "endpoint_display_name"
-                  value: "override-synthesis-endpoint"
+    - name: validateRules
+      tool: firestore_validate_rules
+      params:
+        sourceFile: firestore.rules
 
-    # Placeholder for actual component definitions.
-    # In a real implementation, these would point to container images
-    # or fully defined component specs.
-
-    - name: "export-firestore-to-bq"
-      container:
-        image: "gcr.io/google-cloud-pipeline-components/v1/google-cloud-pipeline-components/experimental/firestore/firestore_to_bigquery_export:latest"
-        args: [
-          "--project_id", "{{inputs.parameters.project_id}}",
-          "--firestore_collection_path", "{{inputs.parameters.firestore_collection}}",
-          "--bigquery_project_id", "{{inputs.parameters.project_id}}",
-          "--bigquery_dataset_id", "{{inputs.parameters.bq_dataset}}",
-          "--bigquery_table_id", "{{inputs.parameters.bq_table}}"
-        ]
-      inputs:
-        parameters:
-          - {name: "project_id", type: "String"}
-          - {name: "firestore_collection", type: "String"}
-          - {name: "bq_dataset", type: "String"}
-          - {name: "bq_table", type: "String"}
-
-
-    - name: "train-vertex-model"
-      container:
-        image: "gcr.io/google-cloud-pipeline-components/v1/google-cloud-pipeline-components/automl/training_job:latest"
-        args: [
-          "--project", "{{inputs.parameters.project_id}}",
-          "--location", "us-central1",
-          "--display_name", "{{inputs.parameters.model_display_name}}",
-          "--dataset_uri", "{{inputs.parameters.bq_input_uri}}",
-          "--model_type", "TABLES"
-        ]
-      inputs:
-        parameters:
-          - {name: "project_id", type: "String"}
-          - {name: "bq_input_uri", type: "String"}
-          - {name: "model_display_name", type: "String"}
-
-
-    - name: "deploy-to-vertex-endpoint"
-      container:
-        image: "gcr.io/google-cloud-pipeline-components/v1/google-cloud-pipeline-components/endpoint/create:latest"
-        args: [
-          "--project", "{{inputs.parameters.project_id}}",
-          "--location", "us-central1",
-          "--model_display_name", "{{inputs.parameters.model_display_name}}",
-          "--endpoint_display_name", "{{inputs.parameters.endpoint_display_name}}"
-        ]
-      inputs:
-        parameters:
-          - {name: "project_id", type: "String"}
-          - {name: "model_display_name", type: "String"}
-          - {name: "endpoint_display_name", type: "String"}
-
-  arguments:
-    parameters:
-      - name: "project_id"
-        value: "thin-wallet-93578845"
+    - name: confirmEnvironment
+      tool: firebase_get_environment
+      output: envStatus.json
