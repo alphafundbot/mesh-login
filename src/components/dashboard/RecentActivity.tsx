@@ -76,7 +76,11 @@ export default function RecentActivity() {
         // If no logs, generate initial one
         const initialLogs = generateSampleLogs();
         if (isBrowser() && user) {
-            await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+            try {
+                await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+            } catch (e) {
+                console.error("Failed to add initial audit log", e);
+            }
         }
         setLatestLog(initialLogs);
       } else {

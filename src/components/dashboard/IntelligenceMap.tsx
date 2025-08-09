@@ -35,7 +35,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, setDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, setDoc, getDoc } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import {
   Dialog,
@@ -212,6 +212,10 @@ export default function IntelligenceMap() {
   }, [handleLogAction]);
 
   const getAnalysis = useCallback(async () => {
+    if (!isBrowser() || !user) {
+        setLoading(false);
+        return;
+    }
     setLoading(true);
     setEscalation(null);
     try {
@@ -224,13 +228,11 @@ export default function IntelligenceMap() {
 
       const output = await analyzeCrossDomainIntelligence({ domainLogs });
       
-      if (!isBrowser() || !user) return; // Guard Firestore write
       await setDoc(doc(db, "intelligence_map_cache", "latest"), {
           analysis: output,
           timestamp: serverTimestamp(),
       });
       processAnalysis(output);
-      setLoading(false);
       
     } catch (error) {
       console.error("AI cross-domain analysis failed:", error);
@@ -239,7 +241,8 @@ export default function IntelligenceMap() {
         title: "Analysis Failed",
         description: "Could not get AI analysis for the intelligence map.",
       });
-      setLoading(false);
+    } finally {
+        setLoading(false);
     }
   }, [toast, user, processAnalysis]);
   
@@ -250,21 +253,25 @@ export default function IntelligenceMap() {
         return;
     }
 
-    const q = doc(db, "intelligence_map_cache", "latest");
-    const unsubscribe = onSnapshot(q, (doc) => {
-        if (doc.exists()) {
-            const latestCache = doc.data().analysis as CrossDomainIntelligenceOutput;
-            processAnalysis(latestCache);
-            setLoading(false);
-        } else {
+    const fetchCachedAnalysis = async () => {
+        const docRef = doc(db, "intelligence_map_cache", "latest");
+        try {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const latestCache = docSnap.data().analysis as CrossDomainIntelligenceOutput;
+                processAnalysis(latestCache);
+                setLoading(false);
+            } else {
+                getAnalysis();
+            }
+        } catch (error) {
+            console.error("Failed to fetch cached analysis", error);
             getAnalysis();
         }
-    }, (error) => {
-        console.error("Failed to fetch cached analysis", error);
-        setLoading(false);
-        getAnalysis(); 
-    });
-    return () => unsubscribe();
+    };
+
+    fetchCachedAnalysis();
+
   }, [processAnalysis, user, getAnalysis]);
 
 

@@ -675,19 +675,13 @@ export default function HistoryClient() {
 
 
   useEffect(() => {
-    if (!isBrowser() || !user || filteredLogs.length === 0) {
-      if(!isBrowser()) setReplayCommentary(null);
+    const startTimeParam = searchParams.get('startTime');
+    if (!isBrowser() || !user || filteredLogs.length === 0 || !startTimeParam) {
+      setReplayCommentary(null);
       return;
     };
     
-    const startTimeParam = searchParams.get('startTime');
-    if (!startTimeParam) {
-      setReplayCommentary(null);
-      return;
-    }
-
     const fetchCommentary = async () => {
-        if (!isBrowser() || !user) return;
         setLoadingReplay(true);
         setReplayCommentary(null);
         try {
