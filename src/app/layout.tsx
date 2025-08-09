@@ -4,11 +4,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { UserProvider } from "@/hooks/use-user";
 import ClientOnly from "@/components/layout/ClientOnly";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 export const metadata: Metadata = {
   title: "Stratagem.ai",
   description: "Strategist-grade mesh manifest.",
 };
+
+const queryClient = new QueryClient();
 
 export default function RootLayout({
   children,
@@ -27,12 +30,14 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <ClientOnly>
-          <UserProvider>
-            <SidebarProvider>
-              {children}
-              <Toaster />
-            </SidebarProvider>
-          </UserProvider>
+          <QueryClientProvider client={queryClient}>
+            <UserProvider>
+              <SidebarProvider>
+                {children}
+                <Toaster />
+              </SidebarProvider>
+            </UserProvider>
+          </QueryClientProvider>
         </ClientOnly>
       </body>
     </html>

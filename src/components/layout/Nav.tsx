@@ -22,6 +22,7 @@ import {
   LogOut,
   Code,
   CheckSquare,
+  Network
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -50,6 +51,7 @@ const analysisItems = [
 
 const systemItems = [
     { href: "/status", label: "API Status", icon: Wifi },
+    { href: "/apis", label: "API Management", icon: Network },
     { href: "/admin", label: "System Admin", icon: Settings },
     { href: "/usage", label: "Usage Dashboard", icon: BarChartHorizontal },
     { href: "/queue", label: "Synthesis Queue", icon: FileClock },
