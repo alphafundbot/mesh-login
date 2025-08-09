@@ -73,14 +73,11 @@ export default function RecentActivity() {
     const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(1));
     const unsubscribe = onSnapshot(q, async (logSnapshot) => {
       if (logSnapshot.empty) {
-        // If no logs, generate initial one
         const initialLogs = generateSampleLogs();
-        if (isBrowser() && user) {
-            try {
-                await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
-            } catch (e) {
-                console.error("Failed to add initial audit log", e);
-            }
+        try {
+            await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+        } catch (e) {
+            console.error("Failed to add initial audit log", e);
         }
         setLatestLog(initialLogs);
       } else {
@@ -88,7 +85,7 @@ export default function RecentActivity() {
          const latestLogData = latestLogDoc.data();
          setLatestLog(latestLogData.logs);
       }
-      setResult(null); // Clear previous analysis when new logs arrive
+      setResult(null); 
       setLoadingLogs(false);
     }, (error) => {
       console.error("Firestore snapshot error:", error);
@@ -145,7 +142,6 @@ export default function RecentActivity() {
     setResult(null);
     const newLogs = generateSampleLogs(isStressTest);
     try {
-      // Add new log, the listener will then pick it up
       await addDoc(collection(db, "audit_logs"), { logs: newLogs, timestamp: serverTimestamp() });
     } catch (error) {
       console.error("Error adding new log:", error);
@@ -273,3 +269,5 @@ export default function RecentActivity() {
     </Card>
   );
 }
+
+    
