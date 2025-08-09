@@ -22,14 +22,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: 'Nehemie',
     role: 'Architect', 
   });
-  const [isFirebaseReady, setIsFirebaseReady] = useState(false);
-
-  useEffect(() => {
-    // The act of importing 'db' from firebase.ts initializes it.
-    // We can use a state to ensure children only render after this effect has run once.
-    setIsFirebaseReady(true);
-  }, []);
-
 
   const setUserRole = (role: Role) => {
     if (ROLES.includes(role)) {
@@ -38,10 +30,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const contextValue = useMemo(() => ({ user, setUserRole }), [user]);
-
-  if (!isFirebaseReady) {
-    return null; // Or a global loading spinner
-  }
 
   return (
     <UserContext.Provider value={contextValue}>
