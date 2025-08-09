@@ -55,10 +55,10 @@ export const CloudflareConnectorV2: Connector = {
       r => r,
       async err => {
         if (err.response?.status === 401) {
-          token = await refreshToken();         // implement refreshToken()
-          await storeToken('cloudflare-api-token', token);              // store back in Vault
+          token = await refreshToken();
+          await storeToken('cloudflare-api-token', token);
           err.config.headers.Authorization = `Bearer ${token}`;
-          return axios(err.config);             // retry once
+          return axios(err.config);
         }
         throw err;
       }

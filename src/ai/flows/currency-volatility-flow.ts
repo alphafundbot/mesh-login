@@ -93,11 +93,6 @@ const currencyVolatilityFlow = ai.defineFlow(
     outputSchema: CurrencyVolatilityOutputSchema,
   },
   async (input) => {
-    // This flow is now aligned with the MPC Sovereignty Protocol.
-    // Instead of calling Genkit's `prompt` directly, which led to quota exhaustion,
-    // we manually construct the prompt and send it through our centralized,
-    // secure `proxyGemini` function. This enforces quota management at the MPC layer.
-    
     let promptString = handlebarsPromptTemplate.replace('{{baseCurrency}}', input.baseCurrency);
     
     const historicalRatesString = input.historicalRates.map(h => 
@@ -108,28 +103,16 @@ const currencyVolatilityFlow = ai.defineFlow(
     const currentRatesString = input.currentRates.map(c => `- ${c.currency}: ${c.rate}`).join('\n');
     promptString = promptString.replace(/{{#each currentRates}}[\s\S]*?{{\/each}}/, currentRatesString);
     
-    // The prompt is now a simple string, which we can send to our proxy.
-    // The proxy will then call the Gemini API via the secure MPC client.
     const output = await proxyGemini(promptString);
     
-    // The proxy returns the raw JSON output from the Gemini API.
-    // We need to parse it to fit our expected schema.
     if (output && output.candidates && output.candidates[0] && output.candidates[0].content) {
         const content = output.candidates[0].content.parts[0].text;
-        // Attempt to parse the string content into our structured output.
         try {
-            // A simple JSON parse might work if the model returns clean JSON.
             const parsedOutput = JSON.parse(content.replace(/```json|```/g, '').trim());
             return CurrencyVolatilityOutputSchema.parse(parsedOutput);
         } catch (e) {
             console.error("Failed to parse Gemini output into schema:", e);
-            // This fallback is imperfect. A more robust solution would involve
-            // asking the model to retry with a specific JSON format.
-            return {
-                isVolatile: content.toLowerCase().includes("volatile"),
-                analysis: content,
-                volatileCurrencies: []
-            };
+            throw new Error("AI output was not in the expected format.");
         }
     }
 

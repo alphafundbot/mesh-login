@@ -31,9 +31,12 @@ export async function storeToken(secretName: string, secretValue: string): Promi
 
 /**
  * Mock function to refresh a token.
+ * This would typically involve an OAuth refresh token flow.
  * @returns A new (mock) token.
  */
 export async function refreshToken(): Promise<string> {
-    console.log("Refreshing token...");
-    return "refreshed-mock-token";
+    console.log("Refreshing authentication token...");
+    // In a real scenario, this would make a call to an auth server.
+    const newToken = `refreshed-mock-token-${Date.now()}`;
+    return newToken;
 }
