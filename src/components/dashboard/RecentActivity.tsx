@@ -65,8 +65,8 @@ export default function RecentActivity() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if (!isBrowser()) setLoadingLogs(false);
-        return;
+      if(!isBrowser()) setLoadingLogs(false);
+      return;
     }
 
     setLoadingLogs(true);
@@ -86,12 +86,17 @@ export default function RecentActivity() {
       setLoadingLogs(false);
     }, (error) => {
       console.error("Firestore snapshot error:", error);
+      toast({
+        variant: "destructive",
+        title: "Firestore Error",
+        description: "Could not fetch recent activity.",
+      });
       setLoading(false);
       setLoadingLogs(false);
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, toast]);
 
   const handleAnalysis = async () => {
     if (!latestLog) {

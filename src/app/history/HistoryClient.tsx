@@ -66,14 +66,20 @@ const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
             }
             const cluster = clusters.get(tag)!;
             cluster.items.push(item);
-            cluster.severities[item.severity]++;
-            item.domains.forEach(domain => {
-                if (!cluster.domains[domain]) {
-                    cluster.domains[domain] = { count: 0, severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 } };
-                }
-                cluster.domains[domain].count++;
-                cluster.domains[domain].severities[item.severity]++;
-            });
+            if (item.severity) {
+                cluster.severities[item.severity]++;
+            }
+            if (item.domains) {
+                item.domains.forEach(domain => {
+                    if (!cluster.domains[domain]) {
+                        cluster.domains[domain] = { count: 0, severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 } };
+                    }
+                    cluster.domains[domain].count++;
+                    if (item.severity) {
+                        cluster.domains[domain].severities[item.severity]++;
+                    }
+                });
+            }
         })
     });
 
@@ -709,6 +715,11 @@ export default function HistoryClient() {
                     .map(log => `[${log.timestamp.toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
                     .join("\n");
 
+                if (!logsString) {
+                    setLoadingReplay(false);
+                    return;
+                }
+
                 const commentary = await generateReplayCommentary({
                     originalForecast: originalForecast,
                     actualLogs: logsString,
@@ -1042,3 +1053,4 @@ export default function HistoryClient() {
     </div>
   );
 }
+
