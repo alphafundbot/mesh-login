@@ -30,10 +30,10 @@ export type ReplayCommentaryInput = z.infer<typeof ReplayCommentaryInputSchema>;
 const ReplayCommentaryOutputSchema = z.object({
     accuracyScore: z.number().min(0).max(1).describe("A score from 0.0 to 1.0 indicating the overall accuracy of the forecast."),
     divergenceMap: z.array(z.object({
-        rationaleTag: z.string(),
-        predicted: z.string(),
-        actual: z.string(),
-        impact: z.string(),
+        rationaleTag: z.string().describe("The rationale cluster that was being forecasted."),
+        predicted: z.string().describe("A summary of the predicted behavior (e.g., 'Escalate', 'Suppress', 'No Change')."),
+        actual: z.string().describe("A summary of the actual observed behavior (e.g., 'Escalate', 'Suppress', 'No Change')."),
+        impact: z.string().describe("A brief analysis of the strategic impact of this divergence."),
     })).describe("An analysis of where the forecast diverged most significantly from reality."),
     strategicNotes: z.string().describe("High-level synthesis of why the forecast was or was not accurate, noting any major strategic pivots, successful predictions, or missed signals."),
 });
@@ -52,7 +52,7 @@ const prompt = ai.definePrompt({
 
 Your analysis must include:
 1.  **Accuracy Score**: A single score from 0.0 (completely wrong) to 1.0 (perfectly accurate) representing how well the forecast predicted events.
-2.  **Divergence Map**: Identify the most significant differences between prediction and reality. For each, describe the predicted behavior, the actual outcome, and the strategic impact of the difference.
+2.  **Divergence Map**: Identify the most significant differences between prediction and reality. For each, describe the predicted behavior, the actual outcome, and the strategic impact of the difference. For 'predicted' and 'actual', use simple terms like 'Escalate', 'Suppress', or 'Stable'.
 3.  **Strategic Notes**: Provide a high-level summary. What did the forecast get right? Where did it fail? Were there any surprising events (anomalies, strategic pivots) that the forecast missed entirely?
 
 ## Original Forecast

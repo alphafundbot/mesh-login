@@ -162,14 +162,22 @@ export default function AdminClient() {
             const data = forecastDoc.data();
             const commentary = data.commentary as ReplayCommentaryOutput;
             
-            // Simple volatility score: 10 points per divergence, capped at 100
-            const divergenceCount = commentary.divergenceMap?.length ?? 0;
-            const volatilityScore = Math.min(100, divergenceCount * 10);
+            // Refined volatility score: Higher weight for major prediction errors (e.g., predicted escalate, saw suppress).
+            const volatilityScore = commentary.divergenceMap.reduce((score, divergence) => {
+                const pred = divergence.predicted.toLowerCase();
+                const act = divergence.actual.toLowerCase();
+                if ((pred.includes("escalate") && act.includes("suppress")) || (pred.includes("suppress") && act.includes("escalate"))) {
+                    return score + 20; // High penalty for inverted predictions
+                }
+                return score + 10; // Standard penalty for other divergences
+            }, 0);
+            
+            const cappedScore = Math.min(100, volatilityScore);
             
             const docRef = doc(db, "forecast_analysis", forecastDoc.id);
-            batch.update(docRef, { volatilityScore });
+            batch.update(docRef, { volatilityScore: cappedScore });
 
-            addLog(`Calculated volatility for forecast ${forecastDoc.id} as ${volatilityScore}.`);
+            addLog(`Calculated volatility for forecast ${forecastDoc.id} as ${cappedScore}.`);
             setProgress(((i + 1) / forecastsToIndex.length) * 100);
         });
 
