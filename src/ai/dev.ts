@@ -2,8 +2,6 @@
 /**
  * @fileOverview A development server for Genkit, loading all defined flows.
  */
-import { config } from 'dotenv';
-config();
 
 import '@/ai/flows/audit-trail-ai.ts';
 import '@/ai/flows/config-validator-flow.ts';
