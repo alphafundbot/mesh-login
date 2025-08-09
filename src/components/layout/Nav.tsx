@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Binary,
   LayoutDashboard,
@@ -19,6 +19,7 @@ import {
   BarChartHorizontal,
   FileClock,
   TestTube,
+  LogOut,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -30,6 +31,8 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { snapshotRegistry } from "@/lib/snapshots";
+import { useUser } from "@/hooks/use-user";
+import { auth } from "@/lib/firebase";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -60,93 +63,120 @@ const SidebarGroupLabel = ({children}: {children: React.ReactNode}) => (
 
 export default function Nav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useUser();
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/login');
+  };
 
   return (
     <SidebarMenu>
-      {navItems.map((item) => (
-        <SidebarMenuItem key={item.href}>
-          <Link href={item.href}>
-            <SidebarMenuButton
-              isActive={pathname === item.href}
-              tooltip={{ children: item.label }}
-            >
-              <item.icon />
-              <span>{item.label}</span>
-            </SidebarMenuButton>
-          </Link>
-        </SidebarMenuItem>
-      ))}
-       <SidebarMenuItem>
-          <SidebarMenuButton
-            tooltip={{ children: "Snapshots" }}
-            isActive={pathname.startsWith('/snapshots')}
-          >
-            <Camera />
-            <span>Snapshots</span>
-          </SidebarMenuButton>
-          <SidebarMenuSub>
-            {snapshotRegistry.map((item) => (
-              <SidebarMenuSubItem key={item.slug}>
-                <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/${item.slug}`}>
-                    <Link href={`/snapshots/${item.slug}`}>
-                        {item.label}
-                    </Link>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            ))}
-             <SidebarMenuSubItem>
-                <SidebarMenuSubButton asChild isActive={pathname === '/snapshots/diff'}>
-                    <Link href="/snapshots/diff">
-                        <GitCompareArrows className="mr-2 h-4 w-4" />
-                        Diff Snapshots
-                    </Link>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-          </SidebarMenuSub>
-        </SidebarMenuItem>
-       <SidebarMenuItem>
-          <Link href="/forecast-archive">
-            <SidebarMenuButton
-              isActive={pathname === "/forecast-archive"}
-              tooltip={{ children: "Forecast Archive" }}
-            >
-              <Eye />
-              <span>Forecast Archive</span>
-            </SidebarMenuButton>
-          </Link>
-        </SidebarMenuItem>
-
-        <SidebarSeparator className="my-2" />
-        <SidebarGroupLabel>Analysis</SidebarGroupLabel>
-        {analysisItems.map((item) => (
-        <SidebarMenuItem key={item.href}>
-          <Link href={item.href}>
-            <SidebarMenuButton
-              isActive={pathname === item.href}
-              tooltip={{ children: item.label }}
-            >
-              <item.icon />
-              <span>{item.label}</span>
-            </SidebarMenuButton>
-          </Link>
-        </SidebarMenuItem>
-      ))}
-
-        <SidebarSeparator className="my-2" />
-         <SidebarGroupLabel>System</SidebarGroupLabel>
-        {systemItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-                <Link href={item.href}>
-                    <SidebarMenuButton
+        <div className="flex flex-col h-full">
+            <div className="flex-1">
+                {navItems.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                    <Link href={item.href}>
+                        <SidebarMenuButton
                         isActive={pathname === item.href}
                         tooltip={{ children: item.label }}
-                    >
+                        >
                         <item.icon />
                         <span>{item.label}</span>
+                        </SidebarMenuButton>
+                    </Link>
+                    </SidebarMenuItem>
+                ))}
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                        tooltip={{ children: "Snapshots" }}
+                        isActive={pathname.startsWith('/snapshots')}
+                    >
+                        <Camera />
+                        <span>Snapshots</span>
                     </SidebarMenuButton>
-                </Link>
-            </SidebarMenuItem>
-        ))}
+                    <SidebarMenuSub>
+                        {snapshotRegistry.map((item) => (
+                        <SidebarMenuSubItem key={item.slug}>
+                            <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/${item.slug}`}>
+                                <Link href={`/snapshots/${item.slug}`}>
+                                    {item.label}
+                                </Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        ))}
+                        <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={pathname === '/snapshots/diff'}>
+                                <Link href="/snapshots/diff">
+                                    <GitCompareArrows className="mr-2 h-4 w-4" />
+                                    Diff Snapshots
+                                </Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                    </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <Link href="/forecast-archive">
+                        <SidebarMenuButton
+                        isActive={pathname === "/forecast-archive"}
+                        tooltip={{ children: "Forecast Archive" }}
+                        >
+                        <Eye />
+                        <span>Forecast Archive</span>
+                        </SidebarMenuButton>
+                    </Link>
+                    </SidebarMenuItem>
+
+                    <SidebarSeparator className="my-2" />
+                    <SidebarGroupLabel>Analysis</SidebarGroupLabel>
+                    {analysisItems.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                    <Link href={item.href}>
+                        <SidebarMenuButton
+                        isActive={pathname === item.href}
+                        tooltip={{ children: item.label }}
+                        >
+                        <item.icon />
+                        <span>{item.label}</span>
+                        </SidebarMenuButton>
+                    </Link>
+                    </SidebarMenuItem>
+                ))}
+
+                    <SidebarSeparator className="my-2" />
+                    <SidebarGroupLabel>System</SidebarGroupLabel>
+                    {systemItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                            <Link href={item.href}>
+                                <SidebarMenuButton
+                                    isActive={pathname === item.href}
+                                    tooltip={{ children: item.label }}
+                                >
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    ))}
+                </div>
+            <div className="mt-auto">
+                 <SidebarSeparator className="my-2" />
+                 <SidebarMenuItem>
+                    <SidebarMenuButton
+                        onClick={handleLogout}
+                        tooltip={{ children: "Logout" }}
+                    >
+                        <LogOut />
+                        <span>Logout</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                 <div className="p-2 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+                    <p className="font-semibold">{user?.name}</p>
+                    <p>{user?.role}</p>
+                </div>
+            </div>
+      </div>
     </SidebarMenu>
   );
 }
