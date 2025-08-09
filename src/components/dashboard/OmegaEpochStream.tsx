@@ -97,7 +97,7 @@ export default function OmegaEpochStream() {
                 <CardDescription>Live Epoch Stream: Transcendental Cognition Loop</CardDescription>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
-                <Select value={metaStrategyFilter} onValueChange={setMetaStrategyFilter}>
+                <Select value={metaStrategyFilter} onValueChange={setMetaStrategyFilter} disabled={!user}>
                   <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Filter by Strategy..." />
                   </SelectTrigger>
@@ -106,7 +106,7 @@ export default function OmegaEpochStream() {
                     {uniqueMetaStrategies.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                 <Select value={capitalStateFilter} onValueChange={setCapitalStateFilter}>
+                 <Select value={capitalStateFilter} onValueChange={setCapitalStateFilter} disabled={!user}>
                   <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Filter by Capital State..." />
                   </SelectTrigger>

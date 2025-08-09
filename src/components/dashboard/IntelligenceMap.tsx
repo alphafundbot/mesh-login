@@ -354,7 +354,7 @@ export default function IntelligenceMap() {
               <Bot className="h-6 w-6 text-accent" />
               <CardTitle>Cross-Domain Intelligence</CardTitle>
             </div>
-             <Button onClick={getAnalysis} disabled={loading} size="sm" variant="outline">
+             <Button onClick={getAnalysis} disabled={loading || !user} size="sm" variant="outline">
                 <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                 Synthesize Intelligence
             </Button>

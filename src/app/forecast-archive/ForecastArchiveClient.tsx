@@ -141,7 +141,7 @@ export default function ForecastArchiveClient() {
                                 </div>
                             ))}
                             <div className="flex justify-end pt-2">
-                                <Button onClick={() => handleReplay(item.timestamp)}>Replay & Compare</Button>
+                                <Button onClick={() => handleReplay(item.timestamp)} disabled={!user}>Replay & Compare</Button>
                             </div>
                         </div>
                     </AccordionContent>

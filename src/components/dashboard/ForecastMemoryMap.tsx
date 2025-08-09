@@ -60,7 +60,7 @@ export default function ForecastMemoryMap() {
                     volatilityScore: data.volatilityScore,
                     strategicNotes: data.commentary?.strategicNotes,
                 };
-            }).filter(a => a.accuracyScore !== undefined);
+            }).filter(a => a.accuracyScore !== undefined || a.volatilityScore !== undefined);
             setAnalyses(fetchedAnalyses);
             setLoading(false);
         }, (error) => {

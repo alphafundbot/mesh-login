@@ -33,7 +33,7 @@ export default function StatusClient() {
 
   useEffect(() => {
     if (!user || !isBrowser()) {
-        if(!isBrowser()) setLoadingHistory(false);
+        if (!isBrowser()) setLoadingHistory(false);
         return;
     }
 
@@ -77,7 +77,7 @@ export default function StatusClient() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={handleTest} disabled={loading}>
+            <Button onClick={handleTest} disabled={loading || !user}>
               {loading ? "Testing..." : "Test API Connection"}
             </Button>
           </CardContent>

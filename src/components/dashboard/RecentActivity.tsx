@@ -201,11 +201,11 @@ export default function RecentActivity() {
                 <CardTitle>Recent Activity Log</CardTitle>
             </div>
             <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleRefresh(false)} disabled={loadingLogs}>
+            <Button variant="outline" size="sm" onClick={() => handleRefresh(false)} disabled={loadingLogs || !user}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${loadingLogs ? 'animate-spin' : ''}`} />
                 Simulate Event
             </Button>
-            <Button variant="destructive" size="sm" onClick={() => handleRefresh(true)} disabled={loadingLogs}>
+            <Button variant="destructive" size="sm" onClick={() => handleRefresh(true)} disabled={loadingLogs || !user}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${loadingLogs ? 'animate-spin' : ''}`} />
                 Stress Test
             </Button>
