@@ -19,6 +19,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'dotenv': require.resolve('./stubs/empty-dotenv.js'),
+        'fs': require.resolve('./stubs/empty-fs.js'),
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

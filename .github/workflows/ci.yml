@@ -11,19 +11,22 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: npm ci
-      - name: MCP environment check
-        run: npx -y firebase-tools@latest experimental:mcp --dir . firebase_get_environment
+      - name: Validate Environment Variables
+        run: node scripts/checkEnv.js
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       - name: Type-check & Lint
-        run: npm run lint && npm run type-check
+        run: npm run lint && npm run typecheck
       - name: Unit Tests
         run: npm test
-      - name: Vertex Pipeline Dry-Run
-        run: |
-          pip install google-cloud-aiplatform
-          python - <<EOF
-from google.cloud import aiplatform
-# dry-run your pipeline here
-EOF
+      - name: Build
+        run: npm run build
       - name: Deploy to Firebase (main only)
         if: github.ref == 'refs/heads/main'
         run: npx -y firebase-tools deploy --only firestore,storage,auth

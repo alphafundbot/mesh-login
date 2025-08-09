@@ -1,20 +1,26 @@
-
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, enableNetwork, type Firestore } from 'firebase/firestore';
 import { getAuth, type Auth } from 'firebase/auth';
 import { isBrowser } from './env-check';
 import { firebasePublicConfig } from '@/config/public';
 
-
-const firebaseConfig = firebasePublicConfig;
+// Validate required env vars at initialization time.
+if (
+  !firebasePublicConfig.apiKey ||
+  !firebasePublicConfig.authDomain ||
+  !firebasePublicConfig.projectId
+) {
+  throw new Error(
+    'Missing required Firebase public config. Check your NEXT_PUBLIC_ environment variables.'
+  );
+}
 
 let app: FirebaseApp;
 let firestore: Firestore;
 let auth: Auth;
 
 if (isBrowser()) {
-    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    app = getApps().length ? getApp() : initializeApp(firebasePublicConfig);
     firestore = getFirestore(app);
     auth = getAuth(app);
     enableNetwork(firestore).catch(() => {
@@ -26,4 +32,3 @@ if (isBrowser()) {
 // These exports may be undefined on the server, and that's by design.
 // Components should use isBrowser() and useUser() to guard against this.
 export { app as firebaseApp, firestore, auth };
-
