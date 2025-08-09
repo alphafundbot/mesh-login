@@ -15,7 +15,6 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import RoleSelector from "@/components/dashboard/RoleSelector";
 import { cn } from "@/lib/utils";
 import IntelligenceMap from "@/components/dashboard/IntelligenceMap";
-import { slugify } from "@/lib/utils";
 import VisualIntegrityDashboard from "@/components/dashboard/VisualIntegrityDashboard";
 import {
   Carousel,
