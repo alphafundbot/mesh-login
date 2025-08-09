@@ -1,8 +1,9 @@
 
 "use client";
 
-import React, { createContext, useState, useContext, useMemo } from 'react';
+import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
 import { ROLES, Role } from '@/lib/roles';
+import { db } from '@/lib/firebase'; // Import db to ensure firebase is initialized
 
 interface User {
   name: string;
@@ -21,6 +22,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: 'Nehemie',
     role: 'Architect', 
   });
+  const [isFirebaseReady, setIsFirebaseReady] = useState(false);
+
+  useEffect(() => {
+    // The act of importing 'db' from firebase.ts initializes it.
+    // We can use a state to ensure children only render after this effect has run once.
+    setIsFirebaseReady(true);
+  }, []);
+
 
   const setUserRole = (role: Role) => {
     if (ROLES.includes(role)) {
@@ -29,6 +38,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const contextValue = useMemo(() => ({ user, setUserRole }), [user]);
+
+  if (!isFirebaseReady) {
+    return null; // Or a global loading spinner
+  }
 
   return (
     <UserContext.Provider value={contextValue}>
