@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -328,6 +329,7 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
     const { user } = useUser();
 
     const handleAnalyzeClusters = useCallback(async () => {
+        if (!isBrowser() || !user) return;
         setLoading(true);
         setClusters(new Map());
         try {
@@ -356,7 +358,7 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
         } finally {
             setLoading(false);
         }
-    }, [logs, toast]);
+    }, [logs, toast, user]);
     
     const sortedClusters = useMemo(() => Array.from(clusters.values()).sort((a, b) => b.riskScore - a.riskScore), [clusters]);
     
@@ -374,7 +376,14 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
                 </div>
             </CardHeader>
             <CardContent>
-                {sortedClusters.length > 0 ? (
+                {loading && (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                    </div>
+                )}
+                {!loading && sortedClusters.length > 0 ? (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {sortedClusters.map(cluster => {
                             const { previousScore } = useClusterMomentum(cluster, previousLogs);
@@ -398,7 +407,7 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
                             );
                         })}
                     </div>
-                ) : (
+                ) : !loading && (
                     <p className="text-muted-foreground text-center py-4">Click "Analyze All Rationales" to identify and score clusters.</p>
                 )}
             </CardContent>
@@ -586,6 +595,7 @@ export default function HistoryClient() {
   }, [allLogs, timeFilter, searchParams]);
 
   const openRationaleModal = useCallback(async (title: string, description: React.ReactNode, rationales: Omit<TaggedRationale, 'tags'>[]) => {
+        if (!isBrowser() || !user) return;
         setLoadingRationales(true);
         setTaggedRationales([]);
         setRationaleDialog({ title, description, rationales: [] });
@@ -610,7 +620,7 @@ export default function HistoryClient() {
             setLoadingRationales(false);
         }
 
-    }, [toast]);
+    }, [toast, user]);
 
     const handleHeatmapCellClick = useCallback((domain: string, severity: Severity) => {
         const relevantLogs = filteredLogs.filter(log => {

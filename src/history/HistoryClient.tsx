@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -65,14 +66,20 @@ const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
             }
             const cluster = clusters.get(tag)!;
             cluster.items.push(item);
-            cluster.severities[item.severity]++;
-            item.domains.forEach(domain => {
-                if (!cluster.domains[domain]) {
-                    cluster.domains[domain] = { count: 0, severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 } };
-                }
-                cluster.domains[domain].count++;
-                cluster.domains[domain].severities[item.severity]++;
-            });
+            if (item.severity) {
+                cluster.severities[item.severity]++;
+            }
+            if (item.domains) {
+                item.domains.forEach(domain => {
+                    if (!cluster.domains[domain]) {
+                        cluster.domains[domain] = { count: 0, severities: { "Warning": 0, "Critical": 0, "Catastrophic": 0 } };
+                    }
+                    cluster.domains[domain].count++;
+                    if (item.severity) {
+                        cluster.domains[domain].severities[item.severity]++;
+                    }
+                });
+            }
         })
     });
 
@@ -375,7 +382,14 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
                 </div>
             </CardHeader>
             <CardContent>
-                {sortedClusters.length > 0 ? (
+                {loading && (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                    </div>
+                )}
+                {!loading && sortedClusters.length > 0 ? (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {sortedClusters.map(cluster => {
                             const { previousScore } = useClusterMomentum(cluster, previousLogs);
@@ -399,7 +413,7 @@ function GlobalClusterPanel({ logs, previousLogs, onClusterClick }: { logs: Acti
                             );
                         })}
                     </div>
-                ) : (
+                ) : !loading && (
                     <p className="text-muted-foreground text-center py-4">Click "Analyze All Rationales" to identify and score clusters.</p>
                 )}
             </CardContent>
