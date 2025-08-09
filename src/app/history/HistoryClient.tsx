@@ -488,7 +488,7 @@ export default function HistoryClient() {
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({});
   const [confidenceThreshold, setConfidenceThreshold] = useState(0);
   const { toast } = useToast();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const searchParams = useSearchParams();
 
   const [rationaleDialog, setRationaleDialog] = useState<RationaleDialogContent>(null);
@@ -739,6 +739,7 @@ export default function HistoryClient() {
   };
 
   const handleFeedback = async (recommendation: Recommendation, rating: 'up' | 'down') => {
+    if (!user) return;
     if (feedbackGiven[recommendation.recommendationId]) return; 
 
     setFeedbackGiven(prev => ({...prev, [recommendation.recommendationId]: rating }));
@@ -973,7 +974,7 @@ export default function HistoryClient() {
                                             variant={feedbackGiven[rec.recommendationId] === 'up' ? "default" : "outline"}
                                             className="h-8 w-8"
                                             onClick={() => handleFeedback(rec, 'up')}
-                                            disabled={!!feedbackGiven[rec.recommendationId]}
+                                            disabled={!!feedbackGiven[rec.recommendationId] || userLoading}
                                         >
                                             <ThumbsUp className="h-4 w-4" />
                                         </Button>
@@ -982,7 +983,7 @@ export default function HistoryClient() {
                                             variant={feedbackGiven[rec.recommendationId] === 'down' ? "destructive" : "outline"}
                                             className="h-8 w-8"
                                             onClick={() => handleFeedback(rec, 'down')}
-                                            disabled={!!feedbackGiven[rec.recommendationId]}
+                                            disabled={!!feedbackGiven[rec.recommendationId] || userLoading}
                                         >
                                             <ThumbsDown className="h-4 w-4" />
                                         </Button>
@@ -1012,4 +1013,3 @@ export default function HistoryClient() {
     </div>
   );
 }
-

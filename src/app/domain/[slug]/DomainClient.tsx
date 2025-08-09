@@ -102,7 +102,7 @@ export default function DomainClient({ domain }: { domain: Domain }) {
   const [confidenceThreshold, setConfidenceThreshold] = useState(0);
 
   const { toast } = useToast();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
 
   useEffect(() => {
     const saved = localStorage.getItem("domainConfidenceThreshold");
@@ -137,6 +137,7 @@ export default function DomainClient({ domain }: { domain: Domain }) {
     };
   
   const handleFeedback = async (recommendation: Recommendation, rating: 'up' | 'down') => {
+    if (!user) return;
     if (feedbackGiven[recommendation.recommendationId]) return; 
 
     setFeedbackGiven(prev => ({...prev, [recommendation.recommendationId]: rating }));
@@ -279,7 +280,7 @@ export default function DomainClient({ domain }: { domain: Domain }) {
                                     variant={feedbackGiven[rec.recommendationId] === 'up' ? "default" : "outline"}
                                     className="h-8 w-8"
                                     onClick={() => handleFeedback(rec, 'up')}
-                                    disabled={!!feedbackGiven[rec.recommendationId]}
+                                    disabled={!!feedbackGiven[rec.recommendationId] || userLoading}
                                 >
                                     <ThumbsUp className="h-4 w-4" />
                                 </Button>
@@ -288,7 +289,7 @@ export default function DomainClient({ domain }: { domain: Domain }) {
                                     variant={feedbackGiven[rec.recommendationId] === 'down' ? "destructive" : "outline"}
                                     className="h-8 w-8"
                                     onClick={() => handleFeedback(rec, 'down')}
-                                    disabled={!!feedbackGiven[rec.recommendationId]}
+                                    disabled={!!feedbackGiven[rec.recommendationId] || userLoading}
                                 >
                                     <ThumbsDown className="h-4 w-4" />
                                 </Button>

@@ -59,7 +59,7 @@ export default function RecentActivity() {
   const [result, setResult] = useState<AuditTrailAISummarizationOutput | null>(null);
   const [latestLog, setLatestLog] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   
 
   useEffect(() => {
@@ -134,6 +134,7 @@ export default function RecentActivity() {
   };
 
   const handleAction = async (action: Action) => {
+    if (!user) return;
     toast({
       title: "Action Initiated",
       description: `${action} protocol has been initiated by ${user.role}.`,
@@ -156,22 +157,26 @@ export default function RecentActivity() {
     }
   };
   
-  const renderActionButtons = () => (
-    <div className="flex gap-2 mt-4">
-      <Button variant="destructive" size="sm" onClick={() => handleAction("Escalate")} disabled={!canUserPerform(user.role, "Escalate")}>
-        <CornerDownRight className="mr-2 h-4 w-4" />
-        Escalate
-      </Button>
-      <Button variant="secondary" size="sm" onClick={() => handleAction("Quarantine")} disabled={!canUserPerform(user.role, "Quarantine")}>
-        <CornerDownRight className="mr-2 h-4 w-4" />
-        Quarantine
-      </Button>
-      <Button variant="secondary" size="sm" onClick={() => handleAction("Rollback")} disabled={!canUserPerform(user.role, "Rollback")}>
-        <CornerDownRight className="mr-2 h-4 w-4" />
-        Rollback
-      </Button>
-    </div>
-  );
+  const renderActionButtons = () => {
+    if (userLoading || !user) return <Skeleton className="h-9 w-64" />;
+
+    return (
+        <div className="flex gap-2 mt-4">
+        <Button variant="destructive" size="sm" onClick={() => handleAction("Escalate")} disabled={!canUserPerform(user.role, "Escalate")}>
+            <CornerDownRight className="mr-2 h-4 w-4" />
+            Escalate
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => handleAction("Quarantine")} disabled={!canUserPerform(user.role, "Quarantine")}>
+            <CornerDownRight className="mr-2 h-4 w-4" />
+            Quarantine
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => handleAction("Rollback")} disabled={!canUserPerform(user.role, "Rollback")}>
+            <CornerDownRight className="mr-2 h-4 w-4" />
+            Rollback
+        </Button>
+        </div>
+    );
+  };
 
   return (
     <Card className="transition-shadow duration-300 hover:shadow-xl h-full">

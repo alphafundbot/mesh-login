@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { UserProvider } from "@/hooks/use-user";
+import ClientOnly from "@/components/layout/ClientOnly";
 
 export const metadata: Metadata = {
   title: "Stratagem.ai",
@@ -25,12 +26,14 @@ export default function RootLayout({
         ></link>
       </head>
       <body className="font-body antialiased">
-        <UserProvider>
-          <SidebarProvider>
-            {children}
-            <Toaster />
-          </SidebarProvider>
-        </UserProvider>
+        <ClientOnly>
+          <UserProvider>
+            <SidebarProvider>
+              {children}
+              <Toaster />
+            </SidebarProvider>
+          </UserProvider>
+        </ClientOnly>
       </body>
     </html>
   );

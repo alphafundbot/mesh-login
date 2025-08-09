@@ -154,6 +154,7 @@ export default function IntelligenceMap() {
   const { user } = useUser();
 
   const handleLogAction = async (action: string, details: string) => {
+    if (!user) return;
     try {
       await addDoc(collection(db, "hud_actions"), {
         action,
