@@ -31,8 +31,8 @@ const ReplayCommentaryOutputSchema = z.object({
     accuracyScore: z.number().min(0).max(1).describe("A score from 0.0 to 1.0 indicating the overall accuracy of the forecast."),
     divergenceMap: z.array(z.object({
         rationaleTag: z.string().describe("The rationale cluster that was being forecasted."),
-        predicted: z.string().describe("A summary of the predicted behavior (e.g., 'Escalate', 'Suppress', 'No Change')."),
-        actual: z.string().describe("A summary of the actual observed behavior (e.g., 'Escalate', 'Suppress', 'No Change')."),
+        predicted: z.string().describe("A summary of the predicted behavior (e.g., 'Escalate', 'Suppress', 'Stable')."),
+        actual: z.string().describe("A summary of the actual observed behavior (e.g., 'Escalate', 'Suppress', 'Stable')."),
         impact: z.string().describe("A brief analysis of the strategic impact of this divergence."),
     })).describe("An analysis of where the forecast diverged most significantly from reality."),
     strategicNotes: z.string().describe("High-level synthesis of why the forecast was or was not accurate, noting any major strategic pivots, successful predictions, or missed signals."),

@@ -162,14 +162,13 @@ export default function AdminClient() {
             const data = forecastDoc.data();
             const commentary = data.commentary as ReplayCommentaryOutput;
             
-            // Refined volatility score: Higher weight for major prediction errors (e.g., predicted escalate, saw suppress).
             const volatilityScore = commentary.divergenceMap.reduce((score, divergence) => {
                 const pred = divergence.predicted.toLowerCase();
                 const act = divergence.actual.toLowerCase();
                 if ((pred.includes("escalate") && act.includes("suppress")) || (pred.includes("suppress") && act.includes("escalate"))) {
-                    return score + 20; // High penalty for inverted predictions
+                    return score + 20;
                 }
-                return score + 10; // Standard penalty for other divergences
+                return score + 10;
             }, 0);
             
             const cappedScore = Math.min(100, volatilityScore);
