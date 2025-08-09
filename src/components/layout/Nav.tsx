@@ -20,6 +20,7 @@ import {
   FileClock,
   TestTube,
   LogOut,
+  Code,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -52,6 +53,10 @@ const systemItems = [
     { href: "/queue", label: "Synthesis Queue", icon: FileClock },
     { href: "/simulation", label: "Simulator", icon: TestTube },
 ];
+
+const metaItems = [
+    { href: "/meta/code-intelligence", label: "Code Intelligence", icon: Code },
+]
 
 const SidebarGroupLabel = ({children}: {children: React.ReactNode}) => (
     <div className="px-2 py-1 text-xs font-semibold text-muted-foreground group-data-[collapsible=icon]:hidden">
@@ -140,6 +145,22 @@ export default function Nav() {
                     <SidebarSeparator className="my-2" />
                     <SidebarGroupLabel>System</SidebarGroupLabel>
                     {systemItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                            <Link href={item.href}>
+                                <SidebarMenuButton
+                                    isActive={pathname === item.href}
+                                    tooltip={{ children: item.label }}
+                                >
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    ))}
+                
+                    <SidebarSeparator className="my-2" />
+                    <SidebarGroupLabel>Meta</SidebarGroupLabel>
+                    {metaItems.map((item) => (
                         <SidebarMenuItem key={item.href}>
                             <Link href={item.href}>
                                 <SidebarMenuButton
