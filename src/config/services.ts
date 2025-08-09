@@ -45,9 +45,7 @@ export interface FirebaseConfig {
 
 export interface ServicesConfig {
     firebase: FirebaseConfig,
-    gcp: {
-        geminiApiKey: string;
-    }
+    gcp: {}
 }
 
 // These are public-facing keys and are safe to be checked into source control.
@@ -62,8 +60,5 @@ const firebaseConfigValues: FirebaseConfig = {
 
 export const servicesConfig: ServicesConfig = {
     firebase: firebaseConfigValues,
-    gcp: {
-        // This will load the GEMINI_API_KEY from your .env file.
-        geminiApiKey: getEnv('GEMINI_API_KEY'),
-    }
+    gcp: {}
 };
