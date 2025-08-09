@@ -1,6 +1,7 @@
 // src/ai/client/geminiProxy.ts
 export async function proxyGemini(prompt: string): Promise<any> {
-  const res = await fetch('/api/gemini', {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+  const res = await fetch(`${baseUrl}/api/gemini`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt })
