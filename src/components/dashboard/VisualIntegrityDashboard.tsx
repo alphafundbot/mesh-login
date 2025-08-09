@@ -241,7 +241,7 @@ export default function VisualIntegrityDashboard() {
     
     const getTopSeverity = (severities: Record<Severity, number>): Severity => {
         if (severities.Catastrophic > 0) return 'Catastrophic';
-        if (severities.Critical > 0) return 'Critical';
+        if (severities.Critical > 0) return 'Warning';
         return 'Warning';
     }
 
