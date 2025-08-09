@@ -11,8 +11,9 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Timer, DatabaseZap } from "lucide-react";
-import { db, app } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 export default function MeshHydrationAudit() {
   const [mountTime, setMountTime] = useState<number | null>(null);
@@ -20,30 +21,32 @@ export default function MeshHydrationAudit() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set mount time immediately as it doesn't depend on external services
     setMountTime(Math.round(performance.now()));
 
-    const checkFirestore = async () => {
-      setLoading(true);
-      try {
-        // Ensure the firebase app is initialized before trying to use its services.
-        if (!app.name) {
-          throw new Error("Firebase app not initialized");
-        }
+    // Wait for the auth state to be confirmed before attempting a firestore read.
+    // This acts as a reliable signal that the Firebase client is initialized and online.
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const checkFirestore = async () => {
+          setLoading(true);
+          try {
+            const startTime = performance.now();
+            const docRef = doc(db, "intelligence_map_cache", "latest");
+            await getDoc(docRef);
+            const endTime = performance.now();
+            setPingTime(Math.round(endTime - startTime));
+          } catch (error) {
+            console.error("Firestore ping failed:", error);
+            setPingTime(null);
+          } finally {
+            setLoading(false);
+          }
+        };
+        
+        checkFirestore();
+    });
 
-        const startTime = performance.now();
-        const docRef = doc(db, "intelligence_map_cache", "latest");
-        await getDoc(docRef);
-        const endTime = performance.now();
-        setPingTime(Math.round(endTime - startTime));
-      } catch (error) {
-        console.error("Firestore ping failed:", error);
-        setPingTime(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkFirestore();
+    return () => unsubscribe();
   }, []);
 
   const renderMetric = (Icon: React.ElementType, title: string, value: string | null, unit: string, isLoading: boolean) => (
