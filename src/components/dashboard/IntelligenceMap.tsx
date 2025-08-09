@@ -212,6 +212,7 @@ export default function IntelligenceMap() {
   }, [handleLogAction]);
 
   const getAnalysis = useCallback(async () => {
+    if (!isBrowser() || !user) return;
     setLoading(true);
     setEscalation(null);
     try {
@@ -240,7 +241,7 @@ export default function IntelligenceMap() {
     } finally {
         setLoading(false);
     }
-  }, [toast, processAnalysis]);
+  }, [toast, processAnalysis, user]);
   
 
   useEffect(() => {
@@ -523,5 +524,3 @@ export default function IntelligenceMap() {
     </>
   );
 }
-
-    

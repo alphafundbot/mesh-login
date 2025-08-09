@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -665,13 +664,38 @@ export default function HistoryClient() {
         const autoStart = searchParams.get('autostart');
         const domain = searchParams.get('domain');
         const severity = searchParams.get('severity') as Severity;
+        const clusterTag = searchParams.get('cluster');
+
 
         if (autoStart !== 'true') return;
 
         if (domain && severity) {
             handleHeatmapCellClick(domain, severity);
+        } else if (clusterTag) {
+            // This requires clusters to be pre-analyzed.
+            // For a robust implementation, the analysis might need to run automatically on load.
+            // For now, we assume if a cluster drilldown is triggered, we should analyze first.
+            const runAnalysisAndOpen = async () => {
+                const untagged = filteredLogs
+                    .map(l => ({ ...l, parsed: parseDetails(l.details) }))
+                    .filter(l => l.parsed.isOverride && l.parsed.rationale && l.parsed.severity && l.parsed.domains);
+
+                if (untagged.length > 0) {
+                     const tagged = await Promise.all(untagged.map(async l => {
+                        const { tags } = await tagRationale({ rationale: l.parsed.rationale! });
+                        return { rationale: l.parsed.rationale!, tags, severity: l.parsed.severity!, domains: l.parsed.domains! };
+                    }));
+                    const clusters = calculateClusters(tagged);
+                    const targetCluster = clusters.get(clusterTag);
+                    if (targetCluster) {
+                        handleClusterClick(targetCluster);
+                    }
+                }
+            }
+            runAnalysisAndOpen();
         }
-    }, [searchParams, filteredLogs, handleHeatmapCellClick, user]);
+
+    }, [searchParams, filteredLogs, handleHeatmapCellClick, handleClusterClick, user]);
 
 
   useEffect(() => {
