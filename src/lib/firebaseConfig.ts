@@ -1,4 +1,5 @@
 
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, enableNetwork, type Firestore } from 'firebase/firestore';
 import { getAuth, type Auth } from 'firebase/auth';
@@ -25,3 +26,4 @@ if (isBrowser()) {
 // These exports may be undefined on the server, and that's by design.
 // Components should use isBrowser() and useUser() to guard against this.
 export { app as firebaseApp, firestore, auth };
+

@@ -1,4 +1,5 @@
 
+
 export interface FirebaseConfig {
     apiKey: string;
     authDomain: string;
@@ -18,3 +19,4 @@ export const firebasePublicConfig: FirebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID!,
 };
+
