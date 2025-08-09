@@ -50,12 +50,12 @@ export interface ServicesConfig {
 
 // These are public-facing keys and are safe to be checked into source control.
 const firebaseConfigValues: FirebaseConfig = {
-    apiKey: "AIzaSyBPJX1gPclHOhKzICEyJJ7jDnLIgkoSraU",
-    authDomain: "stratagemai-xi7q8.firebaseapp.com",
-    projectId: "stratagemai-xi7q8",
-    storageBucket: "stratagemai-xi7q8.firebasestorage.app",
-    messagingSenderId: "405937962472",
-    appId: "1:405937962472:web:2cb16838674ed6e0acb85d"
+    apiKey: getEnv('NEXT_PUBLIC_FIREBASE_API_KEY'),
+    authDomain: getEnv('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'),
+    projectId: getEnv('NEXT_PUBLIC_FIREBASE_PROJECT_ID'),
+    storageBucket: getEnv('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'),
+    messagingSenderId: getEnv('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
+    appId: getEnv('NEXT_PUBLIC_FIREBASE_APP_ID')
 };
 
 export const servicesConfig: ServicesConfig = {

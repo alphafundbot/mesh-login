@@ -25,6 +25,9 @@ export default function MeshHydrationAudit() {
     const checkFirestore = async () => {
       setLoading(true);
       try {
+        // Add a small delay to ensure Firebase is fully initialized client-side
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         const startTime = performance.now();
         const docRef = doc(db, "intelligence_map_cache", "latest");
         await getDoc(docRef);
