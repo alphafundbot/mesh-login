@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Zap, AlertTriangle, ChevronRight } from "lucide-react";
 import { detectVolatilityAnomalies, type VolatilityAnomalyOutput } from "@/ai/flows/volatility-anomaly-flow";
 import { Badge } from "../ui/badge";
+import { isBrowser } from "@/lib/env-check";
+import { useUser } from "@/hooks/use-user";
 
 interface ForecastData {
     id: string;
@@ -22,8 +24,10 @@ export default function VolatilityAnomalyDetector() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<VolatilityAnomalyOutput | null>(null);
     const { toast } = useToast();
+    const { user } = useUser();
 
     const handleDetection = async () => {
+        if (!isBrowser() || !user) return;
         setLoading(true);
         setResult(null);
         try {
@@ -88,7 +92,7 @@ export default function VolatilityAnomalyDetector() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <Button onClick={handleDetection} disabled={loading} className="w-full">
+                <Button onClick={handleDetection} disabled={loading || !user} className="w-full">
                     {loading ? "Analyzing..." : "Scan for Anomalies"}
                 </Button>
 

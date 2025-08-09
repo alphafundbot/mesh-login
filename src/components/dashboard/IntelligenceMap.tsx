@@ -155,7 +155,7 @@ export default function IntelligenceMap() {
   const { toast } = useToast();
   const { user } = useUser();
 
-  const handleLogAction = async (action: string, details: string) => {
+  const handleLogAction = useCallback(async (action: string, details: string) => {
     if (!user) return;
     try {
       await addDoc(collection(db, "hud_actions"), {
@@ -168,7 +168,7 @@ export default function IntelligenceMap() {
     } catch (error) {
       console.error("Failed to log action:", error);
     }
-  };
+  }, [user]);
 
   const processAnalysis = useCallback((output: CrossDomainIntelligenceOutput) => {
       const dataWithAnomalies = output.metrics.map((metric) => ({
