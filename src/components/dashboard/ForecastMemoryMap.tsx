@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { BrainCircuit } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ComposedChart } from 'recharts';
+import { useUser } from "@/hooks/use-user";
 
 interface ForecastAnalysis {
     id: string;
@@ -40,42 +41,37 @@ export default function ForecastMemoryMap() {
     const [analyses, setAnalyses] = useState<ForecastAnalysis[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const { user } = useUser();
 
     useEffect(() => {
-        const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "asc"));
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    const fetchedAnalyses = snapshot.docs.map((doc) => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id,
-                            timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
-                            accuracyScore: data.commentary?.accuracyScore,
-                            volatilityScore: data.volatilityScore,
-                            strategicNotes: data.commentary?.strategicNotes,
-                        };
-                    }).filter(a => a.accuracyScore !== undefined);
-                    setAnalyses(fetchedAnalyses);
-                    setLoading(false);
-                }, (error) => {
-                    console.error("Error fetching forecast analyses:", error);
-                    toast({
-                        variant: "destructive",
-                        title: "Fetch Error",
-                        description: "Could not fetch forecast memory data.",
-                    });
-                    setLoading(false);
-                });
+        if (!user) return; // Wait for user to be authenticated
 
-                return () => unsubscribe();
-            } else {
-                setLoading(false);
-            }
+        const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "asc"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedAnalyses = snapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
+                    accuracyScore: data.commentary?.accuracyScore,
+                    volatilityScore: data.volatilityScore,
+                    strategicNotes: data.commentary?.strategicNotes,
+                };
+            }).filter(a => a.accuracyScore !== undefined);
+            setAnalyses(fetchedAnalyses);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching forecast analyses:", error);
+            toast({
+                variant: "destructive",
+                title: "Fetch Error",
+                description: "Could not fetch forecast memory data.",
+            });
+            setLoading(false);
         });
 
-        return () => authUnsubscribe();
-    }, [toast]);
+        return () => unsubscribe();
+    }, [toast, user]);
     
     const chartData = useMemo(() => {
         return analyses.map(a => {

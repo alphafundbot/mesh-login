@@ -213,27 +213,21 @@ export default function IntelligenceMap() {
   }, []);
 
   useEffect(() => {
-    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-        if(user) {
-            const q = doc(db, "intelligence_map_cache", "latest");
-            const unsubscribe = onSnapshot(q, (doc) => {
-                if (doc.exists()) {
-                    const latestCache = doc.data().analysis as CrossDomainIntelligenceOutput;
-                    processAnalysis(latestCache);
-                }
-                setLoading(false);
-            }, (error) => {
-                console.error("Failed to fetch cached analysis", error);
-                setLoading(false);
-            });
-            return () => unsubscribe();
-        } else {
-            setLoading(false);
-        }
-    });
+    if (!user) return; // Wait for user to be authenticated
 
-    return () => authUnsubscribe();
-  }, [processAnalysis]);
+    const q = doc(db, "intelligence_map_cache", "latest");
+    const unsubscribe = onSnapshot(q, (doc) => {
+        if (doc.exists()) {
+            const latestCache = doc.data().analysis as CrossDomainIntelligenceOutput;
+            processAnalysis(latestCache);
+        }
+        setLoading(false);
+    }, (error) => {
+        console.error("Failed to fetch cached analysis", error);
+        setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [processAnalysis, user]);
 
 
   const getAnalysis = async () => {

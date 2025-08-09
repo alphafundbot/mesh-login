@@ -24,6 +24,7 @@ import type { SnapshotDiffOutput } from "@/ai/flows/snapshot-diff-flow";
 import type { PredictiveOverrideOutput, PredictiveOverrideInput } from "@/ai/flows/predictive-override-flow";
 import { Bot, GitCompareArrows, ChevronsRight, FileText, TestTube, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/hooks/use-user";
 
 interface ArchivedDiffAnalysis {
     id: string;
@@ -64,74 +65,69 @@ export default function ArchiveClient() {
     const [analyses, setAnalyses] = useState<ArchivedAnalysis[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const { user } = useUser();
 
     useEffect(() => {
-        const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const diffQuery = query(collection(db, "diff_analysis"), orderBy("timestamp", "desc"));
-                const simQuery = query(collection(db, "simulation_analysis"), orderBy("timestamp", "desc"));
+        if (!user) return; // Wait for user to be authenticated
 
-                const unsubDiff = onSnapshot(diffQuery, (snapshot) => {
-                    const diffs = snapshot.docs.map(doc => {
-                         const data = doc.data();
-                        return {
-                            id: doc.id,
-                            type: 'diff' as const,
-                            snapshotA: data.snapshotA,
-                            snapshotB: data.snapshotB,
-                            analysis: data.analysis,
-                            timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
-                        }
-                    });
-                    
-                    setAnalyses(current => {
-                        const otherAnalyses = current.filter(a => a.type !== 'diff');
-                        const combined = [...diffs, ...otherAnalyses].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
-                        return combined;
-                    });
-                    setLoading(false);
-                }, (error) => {
-                     toast({ variant: "destructive", title: "Fetch Error", description: "Could not fetch diff analyses."});
-                     console.error("Error fetching diff analyses:", error);
-                     setLoading(false);
-                });
+        const diffQuery = query(collection(db, "diff_analysis"), orderBy("timestamp", "desc"));
+        const simQuery = query(collection(db, "simulation_analysis"), orderBy("timestamp", "desc"));
 
-                const unsubSim = onSnapshot(simQuery, (snapshot) => {
-                    const sims = snapshot.docs.map(doc => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id,
-                            type: 'simulation' as const,
-                            input: data.input,
-                            output: data.output,
-                            timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
-                        }
-                    });
-                    
-                     setAnalyses(current => {
-                        const otherAnalyses = current.filter(a => a.type !== 'simulation');
-                        const combined = [...sims, ...otherAnalyses].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
-                        return combined;
-                    });
-                    setLoading(false);
-                }, (error) => {
-                     toast({ variant: "destructive", title: "Fetch Error", description: "Could not fetch simulation analyses."});
-                     console.error("Error fetching simulation analyses:", error);
-                     setLoading(false);
-                });
-
-
-                return () => {
-                    unsubDiff();
-                    unsubSim();
+        const unsubDiff = onSnapshot(diffQuery, (snapshot) => {
+            const diffs = snapshot.docs.map(doc => {
+                 const data = doc.data();
+                return {
+                    id: doc.id,
+                    type: 'diff' as const,
+                    snapshotA: data.snapshotA,
+                    snapshotB: data.snapshotB,
+                    analysis: data.analysis,
+                    timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
                 }
-            } else {
-                setLoading(false);
-            }
+            });
+            
+            setAnalyses(current => {
+                const otherAnalyses = current.filter(a => a.type !== 'diff');
+                const combined = [...diffs, ...otherAnalyses].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+                return combined;
+            });
+            setLoading(false);
+        }, (error) => {
+             toast({ variant: "destructive", title: "Fetch Error", description: "Could not fetch diff analyses."});
+             console.error("Error fetching diff analyses:", error);
+             setLoading(false);
         });
-        
-        return () => authUnsubscribe();
-    }, [toast]);
+
+        const unsubSim = onSnapshot(simQuery, (snapshot) => {
+            const sims = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    type: 'simulation' as const,
+                    input: data.input,
+                    output: data.output,
+                    timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
+                }
+            });
+            
+             setAnalyses(current => {
+                const otherAnalyses = current.filter(a => a.type !== 'simulation');
+                const combined = [...sims, ...otherAnalyses].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+                return combined;
+            });
+            setLoading(false);
+        }, (error) => {
+             toast({ variant: "destructive", title: "Fetch Error", description: "Could not fetch simulation analyses."});
+             console.error("Error fetching simulation analyses:", error);
+             setLoading(false);
+        });
+
+
+        return () => {
+            unsubDiff();
+            unsubSim();
+        }
+    }, [toast, user]);
 
     if (loading) {
         return (

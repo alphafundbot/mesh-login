@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
+import { useUser } from "@/hooks/use-user";
 
 interface Epoch {
     id: string;
@@ -31,35 +32,31 @@ export default function OmegaEpochStream() {
   const [loading, setLoading] = useState(true);
   const [metaStrategyFilter, setMetaStrategyFilter] = useState<string>("all");
   const [capitalStateFilter, setCapitalStateFilter] = useState<string>("all");
+  const { user } = useUser();
 
   useEffect(() => {
-    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-        if(user) {
-            const q = query(
-              collection(db, 'omega_epochs'),
-              orderBy('epoch', 'desc')
-            );
+    if (!user) return; // Wait for user to be authenticated
 
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-              const data = snapshot.docs.map(doc => ({ 
-                  id: doc.id,
-                  ...doc.data(),
-                  timestamp: (doc.data().timestamp as Timestamp)?.toDate() || new Date()
-              })) as Epoch[];
-              setEpochs(data);
-              setLoading(false);
-            }, (error) => {
-                console.error("Omega Epoch Stream Error:", error);
-                setLoading(false);
-            });
+    const q = query(
+      collection(db, 'omega_epochs'),
+      orderBy('epoch', 'desc')
+    );
 
-            return () => unsubscribe();
-        } else {
-            setLoading(false);
-        }
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ 
+          id: doc.id,
+          ...doc.data(),
+          timestamp: (doc.data().timestamp as Timestamp)?.toDate() || new Date()
+      })) as Epoch[];
+      setEpochs(data);
+      setLoading(false);
+    }, (error) => {
+        console.error("Omega Epoch Stream Error:", error);
+        setLoading(false);
     });
-    return () => authUnsubscribe();
-  }, []);
+
+    return () => unsubscribe();
+  }, [user]);
 
   const { uniqueMetaStrategies, uniqueCapitalStates } = useMemo(() => {
     const metaStrategies = new Set<string>();

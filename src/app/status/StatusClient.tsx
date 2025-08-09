@@ -16,6 +16,7 @@ import { checkApiHealth, type HealthCheckOutput } from "@/ai/flows/health-check-
 import { Skeleton } from "@/components/ui/skeleton";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, onSnapshot, Timestamp } from "firebase/firestore";
+import { useUser } from "@/hooks/use-user";
 
 type HistoricalCheck = HealthCheckOutput & {
   id: string;
@@ -27,8 +28,11 @@ export default function StatusClient() {
   const [result, setResult] = useState<HealthCheckOutput | null>(null);
   const [history, setHistory] = useState<HistoricalCheck[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const { user } = useUser();
 
   useEffect(() => {
+    if (!user) return; // Wait for user to be authenticated
+
     const q = query(collection(db, "health_checks"), orderBy("timestamp", "desc"), limit(10));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const historicalData = snapshot.docs.map(doc => {
@@ -48,7 +52,7 @@ export default function StatusClient() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   async function handleTest() {
     setLoading(true);

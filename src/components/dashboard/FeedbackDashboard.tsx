@@ -2,13 +2,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { db, auth } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { db } from '@/lib/firebase';
 import { collection, query, onSnapshot, Timestamp, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
 import { ThumbsUp, ThumbsDown, BarChart2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useUser } from '@/hooks/use-user';
 
 interface Feedback {
     id: string;
@@ -27,41 +27,37 @@ const COLORS = {
 export default function FeedbackDashboard() {
     const [feedback, setFeedback] = useState<Feedback[]>([]);
     const [loading, setLoading] = useState(true);
+    const { user } = useUser();
 
     useEffect(() => {
-        const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-            if(user) {
-                const q = query(collection(db, 'feedback'), orderBy("timestamp", "desc"));
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    if (snapshot.empty) {
-                        setLoading(false);
-                        return;
-                    }
-                    const fetchedFeedback = snapshot.docs.map(doc => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id,
-                            recommendationId: data.recommendationId,
-                            rating: data.rating,
-                            role: data.role,
-                            recommendationText: data.recommendationText || `Rec ID: ${data.recommendationId}`,
-                            timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
-                        } as Feedback;
-                    });
-                    setFeedback(fetchedFeedback);
-                    setLoading(false);
-                }, (error) => {
-                    console.error("Error fetching feedback:", error);
-                    setLoading(false);
-                });
+        if (!user) return; // Wait for user to be authenticated
 
-                return () => unsubscribe();
-            } else {
+        const q = query(collection(db, 'feedback'), orderBy("timestamp", "desc"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (snapshot.empty) {
                 setLoading(false);
+                return;
             }
+            const fetchedFeedback = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    recommendationId: data.recommendationId,
+                    rating: data.rating,
+                    role: data.role,
+                    recommendationText: data.recommendationText || `Rec ID: ${data.recommendationId}`,
+                    timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
+                } as Feedback;
+            });
+            setFeedback(fetchedFeedback);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching feedback:", error);
+            setLoading(false);
         });
-        return () => authUnsubscribe();
-    }, []);
+
+        return () => unsubscribe();
+    }, [user]);
 
     const { byRole, topLiked, topDisliked } = useMemo(() => {
         if (feedback.length === 0) return { byRole: [], topLiked: [], topDisliked: [] };

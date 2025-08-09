@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/hooks/use-user";
 
 interface ArchivedForecast {
     id: string;
@@ -38,40 +39,35 @@ export default function ForecastArchiveClient() {
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
     const router = useRouter();
+    const { user } = useUser();
 
     useEffect(() => {
-        const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"));
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    const fetchedAnalyses = snapshot.docs.map((doc) => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id,
-                            forecast: data.forecast,
-                            timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
-                        };
-                    });
-                    setAnalyses(fetchedAnalyses);
-                    setLoading(false);
-                }, (error) => {
-                    console.error("Error fetching forecast archive:", error);
-                    toast({
-                        variant: "destructive",
-                        title: "Fetch Error",
-                        description: "Could not fetch forecast archive.",
-                    });
-                    setLoading(false);
-                });
+        if (!user) return; // Wait for user to be authenticated
 
-                return () => unsubscribe();
-            } else {
-                setLoading(false);
-            }
+        const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedAnalyses = snapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    forecast: data.forecast,
+                    timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
+                };
+            });
+            setAnalyses(fetchedAnalyses);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching forecast archive:", error);
+            toast({
+                variant: "destructive",
+                title: "Fetch Error",
+                description: "Could not fetch forecast archive.",
+            });
+            setLoading(false);
         });
 
-        return () => authUnsubscribe();
-    }, [toast]);
+        return () => unsubscribe();
+    }, [toast, user]);
 
     const handleReplay = (timestamp: Date) => {
         const params = new URLSearchParams({
