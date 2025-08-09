@@ -4,17 +4,9 @@ import { getAuth, type Auth } from 'firebase/auth';
 import { isBrowser } from './env-check';
 import { firebasePublicConfig } from '@/config/public';
 
-// Validate required env vars at initialization time.
-if (
-  !firebasePublicConfig.apiKey ||
-  !firebasePublicConfig.authDomain ||
-  !firebasePublicConfig.projectId
-) {
-  throw new Error(
-    'Missing required Firebase public config. Check your NEXT_PUBLIC_ environment variables.'
-  );
-}
-
+// The firebasePublicConfig now robustly handles environment variable checks,
+// throwing an error at the source if a variable is missing. This top-level
+// validation is therefore redundant.
 let app: FirebaseApp;
 let firestore: Firestore;
 let auth: Auth;
