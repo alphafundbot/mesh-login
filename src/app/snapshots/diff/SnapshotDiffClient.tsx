@@ -83,8 +83,8 @@ export default function SnapshotDiffClient() {
     setIsSaving(true);
     try {
       await addDoc(collection(db, "diff_analysis"), {
-        snapshotA: snapshotA.slug,
-        snapshotB: snapshotB.slug,
+        snapshotA: snapshotA.label,
+        snapshotB: snapshotB.label,
         analysis: result,
         timestamp: serverTimestamp(),
       });
