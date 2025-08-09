@@ -11,6 +11,8 @@ import {
   updateDoc,
   Timestamp,
   writeBatch,
+  addDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
@@ -22,7 +24,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Bot, RefreshCw, History, Zap } from "lucide-react";
+import { Bot, RefreshCw, History, Zap, BrainCircuit } from "lucide-react";
 import {
   generateReplayCommentary,
   type ReplayCommentaryOutput,
@@ -34,6 +36,7 @@ import { Progress } from "@/components/ui/progress";
 export default function AdminClient() {
   const [loadingBackfill, setLoadingBackfill] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(false);
+  const [loadingInject, setLoadingInject] = useState(false);
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const { toast } = useToast();
@@ -200,11 +203,68 @@ export default function AdminClient() {
     } finally {
         setLoadingIndex(false);
     }
+  };
+
+  const handleInjectEpochs = async () => {
+    setLoadingInject(true);
+    setProgress(0);
+    setLogs([]);
+    addLog("Initiating Omega Epoch data injection...");
+
+    const sampleEpochs = [
+      {
+        epoch: 1,
+        meta_strategy: 'Liquidity Surge',
+        capital_state: 'Volatile',
+        cognition_loop: 'Capital influx triggered override momentum recalibration.'
+      },
+      {
+        epoch: 2,
+        meta_strategy: 'Defensive Mesh',
+        capital_state: 'Stable',
+        cognition_loop: 'Override dampeners engaged. Commentary replay paused.'
+      },
+      {
+        epoch: 3,
+        meta_strategy: 'Aggressive Expansion',
+        capital_state: 'Critical',
+        cognition_loop: 'Strategist override breached quota threshold. Escalation imminent.'
+      }
+    ];
+
+    try {
+        const collectionRef = collection(db, 'omega_epochs');
+        for (let i = 0; i < sampleEpochs.length; i++) {
+            const epoch = sampleEpochs[i];
+            await addDoc(collectionRef, {
+                ...epoch,
+                timestamp: serverTimestamp(),
+            });
+            addLog(`Injected Epoch ${epoch.epoch}: ${epoch.meta_strategy}`);
+            setProgress(((i + 1) / sampleEpochs.length) * 100);
+        }
+        addLog("Data injection complete.");
+        toast({
+            title: "Epochs Injected",
+            description: `Successfully added ${sampleEpochs.length} sample epochs to Firestore.`
+        });
+    } catch (error) {
+        console.error("Epoch injection failed:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        addLog(`ERROR: ${errorMessage}`);
+        toast({
+            variant: "destructive",
+            title: "Injection Failed",
+            description: "Could not inject sample epoch data.",
+        });
+    } finally {
+        setLoadingInject(false);
+    }
   }
 
   return (
     <div className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card>
                 <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -216,11 +276,11 @@ export default function AdminClient() {
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
-                <Button onClick={handleBackfill} disabled={loadingBackfill || loadingIndex}>
+                <Button onClick={handleBackfill} disabled={loadingBackfill || loadingIndex || loadingInject}>
                     <RefreshCw
                     className={`mr-2 h-4 w-4 ${loadingBackfill ? "animate-spin" : ""}`}
                     />
-                    {loadingBackfill ? "Backfill in Progress..." : "Start Commentary Backfill"}
+                    {loadingBackfill ? "Backfilling..." : "Start Backfill"}
                 </Button>
                 </CardContent>
             </Card>
@@ -230,21 +290,39 @@ export default function AdminClient() {
                     <Zap className="h-6 w-6 text-accent" /> Forecast Volatility Indexer
                 </CardTitle>
                 <CardDescription>
-                   Bulk-calculate and persist a `volatilityScore` for all forecasts based on commentary divergence.
+                   Bulk-calculate and persist `volatilityScore` for all forecasts based on commentary divergence.
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
-                <Button onClick={handleIndexVolatility} disabled={loadingIndex || loadingBackfill}>
+                <Button onClick={handleIndexVolatility} disabled={loadingIndex || loadingBackfill || loadingInject}>
                     <RefreshCw
                     className={`mr-2 h-4 w-4 ${loadingIndex ? "animate-spin" : ""}`}
                     />
-                    {loadingIndex ? "Indexing in Progress..." : "Index Forecast Volatility"}
+                    {loadingIndex ? "Indexing..." : "Index Volatility"}
+                </Button>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <BrainCircuit className="h-6 w-6 text-accent" /> Epoch Injection Engine
+                </CardTitle>
+                <CardDescription>
+                   Inject sample Omega Epoch data into Firestore to populate the main dashboard stream.
+                </CardDescription>
+                </CardHeader>
+                <CardContent>
+                <Button onClick={handleInjectEpochs} disabled={loadingIndex || loadingBackfill || loadingInject}>
+                    <RefreshCw
+                    className={`mr-2 h-4 w-4 ${loadingInject ? "animate-spin" : ""}`}
+                    />
+                    {loadingInject ? "Injecting..." : "Inject Sample Data"}
                 </Button>
                 </CardContent>
             </Card>
         </div>
         
-        {(loadingBackfill || loadingIndex) && (
+        {(loadingBackfill || loadingIndex || loadingInject) && (
             <div className="space-y-2">
                 <Progress value={progress} className="w-full" />
                 <Card className="max-h-60 overflow-y-auto bg-muted/50 p-4">
