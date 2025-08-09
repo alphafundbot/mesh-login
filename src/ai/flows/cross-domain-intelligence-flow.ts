@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firestore } from '@/lib/firebaseConfig';
+import { proxyGemini } from '@/ai/client/geminiProxy';
 
 
 const CrossDomainIntelligenceInputSchema = z.object({
@@ -68,12 +69,7 @@ export async function analyzeCrossDomainIntelligence(input: CrossDomainIntellige
   return result;
 }
 
-const prompt = ai.definePrompt({
-  name: 'crossDomainIntelligencePrompt',
-  input: {schema: CrossDomainIntelligenceInputSchema},
-  output: {schema: CrossDomainIntelligenceOutputSchema},
-  model: 'googleai/gemini-1.5-flash',
-  prompt: `You are a master systems analyst. You are provided with logs from multiple operational domains. Your task is to analyze these logs and generate a quantitative score (0-100) for each domain across three key metrics: Stability, Security, and Activity.
+const handlebarsPromptTemplate = `You are a master systems analyst. You are provided with logs from multiple operational domains. Your task is to analyze these logs and generate a quantitative score (0-100) for each domain across three key metrics: Stability, Security, and Activity.
 
 - **Stability**: Assess this based on errors, rollbacks, downtime, and successful deployments. High errors and frequent rollbacks decrease the score.
 - **Security**: Assess this based on compliance failures, unauthorized access attempts, port scans, and successful security scans. More threats decrease the score.
@@ -89,8 +85,7 @@ Logs:
 {{{this}}}
 ---
 {{/each}}
-`,
-});
+`;
 
 const crossDomainIntelligenceFlow = ai.defineFlow(
   {
@@ -99,7 +94,28 @@ const crossDomainIntelligenceFlow = ai.defineFlow(
     outputSchema: CrossDomainIntelligenceOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    let promptString = handlebarsPromptTemplate;
+    const domainLogsString = Object.entries(input.domainLogs).map(([key, value]) => `---
+Domain: ${key}
+Logs:
+${value}
+---`).join('\n');
+
+    promptString = promptString.replace(/{{#each domainLogs}}[\s\S]*?{{\/each}}/, domainLogsString);
+
+    const output = await proxyGemini(promptString);
+    
+    if (output && output.candidates && output.candidates[0] && output.candidates[0].content) {
+        const content = output.candidates[0].content.parts[0].text;
+        try {
+            const parsedOutput = JSON.parse(content.replace(/```json|```/g, '').trim());
+            return CrossDomainIntelligenceOutputSchema.parse(parsedOutput);
+        } catch (e) {
+            console.error("Failed to parse Gemini output into schema:", e);
+            throw new Error("AI output was not in the expected format.");
+        }
+    }
+
+    throw new Error("Invalid or empty response from Gemini proxy.");
   }
 );
