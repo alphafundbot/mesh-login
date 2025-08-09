@@ -34,8 +34,7 @@ import {
   ShieldX,
   RefreshCw,
 } from "lucide-react";
-import { db, auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, setDoc } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import {
@@ -234,6 +233,10 @@ export default function IntelligenceMap() {
 
 
   const getAnalysis = async () => {
+    if (!user || !isBrowser()) {
+        toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+        return;
+    }
     setLoading(true);
     setEscalation(null);
     try {

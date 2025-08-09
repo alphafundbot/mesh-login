@@ -27,7 +27,14 @@ export default function VolatilityAnomalyDetector() {
     const { user } = useUser();
 
     const handleDetection = async () => {
-        if (!isBrowser() || !user) return;
+        if (!isBrowser() || !user) {
+            toast({
+                title: "Authentication Error",
+                description: "You must be logged in to run this tool.",
+                variant: "destructive",
+            });
+            return;
+        }
         setLoading(true);
         setResult(null);
         try {

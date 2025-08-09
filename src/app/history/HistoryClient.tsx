@@ -2,8 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { db, auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp, where, getDocs, limit, doc, updateDoc, addDoc } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import {
@@ -150,7 +149,7 @@ function DialogClusterItem({ cluster, previousLogs }: { cluster: ClusterInfo, pr
                                     <div key={domain} className="text-xs p-2 rounded-md bg-muted/30">
                                         <div className="flex items-center justify-between font-semibold">
                                             <span className="text-foreground">{domain}</span>
-                                            <Badge variant="secondary">{metrics.count} total}</Badge>
+                                            <Badge variant="secondary">{metrics.count} total</Badge>
                                         </div>
                                         <div className="flex gap-2 mt-1.5">
                                             {metrics.severities.Warning > 0 && <Badge variant="secondary" className="gap-1 text-xs bg-yellow-500/20 text-yellow-300"><AlertCircle className="h-3 w-3" />{metrics.severities.Warning}</Badge>}
@@ -509,15 +508,17 @@ export default function HistoryClient() {
   }, [searchParams]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("confidenceThreshold");
-    if (saved !== null) {
-        setConfidenceThreshold(parseFloat(saved));
+    if (isBrowser()) {
+        const saved = localStorage.getItem("confidenceThreshold");
+        if (saved !== null) {
+            setConfidenceThreshold(parseFloat(saved));
+        }
     }
   }, []);
 
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (isBrowser()) {
       localStorage.setItem("confidenceThreshold", String(confidenceThreshold));
     }
   }, [confidenceThreshold]);
@@ -641,6 +642,7 @@ export default function HistoryClient() {
     }, []);
     
     useEffect(() => {
+        if (!isBrowser()) return;
         const autoStart = searchParams.get('autostart');
         const domain = searchParams.get('domain');
         const severity = searchParams.get('severity') as Severity;
@@ -654,6 +656,7 @@ export default function HistoryClient() {
 
 
   useEffect(() => {
+    if (!isBrowser()) return;
     const startTimeParam = searchParams.get('startTime');
     if (!startTimeParam || filteredLogs.length === 0) {
       setReplayCommentary(null);

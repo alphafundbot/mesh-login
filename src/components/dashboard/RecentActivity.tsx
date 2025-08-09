@@ -17,8 +17,7 @@ import {
 } from "@/ai/flows/audit-trail-ai";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
-import { db, auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "@/lib/firebase";
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { canUserPerform, type Action } from "@/lib/roles";
@@ -123,6 +122,14 @@ export default function RecentActivity() {
 
 
   const handleRefresh = async (isStressTest: boolean) => {
+    if (!user || !isBrowser()) {
+        toast({
+            title: "Authentication Error",
+            description: "You must be logged in to simulate events.",
+            variant: "destructive",
+        });
+        return;
+    }
     setLoadingLogs(true);
     setResult(null);
     const newLogs = generateSampleLogs(isStressTest);

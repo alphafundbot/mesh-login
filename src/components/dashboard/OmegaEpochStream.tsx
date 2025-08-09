@@ -3,8 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 import { BrainCircuit } from "lucide-react";

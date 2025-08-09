@@ -173,7 +173,7 @@ export default function FeedbackDashboard() {
             </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-primary"><ThumbsDown className="h-5 w-5" />Recent Feedback</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-primary"><ThumbsUp className="h-5 w-5" />Recent Feedback</CardTitle>
                     <CardDescription>Latest interactions from all strategists.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
