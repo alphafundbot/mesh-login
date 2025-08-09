@@ -1,10 +1,11 @@
 
 "use client";
 
-import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
+import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
 import { ROLES, Role } from '@/lib/roles';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 interface User {
   uid: string;
@@ -17,6 +18,7 @@ interface UserContextType {
   user: User | null;
   loading: boolean;
   setUserRole: (role: Role) => void;
+  logout: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -24,12 +26,9 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  // This is a placeholder for mapping Firebase users to app roles.
-  // In a real app, this might come from a database or custom claims.
   const getRoleForUser = (firebaseUser: FirebaseUser): Role => {
-    // Default to 'Analyst' for any logged-in user.
-    // The pre-existing logic for 'nehemie' can be a stand-in for a role lookup.
     if (firebaseUser.email?.startsWith('nehemie')) {
         return 'Architect';
     }
@@ -62,7 +61,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const contextValue = useMemo(() => ({ user, loading, setUserRole }), [user, loading]);
+  const logout = useCallback(async () => {
+    try {
+        await signOut(auth);
+        router.push('/login');
+    } catch (error) {
+        console.error("Logout failed:", error);
+    }
+  }, [router]);
+
+  const contextValue = useMemo(() => ({ user, loading, setUserRole, logout }), [user, loading, logout]);
 
   return (
     <UserContext.Provider value={contextValue}>

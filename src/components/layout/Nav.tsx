@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Binary,
   LayoutDashboard,
@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/sidebar";
 import { snapshotRegistry } from "@/lib/snapshots";
 import { useUser } from "@/hooks/use-user";
-import { auth } from "@/lib/firebase";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -63,13 +62,7 @@ const SidebarGroupLabel = ({children}: {children: React.ReactNode}) => (
 
 export default function Nav() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user } = useUser();
-
-  const handleLogout = async () => {
-    await auth.signOut();
-    router.push('/login');
-  };
+  const { user, logout } = useUser();
 
   return (
     <SidebarMenu>
@@ -164,7 +157,7 @@ export default function Nav() {
                  <SidebarSeparator className="my-2" />
                  <SidebarMenuItem>
                     <SidebarMenuButton
-                        onClick={handleLogout}
+                        onClick={logout}
                         tooltip={{ children: "Logout" }}
                     >
                         <LogOut />
