@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import type { RationaleForecastOutput } from './rationale-forecast-flow';
 
 const ForecastedRationaleSchema = z.object({
     rationaleTag: z.string(),
