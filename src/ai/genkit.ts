@@ -2,9 +2,11 @@ import {genkit, type GenkitErrorCode, type GenkitError} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 import {servicesConfig} from '@/config/services';
 
+// Initialize Genkit with credentials from the centralized config service.
+// This ensures that all AI flows use the same, validated API key.
 export const ai = genkit({
   plugins: [
-    googleAI(),
+    googleAI({ apiKey: servicesConfig.gcp.geminiApiKey }),
   ],
   // The default behavior is to swallow errors and log them to the trace.
   // This is not always desirable, so we throw the error instead.
