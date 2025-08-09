@@ -32,6 +32,7 @@ import PortAudit from "@/components/dashboard/PortAudit";
 import { Suspense } from "react";
 import ClientOnly from "@/components/layout/ClientOnly";
 import MeshHydrationAudit from "@/components/dashboard/MeshHydrationAudit";
+import OmegaEpochStream from "@/components/dashboard/OmegaEpochStream";
 
 
 const getStatusColor = (status: string) => {
@@ -157,6 +158,9 @@ function DashboardContent() {
               <PortAudit />
               <MeshHydrationAudit />
             </div>
+        </div>
+         <div className="grid gap-4">
+            <OmegaEpochStream />
         </div>
       </div>
     </AppLayout>
