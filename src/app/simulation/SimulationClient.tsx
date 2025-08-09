@@ -112,7 +112,7 @@ export default function SimulationClient() {
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {domainData.map(d => <SelectItem key={d.slug} value={d.slug}>{d.name}</SelectItem>)}
+                                            {domainData.map(d => <SelectItem key={d.slug} value={d.name}>{d.name}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
