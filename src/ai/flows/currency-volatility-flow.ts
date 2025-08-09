@@ -27,6 +27,7 @@ const prompt = ai.definePrompt({
   name: 'currencyVolatilityPrompt',
   input: {schema: CurrencyVolatilityInputSchema},
   output: {schema: CurrencyVolatilityOutputSchema},
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are a financial analyst AI specializing in foreign exchange markets. Your task is to analyze current currency rates against recent historical data to detect significant volatility.
 
 A currency is considered volatile if its current rate shows a significant deviation (e.g., more than 2-3 standard deviations) from the established historical trend or if there is a sharp, unexpected movement.
