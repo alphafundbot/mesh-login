@@ -1,3 +1,4 @@
+
 import AppLayout from "@/components/layout/AppLayout";
 import ArchiveClient from "./ArchiveClient";
 import { Suspense } from "react";
@@ -10,7 +11,7 @@ function ArchiveContent() {
                     <h1 className="text-3xl font-bold tracking-tight">Analysis Archive</h1>
                 </div>
                 <p className="text-muted-foreground">
-                    A historical log of all AI-generated trajectory synthesis reports from snapshot diffs.
+                    A historical log of all AI-generated analyses from simulations and snapshot diffs.
                 </p>
                 <ArchiveClient />
             </div>
@@ -25,3 +26,5 @@ export default function AnalysisArchivePage() {
         </Suspense>
     )
 }
+
+    

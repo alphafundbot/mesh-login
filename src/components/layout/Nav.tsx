@@ -42,7 +42,6 @@ const analysisItems = [
   { href: "/audit", label: "Audit Trail AI", icon: ShieldCheck },
   { href: "/validator", label: "Config Validator", icon: Binary },
   { href: "/analysis-archive", label: "Analysis Archive", icon: Archive },
-  { href: "/forecast-archive", label: "Forecast Archive", icon: Eye },
 ];
 
 const systemItems = [
@@ -141,3 +140,5 @@ export default function Nav() {
     </SidebarMenu>
   );
 }
+
+    

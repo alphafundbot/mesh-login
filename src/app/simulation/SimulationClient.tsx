@@ -32,10 +32,13 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot, TestTube, TrendingUp, TrendingDown } from "lucide-react";
-import { simulateOverride, type PredictiveOverrideOutput } from "@/ai/flows/predictive-override-flow";
+import { Bot, TestTube, TrendingUp, TrendingDown, Save } from "lucide-react";
+import { simulateOverride, type PredictiveOverrideOutput, type PredictiveOverrideInput } from "@/ai/flows/predictive-override-flow";
 import { domainData } from "@/lib/domains";
 import { cn } from "@/lib/utils";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 
 const formSchema = z.object({
   action: z.string().min(5, "Action must be at least 5 characters."),
@@ -45,7 +48,9 @@ const formSchema = z.object({
 
 export default function SimulationClient() {
     const [loading, setLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [result, setResult] = useState<PredictiveOverrideOutput | null>(null);
+    const [lastInput, setLastInput] = useState<PredictiveOverrideInput | null>(null);
     const { toast } = useToast();
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -59,6 +64,7 @@ export default function SimulationClient() {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setLoading(true);
         setResult(null);
+        setLastInput(values);
         try {
             const output = await simulateOverride(values);
             setResult(output);
@@ -74,6 +80,32 @@ export default function SimulationClient() {
             setLoading(false);
         }
     }
+
+    const handleSaveAnalysis = async () => {
+        if (!result || !lastInput) return;
+        setIsSaving(true);
+        try {
+          await addDoc(collection(db, "simulation_analysis"), {
+            input: lastInput,
+            output: result,
+            timestamp: serverTimestamp(),
+          });
+          toast({
+            title: "Analysis Saved",
+            description: "The simulation has been archived.",
+          });
+        } catch (error) {
+          console.error("Failed to save analysis:", error);
+          toast({
+            variant: "destructive",
+            title: "Save Failed",
+            description: "Could not archive the analysis.",
+          });
+        } finally {
+          setIsSaving(false);
+        }
+    };
+
 
     const ImpactScore = ({ score }: { score: number }) => {
         const isPositive = score > 0;
@@ -174,8 +206,16 @@ export default function SimulationClient() {
         {result && (
             <Card>
                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-accent"><Bot className="h-5 w-5" /> AI Impact Assessment</CardTitle>
-                    <CardDescription>Simulation ID: <span className="font-mono text-xs">{result.simulationId}</span></CardDescription>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle className="flex items-center gap-2 text-accent"><Bot className="h-5 w-5" /> AI Impact Assessment</CardTitle>
+                            <CardDescription>Simulation ID: <span className="font-mono text-xs">{result.simulationId}</span></CardDescription>
+                        </div>
+                         <Button onClick={handleSaveAnalysis} disabled={isSaving} variant="outline">
+                            <Save className="mr-2 h-4 w-4" />
+                            {isSaving ? "Archiving..." : "Archive Analysis"}
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div>
@@ -199,3 +239,5 @@ export default function SimulationClient() {
     </div>
   );
 }
+
+    

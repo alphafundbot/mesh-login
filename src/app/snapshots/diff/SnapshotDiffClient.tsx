@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -229,13 +230,20 @@ export default function SnapshotDiffClient() {
         <div>
           {snapshotA ? (
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold tracking-tight">
-                {snapshotA.label}
-              </h2>
-              <p className="text-muted-foreground">{snapshotA.description}</p>
+               <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">{snapshotA.label}</CardTitle>
+                  <CardDescription>{snapshotA.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <pre className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-lg overflow-x-auto">
+                    <code>{snapshotA.data.logs}</code>
+                  </pre>
+                </CardContent>
+              </Card>
             </div>
           ) : (
-            <Card className="flex items-center justify-center h-96">
+            <Card className="flex items-center justify-center h-full min-h-96">
               <p className="text-muted-foreground">
                 Select Snapshot A to view its data
               </p>
@@ -244,14 +252,21 @@ export default function SnapshotDiffClient() {
         </div>
         <div>
           {snapshotB ? (
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold tracking-tight">
-                {snapshotB.label}
-              </h2>
-              <p className="text-muted-foreground">{snapshotB.description}</p>
+             <div className="space-y-2">
+               <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">{snapshotB.label}</CardTitle>
+                  <CardDescription>{snapshotB.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <pre className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-lg overflow-x-auto">
+                    <code>{snapshotB.data.logs}</code>
+                  </pre>
+                </CardContent>
+              </Card>
             </div>
           ) : (
-            <Card className="flex items-center justify-center h-96">
+             <Card className="flex items-center justify-center h-full min-h-96">
               <p className="text-muted-foreground">
                 Select Snapshot B to view its data
               </p>
@@ -262,3 +277,5 @@ export default function SnapshotDiffClient() {
     </div>
   );
 }
+
+    
