@@ -21,6 +21,7 @@ import {
   TestTube,
   LogOut,
   Code,
+  CheckSquare,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -56,6 +57,7 @@ const systemItems = [
 
 const metaItems = [
     { href: "/meta/code-intelligence", label: "Code Intelligence", icon: Code },
+    { href: "/meta/meta-audit", label: "Meta-Audit", icon: CheckSquare },
 ]
 
 const SidebarGroupLabel = ({children}: {children: React.ReactNode}) => (
@@ -164,7 +166,7 @@ export default function Nav() {
                         <SidebarMenuItem key={item.href}>
                             <Link href={item.href}>
                                 <SidebarMenuButton
-                                    isActive={pathname === item.href}
+                                    isActive={pathname.startsWith(item.href)}
                                     tooltip={{ children: item.label }}
                                 >
                                     <item.icon />
