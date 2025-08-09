@@ -64,14 +64,14 @@ export default function RecentActivity() {
   
 
   useEffect(() => {
-    if (!user || !isBrowser()) {
+    if (!isBrowser() || !user) {
         if (!isBrowser()) setLoadingLogs(false);
         return;
     }
 
+    setLoadingLogs(true);
     const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(1));
     const unsubscribe = onSnapshot(q, async (logSnapshot) => {
-      setLoadingLogs(true);
       if (logSnapshot.empty) {
         // If no logs, generate initial one
         const initialLogs = generateSampleLogs();
@@ -122,7 +122,7 @@ export default function RecentActivity() {
 
 
   const handleRefresh = async (isStressTest: boolean) => {
-    if (!user || !isBrowser()) {
+    if (!isBrowser() || !user) {
         toast({
             title: "Authentication Error",
             description: "You must be logged in to simulate events.",
@@ -148,7 +148,7 @@ export default function RecentActivity() {
   };
 
   const handleAction = async (action: Action) => {
-    if (!user) return;
+    if (!isBrowser() || !user) return;
     toast({
       title: "Action Initiated",
       description: `${action} protocol has been initiated by ${user.role}.`,

@@ -155,7 +155,7 @@ export default function IntelligenceMap() {
   const { user } = useUser();
 
   const handleLogAction = useCallback(async (action: string, details: string) => {
-    if (!user || !isBrowser()) return;
+    if (!isBrowser() || !user) return;
     try {
       await addDoc(collection(db, "hud_actions"), {
         action,
@@ -211,32 +211,9 @@ export default function IntelligenceMap() {
       }
   }, [handleLogAction]);
 
-  useEffect(() => {
-    if (!user || !isBrowser()) {
-        if (!isBrowser()) setLoading(false);
-        return;
-    }
+  const getAnalysis = useCallback(async () => {
+    if (!isBrowser() || !user) return;
 
-    const q = doc(db, "intelligence_map_cache", "latest");
-    const unsubscribe = onSnapshot(q, (doc) => {
-        if (doc.exists()) {
-            const latestCache = doc.data().analysis as CrossDomainIntelligenceOutput;
-            processAnalysis(latestCache);
-        }
-        setLoading(false);
-    }, (error) => {
-        console.error("Failed to fetch cached analysis", error);
-        setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [processAnalysis, user]);
-
-
-  const getAnalysis = async () => {
-    if (!user || !isBrowser()) {
-        toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
-        return;
-    }
     setLoading(true);
     setEscalation(null);
     try {
@@ -253,6 +230,7 @@ export default function IntelligenceMap() {
           analysis: output,
           timestamp: serverTimestamp(),
       });
+      // The onSnapshot listener will pick up the change and update the state
       
     } catch (error) {
       console.error("AI cross-domain analysis failed:", error);
@@ -261,10 +239,34 @@ export default function IntelligenceMap() {
         title: "Analysis Failed",
         description: "Could not get AI analysis for the intelligence map.",
       });
-    } finally {
       setLoading(false);
     }
-  };
+  }, [toast, user]);
+  
+
+  useEffect(() => {
+    if (!isBrowser() || !user) {
+        if (!isBrowser()) setLoading(false);
+        return;
+    }
+
+    const q = doc(db, "intelligence_map_cache", "latest");
+    const unsubscribe = onSnapshot(q, (doc) => {
+        if (doc.exists()) {
+            const latestCache = doc.data().analysis as CrossDomainIntelligenceOutput;
+            processAnalysis(latestCache);
+            setLoading(false);
+        } else {
+            // If no cache, fetch it
+            getAnalysis();
+        }
+    }, (error) => {
+        console.error("Failed to fetch cached analysis", error);
+        setLoading(false);
+        getAnalysis(); // Fetch on error as well
+    });
+    return () => unsubscribe();
+  }, [processAnalysis, user, getAnalysis]);
 
 
   const handleActionClick = (action: string) => {

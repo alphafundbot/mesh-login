@@ -44,11 +44,12 @@ export default function ForecastMemoryMap() {
     const { user } = useUser();
 
     useEffect(() => {
-        if (!user || !isBrowser()) {
+        if (!isBrowser() || !user) {
             if(!isBrowser()) setLoading(false);
             return;
         } 
 
+        setLoading(true);
         const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const fetchedAnalyses = snapshot.docs.map((doc) => {

@@ -32,11 +32,12 @@ export default function StatusClient() {
   const { user } = useUser();
 
   useEffect(() => {
-    if (!user || !isBrowser()) {
+    if (!isBrowser() || !user) {
         if (!isBrowser()) setLoadingHistory(false);
         return;
     }
 
+    setLoadingHistory(true);
     const q = query(collection(db, "health_checks"), orderBy("timestamp", "desc"), limit(10));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const historicalData = snapshot.docs.map(doc => {

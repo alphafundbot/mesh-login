@@ -525,11 +525,12 @@ export default function HistoryClient() {
   }, [confidenceThreshold]);
 
   useEffect(() => {
-    if (!user || !isBrowser()) {
+    if (!isBrowser() || !user) {
         if(!isBrowser()) setLoading(false);
         return;
     }
 
+    setLoading(true);
     const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedLogs = snapshot.docs.map((doc) => {
@@ -643,13 +644,13 @@ export default function HistoryClient() {
     }, []);
     
     useEffect(() => {
-        if (!user || !isBrowser()) return;
+        if (!isBrowser() || !user || filteredLogs.length === 0) return;
 
         const autoStart = searchParams.get('autostart');
         const domain = searchParams.get('domain');
         const severity = searchParams.get('severity') as Severity;
 
-        if (autoStart !== 'true' || filteredLogs.length === 0) return;
+        if (autoStart !== 'true') return;
 
         if (domain && severity) {
             handleHeatmapCellClick(domain, severity);
@@ -658,7 +659,7 @@ export default function HistoryClient() {
 
 
   useEffect(() => {
-    if (!user || !isBrowser() || filteredLogs.length === 0) {
+    if (!isBrowser() || !user || filteredLogs.length === 0) {
       if(!isBrowser()) setReplayCommentary(null);
       return;
     };
@@ -670,6 +671,7 @@ export default function HistoryClient() {
     }
 
     const fetchCommentary = async () => {
+        if (!isBrowser() || !user) return;
         setLoadingReplay(true);
         setReplayCommentary(null);
         try {
@@ -722,6 +724,7 @@ export default function HistoryClient() {
   }, [searchParams, filteredLogs, toast, user]);
 
   const handleAnalysis = async () => {
+    if (!isBrowser() || !user) return;
     setLoadingAnalysis(true);
     setAnalysisResult(null);
     setFeedbackGiven({});
@@ -755,7 +758,7 @@ export default function HistoryClient() {
   };
 
   const handleFeedback = async (recommendation: Recommendation, rating: 'up' | 'down') => {
-    if (!user) return;
+    if (!isBrowser() || !user) return;
     if (feedbackGiven[recommendation.recommendationId]) return; 
 
     setFeedbackGiven(prev => ({...prev, [recommendation.recommendationId]: rating }));

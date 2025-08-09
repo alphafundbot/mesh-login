@@ -68,7 +68,7 @@ export default function ArchiveClient() {
     const { user } = useUser();
 
     useEffect(() => {
-        if (!user || !isBrowser()) {
+        if (!isBrowser() || !user) {
             if (!isBrowser()) setLoading(false);
             return;
         } 

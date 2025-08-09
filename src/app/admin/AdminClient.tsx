@@ -44,7 +44,7 @@ export default function AdminClient() {
   };
 
   const handleBackfill = async () => {
-    if (!user || !isBrowser()) {
+    if (!isBrowser() || !user) {
         toast({ title: "Error", description: "You must be logged in to perform this action."});
         return;
     }

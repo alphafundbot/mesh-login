@@ -11,15 +11,16 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Timer, DatabaseZap } from "lucide-react";
-import { db, auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { useUser } from "@/hooks/use-user";
 import { isBrowser } from "@/lib/env-check";
 
 export default function MeshHydrationAudit() {
   const [mountTime, setMountTime] = useState<number | null>(null);
   const [pingTime, setPingTime] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useUser();
 
   useEffect(() => {
     if (!isBrowser()) {
@@ -28,28 +29,27 @@ export default function MeshHydrationAudit() {
     }
     setMountTime(Math.round(performance.now()));
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const startTime = performance.now();
-          const docRef = doc(db, "intelligence_map_cache", "latest");
-          await getDoc(docRef);
-          const endTime = performance.now();
-          setPingTime(Math.round(endTime - startTime));
-        } catch (error) {
-          console.error("Firestore ping failed:", error);
-          setPingTime(null);
-        } finally {
-          setLoading(false);
-        }
-      } else {
+    if (user) {
+        const pingFirestore = async () => {
+            try {
+              const startTime = performance.now();
+              const docRef = doc(db, "intelligence_map_cache", "latest");
+              await getDoc(docRef);
+              const endTime = performance.now();
+              setPingTime(Math.round(endTime - startTime));
+            } catch (error) {
+              console.error("Firestore ping failed:", error);
+              setPingTime(null);
+            } finally {
+              setLoading(false);
+            }
+        };
+        pingFirestore();
+    } else {
         setLoading(false);
         setPingTime(null);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+    }
+  }, [user]);
 
   const renderMetric = (Icon: React.ElementType, title: string, value: string | null, unit: string, isLoading: boolean) => (
      <div className="flex items-center justify-between">
