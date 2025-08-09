@@ -103,6 +103,17 @@ export default function ForecastMemoryMap() {
         )
     }
 
+    if (!user && !loading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><BrainCircuit className="h-6 w-6 text-accent" />Forecast Memory Map</CardTitle>
+                    <CardDescription>Authentication required to view forecast analysis.</CardDescription>
+                </CardHeader>
+            </Card>
+        )
+    }
+
     if (analyses.length === 0) {
         return (
             <Card>

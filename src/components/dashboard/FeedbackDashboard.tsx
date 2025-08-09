@@ -105,6 +105,17 @@ export default function FeedbackDashboard() {
         );
     }
     
+    if (!user && !loading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Authentication Required</CardTitle>
+                    <CardDescription>You must be logged in to view feedback.</CardDescription>
+                </CardHeader>
+            </Card>
+        )
+    }
+
     if (feedback.length === 0) {
         return (
              <Card className="md:col-span-2 lg:col-span-3">

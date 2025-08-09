@@ -143,6 +143,17 @@ export default function ArchiveClient() {
         );
     }
 
+    if (!user && !loading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Authentication Required</CardTitle>
+                    <CardDescription>You must be logged in to view the analysis archive.</CardDescription>
+                </CardHeader>
+            </Card>
+        )
+    }
+
     if (analyses.length === 0) {
         return (
             <Card>

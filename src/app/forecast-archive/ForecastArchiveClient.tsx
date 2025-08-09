@@ -91,6 +91,17 @@ export default function ForecastArchiveClient() {
             </div>
         );
     }
+    
+    if (!user && !loading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Authentication Required</CardTitle>
+                    <CardDescription>You must be logged in to view the forecast archive.</CardDescription>
+                </CardHeader>
+            </Card>
+        )
+    }
 
     if (analyses.length === 0) {
         return (
