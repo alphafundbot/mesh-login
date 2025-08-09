@@ -75,7 +75,9 @@ export default function RecentActivity() {
       if (logSnapshot.empty) {
         // If no logs, generate initial one
         const initialLogs = generateSampleLogs();
-        await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+        if (isBrowser() && user) {
+            await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+        }
         setLatestLog(initialLogs);
       } else {
          const latestLogDoc = logSnapshot.docs[0];
@@ -251,7 +253,7 @@ export default function RecentActivity() {
         {result && !loading && (
           <div className="border-t border-border pt-4">
             <h3 className="font-semibold mb-2">AI Summary:</h3>
-            <p className="text-muted-foreground">{result.summary}</p>
+            <p className="text-muted-foreground whitespace-pre-wrap">{result.summary}</p>
             
             <h3 className="font-semibold mt-4 mb-2 flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />

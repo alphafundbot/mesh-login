@@ -715,6 +715,11 @@ export default function HistoryClient() {
                     .map(log => `[${log.timestamp.toISOString()}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
                     .join("\n");
 
+                if (!logsString) {
+                    setLoadingReplay(false);
+                    return;
+                }
+
                 const commentary = await generateReplayCommentary({
                     originalForecast: originalForecast,
                     actualLogs: logsString,
