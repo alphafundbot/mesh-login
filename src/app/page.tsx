@@ -1,3 +1,4 @@
+"use client";
 
 import Link from "next/link";
 import {
@@ -28,6 +29,8 @@ import RevenueMetrics from "@/components/dashboard/RevenueMetrics";
 import RevenueChart from "@/components/dashboard/RevenueChart";
 import CurrencySignalModule from "@/components/dashboard/CurrencySignalModule";
 import PortAudit from "@/components/dashboard/PortAudit";
+import { Suspense } from "react";
+import ClientOnly from "@/components/layout/ClientOnly";
 
 
 const getStatusColor = (status: string) => {
@@ -41,7 +44,7 @@ const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(value);
 };
 
-export default function DashboardPage() {
+function DashboardContent() {
   return (
     <AppLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8">
@@ -151,5 +154,16 @@ export default function DashboardPage() {
         </div>
       </div>
     </AppLayout>
-  );
+  )
+}
+
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ClientOnly>
+        <DashboardContent />
+      </ClientOnly>
+    </Suspense>
+  )
 }
