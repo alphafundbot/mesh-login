@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import {
   Card,
@@ -39,29 +40,37 @@ export default function ForecastArchiveClient() {
     const router = useRouter();
 
     useEffect(() => {
-        const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const fetchedAnalyses = snapshot.docs.map((doc) => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    forecast: data.forecast,
-                    timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
-                };
-            });
-            setAnalyses(fetchedAnalyses);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching forecast archive:", error);
-            toast({
-                variant: "destructive",
-                title: "Fetch Error",
-                description: "Could not fetch forecast archive.",
-            });
-            setLoading(false);
+        const authUnsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"));
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    const fetchedAnalyses = snapshot.docs.map((doc) => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            forecast: data.forecast,
+                            timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
+                        };
+                    });
+                    setAnalyses(fetchedAnalyses);
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching forecast archive:", error);
+                    toast({
+                        variant: "destructive",
+                        title: "Fetch Error",
+                        description: "Could not fetch forecast archive.",
+                    });
+                    setLoading(false);
+                });
+
+                return () => unsubscribe();
+            } else {
+                setLoading(false);
+            }
         });
 
-        return () => unsubscribe();
+        return () => authUnsubscribe();
     }, [toast]);
 
     const handleReplay = (timestamp: Date) => {

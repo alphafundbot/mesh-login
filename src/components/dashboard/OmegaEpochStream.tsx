@@ -3,7 +3,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 import { BrainCircuit } from "lucide-react";
@@ -32,25 +33,32 @@ export default function OmegaEpochStream() {
   const [capitalStateFilter, setCapitalStateFilter] = useState<string>("all");
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'omega_epochs'),
-      orderBy('epoch', 'desc')
-    );
+    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
+        if(user) {
+            const q = query(
+              collection(db, 'omega_epochs'),
+              orderBy('epoch', 'desc')
+            );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ 
-          id: doc.id,
-          ...doc.data(),
-          timestamp: (doc.data().timestamp as Timestamp)?.toDate() || new Date()
-      })) as Epoch[];
-      setEpochs(data);
-      setLoading(false);
-    }, (error) => {
-        console.error("Omega Epoch Stream Error:", error);
-        setLoading(false);
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+              const data = snapshot.docs.map(doc => ({ 
+                  id: doc.id,
+                  ...doc.data(),
+                  timestamp: (doc.data().timestamp as Timestamp)?.toDate() || new Date()
+              })) as Epoch[];
+              setEpochs(data);
+              setLoading(false);
+            }, (error) => {
+                console.error("Omega Epoch Stream Error:", error);
+                setLoading(false);
+            });
+
+            return () => unsubscribe();
+        } else {
+            setLoading(false);
+        }
     });
-
-    return () => unsubscribe();
+    return () => authUnsubscribe();
   }, []);
 
   const { uniqueMetaStrategies, uniqueCapitalStates } = useMemo(() => {

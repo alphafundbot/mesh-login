@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, onSnapshot, Timestamp, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
@@ -28,31 +29,38 @@ export default function FeedbackDashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const q = query(collection(db, 'feedback'), orderBy("timestamp", "desc"));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            if (snapshot.empty) {
-                setLoading(false);
-                return;
-            }
-            const fetchedFeedback = snapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    recommendationId: data.recommendationId,
-                    rating: data.rating,
-                    role: data.role,
-                    recommendationText: data.recommendationText || `Rec ID: ${data.recommendationId}`,
-                    timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
-                } as Feedback;
-            });
-            setFeedback(fetchedFeedback);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching feedback:", error);
-            setLoading(false);
-        });
+        const authUnsubscribe = onAuthStateChanged(auth, (user) => {
+            if(user) {
+                const q = query(collection(db, 'feedback'), orderBy("timestamp", "desc"));
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    if (snapshot.empty) {
+                        setLoading(false);
+                        return;
+                    }
+                    const fetchedFeedback = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            recommendationId: data.recommendationId,
+                            rating: data.rating,
+                            role: data.role,
+                            recommendationText: data.recommendationText || `Rec ID: ${data.recommendationId}`,
+                            timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
+                        } as Feedback;
+                    });
+                    setFeedback(fetchedFeedback);
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching feedback:", error);
+                    setLoading(false);
+                });
 
-        return () => unsubscribe();
+                return () => unsubscribe();
+            } else {
+                setLoading(false);
+            }
+        });
+        return () => authUnsubscribe();
     }, []);
 
     const { byRole, topLiked, topDisliked } = useMemo(() => {

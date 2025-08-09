@@ -34,7 +34,8 @@ import {
   ShieldX,
   RefreshCw,
 } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, setDoc } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import {
@@ -212,18 +213,26 @@ export default function IntelligenceMap() {
   }, []);
 
   useEffect(() => {
-    const q = doc(db, "intelligence_map_cache", "latest");
-    const unsubscribe = onSnapshot(q, (doc) => {
-        if (doc.exists()) {
-            const latestCache = doc.data().analysis as CrossDomainIntelligenceOutput;
-            processAnalysis(latestCache);
+    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
+        if(user) {
+            const q = doc(db, "intelligence_map_cache", "latest");
+            const unsubscribe = onSnapshot(q, (doc) => {
+                if (doc.exists()) {
+                    const latestCache = doc.data().analysis as CrossDomainIntelligenceOutput;
+                    processAnalysis(latestCache);
+                }
+                setLoading(false);
+            }, (error) => {
+                console.error("Failed to fetch cached analysis", error);
+                setLoading(false);
+            });
+            return () => unsubscribe();
+        } else {
+            setLoading(false);
         }
-        setLoading(false);
-    }, (error) => {
-        console.error("Failed to fetch cached analysis", error);
-        setLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => authUnsubscribe();
   }, [processAnalysis]);
 
 

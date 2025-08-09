@@ -17,7 +17,8 @@ import {
 } from "@/ai/flows/audit-trail-ai";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { canUserPerform, type Action } from "@/lib/roles";
@@ -63,28 +64,36 @@ export default function RecentActivity() {
   
 
   useEffect(() => {
-    const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(1));
-    const unsubscribe = onSnapshot(q, async (logSnapshot) => {
-      setLoadingLogs(true);
-      if (logSnapshot.empty) {
-        // If no logs, generate initial one
-        const initialLogs = generateSampleLogs();
-        await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
-        setLatestLog(initialLogs);
-      } else {
-         const latestLogDoc = logSnapshot.docs[0];
-         const latestLogData = latestLogDoc.data();
-         setLatestLog(latestLogData.logs);
-      }
-      setResult(null); // Clear previous analysis when new logs arrive
-      setLoadingLogs(false);
-    }, (error) => {
-      console.error("Firestore snapshot error:", error);
-      setLoading(false);
-      setLoadingLogs(false);
+    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
+        if(user) {
+            const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(1));
+            const unsubscribe = onSnapshot(q, async (logSnapshot) => {
+              setLoadingLogs(true);
+              if (logSnapshot.empty) {
+                // If no logs, generate initial one
+                const initialLogs = generateSampleLogs();
+                await addDoc(collection(db, "audit_logs"), { logs: initialLogs, timestamp: serverTimestamp() });
+                setLatestLog(initialLogs);
+              } else {
+                 const latestLogDoc = logSnapshot.docs[0];
+                 const latestLogData = latestLogDoc.data();
+                 setLatestLog(latestLogData.logs);
+              }
+              setResult(null); // Clear previous analysis when new logs arrive
+              setLoadingLogs(false);
+            }, (error) => {
+              console.error("Firestore snapshot error:", error);
+              setLoading(false);
+              setLoadingLogs(false);
+            });
+
+            return () => unsubscribe();
+        } else {
+            setLoadingLogs(false);
+        }
     });
 
-    return () => unsubscribe();
+    return () => authUnsubscribe();
   }, [toast]);
 
   const handleAnalysis = async () => {

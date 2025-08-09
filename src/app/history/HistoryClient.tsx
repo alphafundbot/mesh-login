@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, orderBy, onSnapshot, Timestamp, where, getDocs, limit, doc, updateDoc, addDoc } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import {
@@ -521,32 +522,39 @@ export default function HistoryClient() {
   }, [confidenceThreshold]);
 
   useEffect(() => {
-    const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedLogs = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          action: data.action,
-          role: data.role,
-          strategist: data.strategist,
-          details: data.details,
-          timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
-        };
-      });
-      setAllLogs(fetchedLogs);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching action logs:", error);
-      toast({
-        variant: "destructive",
-        title: "Fetch Error",
-        description: "Could not fetch Signal Memory logs.",
-      });
-      setLoading(false);
-    });
+    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+              const fetchedLogs = snapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                  id: doc.id,
+                  action: data.action,
+                  role: data.role,
+                  strategist: data.strategist,
+                  details: data.details,
+                  timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
+                };
+              });
+              setAllLogs(fetchedLogs);
+              setLoading(false);
+            }, (error) => {
+              console.error("Error fetching action logs:", error);
+              toast({
+                variant: "destructive",
+                title: "Fetch Error",
+                description: "Could not fetch Signal Memory logs.",
+              });
+              setLoading(false);
+            });
 
-    return () => unsubscribe();
+            return () => unsubscribe();
+        } else {
+            setLoading(false);
+        }
+    });
+    return () => authUnsubscribe();
   }, [toast]);
 
   const { filteredLogs, previousPeriodLogs } = useMemo(() => {
