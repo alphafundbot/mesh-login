@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -27,6 +28,8 @@ import { useRouter } from "next/navigation";
 import { tagRationale } from "@/ai/flows/rationale-tagging-flow";
 import type { ActionLog, Severity, TaggedRationale, ClusterInfo, ClusterMap } from "@/lib/types";
 import { parseDetails, RISK_WEIGHTS } from "@/lib/types";
+import { useUser } from "@/hooks/use-user";
+import { isBrowser } from "@/lib/env-check";
 
 
 const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
@@ -105,6 +108,7 @@ export default function VisualIntegrityDashboard() {
   const [loadingLogs, setLoadingLogs] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useUser();
   
   const [allLogs, setAllLogs] = useState<ActionLog[]>([]);
   const [suppressionForecast, setSuppressionForecast] = useState<SuppressionForecastOutput | null>(null);
@@ -124,6 +128,10 @@ export default function VisualIntegrityDashboard() {
   }, [allLogs]);
 
   useEffect(() => {
+    if (!isBrowser() || !user) {
+        if (!user) setLoadingLogs(false);
+        return;
+    }
     const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         setLoadingLogs(true);
@@ -141,9 +149,10 @@ export default function VisualIntegrityDashboard() {
         setLoadingLogs(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const handleGenerateForecasts = async () => {
+    if (!isBrowser() || !user) return;
     setLoading(true);
     setSuppressionForecast(null);
     setRationaleForecast(null);
@@ -277,6 +286,7 @@ export default function VisualIntegrityDashboard() {
   }, [globalClusters, previousPeriodLogs]);
 
   useEffect(() => {
+    if (!isBrowser()) return;
     const saved = localStorage.getItem("forecastConfidenceThreshold");
     if (saved !== null) {
       setConfidenceThreshold(parseFloat(saved));
@@ -284,9 +294,8 @@ export default function VisualIntegrityDashboard() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("forecastConfidenceThreshold", String(confidenceThreshold));
-    }
+    if (!isBrowser()) return;
+    localStorage.setItem("forecastConfidenceThreshold", String(confidenceThreshold));
   }, [confidenceThreshold]);
 
   const handleInvestigate = () => {
@@ -321,7 +330,7 @@ export default function VisualIntegrityDashboard() {
                     AI-surfaced view of system stress, risk trends, and predictive forecasts.
                 </CardDescription>
             </div>
-            <Button onClick={handleGenerateForecasts} disabled={loading || loadingLogs} size="sm">
+            <Button onClick={handleGenerateForecasts} disabled={loading || loadingLogs || !user} size="sm">
                 <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
                 Generate Forecasts
             </Button>

@@ -702,6 +702,7 @@ export default function HistoryClient() {
     const startTimeParam = searchParams.get('startTime');
     if (!isBrowser() || !user || filteredLogs.length === 0 || !startTimeParam) {
       if (!user) setReplayCommentary(null);
+      setLoadingReplay(false);
       return;
     };
     

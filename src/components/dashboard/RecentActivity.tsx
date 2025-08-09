@@ -102,7 +102,7 @@ export default function RecentActivity() {
   }, [user, toast, userLoading]);
 
   const handleAnalysis = async () => {
-    if (!latestLog) {
+    if (!isBrowser() || !user || !latestLog) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -230,7 +230,7 @@ export default function RecentActivity() {
             <pre className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-lg overflow-x-auto">
                 <code>{latestLog}</code>
             </pre>
-            <Button onClick={handleAnalysis} disabled={loading || !latestLog} className="mt-4">
+            <Button onClick={handleAnalysis} disabled={loading || !latestLog || !user} className="mt-4">
                 {loading ? "Analyzing..." : "Analyze with AI"}
             </Button>
           </div>

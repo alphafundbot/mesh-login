@@ -25,6 +25,12 @@ const sanitizeDocId = (id: string): string => {
   return id.replace(/[\/.]/g, '_');
 };
 
+const desanitizeDocId = (id: string): string => {
+  // This is a best-effort reversal. It assumes original didn't have underscores.
+  // A more robust solution would store the original path in the document itself.
+  return id.replace(/_/g, '/');
+}
+
 /**
  * Updates or creates an audit result in Firestore.
  * @param filePath The path of the file that was audited.
@@ -38,6 +44,7 @@ export async function updateAuditResult(
   const docRef = doc(db, "meta_audit_results", docId);
   await setDoc(docRef, {
     analysis,
+    filePath, // Store original path
     auditedAt: serverTimestamp(),
   });
 }
@@ -55,15 +62,17 @@ export async function getAuditResults(): Promise<Record<string, AuditResult>> {
   snapshot.forEach((doc) => {
     const data = doc.data();
     // Convert Firestore Timestamp to JS Date
-    const auditedAt = (data.auditedAt as Timestamp)?.toDate() || new Date();
+    const auditedAt = (data.auditedAt as Timestamp)?.toDate();
     
-    // Convert sanitized ID back to original file path for the key
-    const originalFilePath = doc.id.replace(/_/g, '/');
+    // Use the stored original file path, or fall back to desanitizing the ID
+    const originalFilePath = data.filePath || desanitizeDocId(doc.id);
 
-    results[originalFilePath] = {
-      analysis: data.analysis,
-      auditedAt: auditedAt,
-    };
+    if (auditedAt) {
+        results[originalFilePath] = {
+            analysis: data.analysis,
+            auditedAt: auditedAt,
+        };
+    }
   });
   
   return results;

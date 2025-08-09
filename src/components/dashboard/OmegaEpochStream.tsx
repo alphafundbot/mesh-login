@@ -129,7 +129,7 @@ export default function OmegaEpochStream() {
                     <Skeleton className="h-16 w-full" />
                 </div>
             ) : filteredEpochs.length === 0 ? (
-                 <p className="text-muted-foreground text-center py-4">{epochs.length > 0 ? "No epochs match the current filters." : "Awaiting Omega Epoch stream..."}</p>
+                 <p className="text-muted-foreground text-center py-4">{!user ? "Login to view stream." : epochs.length > 0 ? "No epochs match the current filters." : "Awaiting Omega Epoch stream..."}</p>
             ) : (
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                     {filteredEpochs.map(e => (

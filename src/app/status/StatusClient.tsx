@@ -60,6 +60,7 @@ export default function StatusClient() {
   }, [user]);
 
   async function handleTest() {
+    if (!isBrowser() || !user) return;
     setLoading(true);
     setResult(null);
     const apiResult = await checkApiHealth();

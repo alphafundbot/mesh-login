@@ -107,7 +107,9 @@ export default function MetaAuditClient() {
   
   const formatDate = (date: Date | undefined) => {
     if (!date) return "Never";
-    return new Date(date).toLocaleString();
+    const d = new Date(date);
+    if(isNaN(d.getTime())) return 'Invalid Date';
+    return d.toLocaleString();
   }
 
   return (

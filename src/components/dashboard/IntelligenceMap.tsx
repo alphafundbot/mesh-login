@@ -282,7 +282,7 @@ export default function IntelligenceMap() {
   };
   
   const handleRationaleSubmit = () => {
-    if (!escalation || !escalation.action) return;
+    if (!isBrowser() || !user || !escalation || !escalation.action) return;
 
     const defaultRationale = SEVERITY_RATIONALE_TEMPLATES[escalation.severity];
     const isOverridden = rationale !== defaultRationale;
@@ -299,7 +299,7 @@ export default function IntelligenceMap() {
   };
 
   const handleDismiss = () => {
-    if (!escalation) return;
+    if (!isBrowser() || !user || !escalation) return;
     const details = `Dismissed ${escalation.severity} escalation for ${escalation.anomalousDomains.map(d => d.domain).join(', ')}`;
     handleLogAction("DISMISS", details);
     setEscalation(null);
