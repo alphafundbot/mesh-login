@@ -29,26 +29,29 @@ export default function MeshHydrationAudit() {
     }
     setMountTime(Math.round(performance.now()));
 
-    if (user) {
-        const pingFirestore = async () => {
-            try {
-              const startTime = performance.now();
-              const docRef = doc(db, "intelligence_map_cache", "latest");
-              await getDoc(docRef);
-              const endTime = performance.now();
-              setPingTime(Math.round(endTime - startTime));
-            } catch (error) {
-              console.error("Firestore ping failed:", error);
-              setPingTime(null);
-            } finally {
-              setLoading(false);
-            }
-        };
-        pingFirestore();
-    } else {
-        setLoading(false);
-        setPingTime(null);
-    }
+    const pingFirestore = async () => {
+        if (!user) {
+            setLoading(false);
+            setPingTime(null);
+            return;
+        }
+        try {
+          const startTime = performance.now();
+          // Use a document that is very likely to exist, like the intelligence map cache
+          const docRef = doc(db, "intelligence_map_cache", "latest");
+          await getDoc(docRef);
+          const endTime = performance.now();
+          setPingTime(Math.round(endTime - startTime));
+        } catch (error) {
+          console.error("Firestore ping failed:", error);
+          setPingTime(null);
+        } finally {
+          setLoading(false);
+        }
+    };
+    
+    pingFirestore();
+
   }, [user]);
 
   const renderMetric = (Icon: React.ElementType, title: string, value: string | null, unit: string, isLoading: boolean) => (
@@ -61,7 +64,7 @@ export default function MeshHydrationAudit() {
             value !== null ? (
                 <span className="font-mono text-sm">{value}{unit}</span>
             ) : (
-                 <span className="font-mono text-sm text-destructive">Error</span>
+                 <span className="font-mono text-sm text-destructive">N/A</span>
             )
         )}
     </div>
@@ -79,7 +82,7 @@ export default function MeshHydrationAudit() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {renderMetric(Timer, "HUD Mount Time", mountTime?.toString() ?? null, "ms", !mountTime)}
+        {renderMetric(Timer, "HUD Mount Time", mountTime?.toString() ?? null, "ms", !mountTime && isBrowser())}
         {renderMetric(DatabaseZap, "Firestore Ping", pingTime?.toString() ?? null, "ms", loading)}
       </CardContent>
     </Card>

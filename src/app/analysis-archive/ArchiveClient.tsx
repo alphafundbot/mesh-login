@@ -73,6 +73,7 @@ export default function ArchiveClient() {
             return;
         } 
 
+        setLoading(true);
         const diffQuery = query(collection(db, "diff_analysis"), orderBy("timestamp", "desc"));
         const simQuery = query(collection(db, "simulation_analysis"), orderBy("timestamp", "desc"));
 

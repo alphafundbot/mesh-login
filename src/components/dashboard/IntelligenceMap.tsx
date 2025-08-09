@@ -212,8 +212,6 @@ export default function IntelligenceMap() {
   }, [handleLogAction]);
 
   const getAnalysis = useCallback(async () => {
-    if (!isBrowser() || !user) return;
-
     setLoading(true);
     setEscalation(null);
     try {
@@ -226,11 +224,13 @@ export default function IntelligenceMap() {
 
       const output = await analyzeCrossDomainIntelligence({ domainLogs });
       
+      if (!isBrowser() || !user) return; // Guard Firestore write
       await setDoc(doc(db, "intelligence_map_cache", "latest"), {
           analysis: output,
           timestamp: serverTimestamp(),
       });
-      // The onSnapshot listener will pick up the change and update the state
+      processAnalysis(output);
+      setLoading(false);
       
     } catch (error) {
       console.error("AI cross-domain analysis failed:", error);
@@ -241,7 +241,7 @@ export default function IntelligenceMap() {
       });
       setLoading(false);
     }
-  }, [toast, user]);
+  }, [toast, user, processAnalysis]);
   
 
   useEffect(() => {
@@ -257,13 +257,12 @@ export default function IntelligenceMap() {
             processAnalysis(latestCache);
             setLoading(false);
         } else {
-            // If no cache, fetch it
             getAnalysis();
         }
     }, (error) => {
         console.error("Failed to fetch cached analysis", error);
         setLoading(false);
-        getAnalysis(); // Fetch on error as well
+        getAnalysis(); 
     });
     return () => unsubscribe();
   }, [processAnalysis, user, getAnalysis]);
@@ -451,11 +450,11 @@ export default function IntelligenceMap() {
                 <SeverityIcon className="h-6 w-6" />
                 {escalation.severity} Escalation Protocol
               </DialogTitle>
-              <DialogDescription>
-                The system has detected anomalies in{" "}
-                {escalation.anomalousDomains.length} domains, requiring
-                strategist attention.
-              </DialogDescription>
+                <DialogDescription>
+                  The system has detected anomalies in{" "}
+                  {escalation.anomalousDomains.length} domains, requiring
+                  strategist attention.
+                </DialogDescription>
             </DialogHeader>
 
             <div className="mt-4 space-y-2">
