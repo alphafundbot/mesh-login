@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -241,7 +240,7 @@ export default function VisualIntegrityDashboard() {
     
     const getTopSeverity = (severities: Record<Severity, number>): Severity => {
         if (severities.Catastrophic > 0) return 'Catastrophic';
-        if (severities.Critical > 0) return 'Warning';
+        if (severities.Critical > 0) return 'Critical';
         return 'Warning';
     }
 
