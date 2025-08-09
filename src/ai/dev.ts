@@ -17,3 +17,4 @@ import '@/ai/flows/volatility-anomaly-flow.ts';
 import '@/ai/flows/currency-volatility-flow.ts';
 import '@/ai/flows/predictive-override-flow.ts';
 import '@/ai/flows/code-intelligence-flow.ts';
+import '@/ai/flows/api-discovery-flow.ts';

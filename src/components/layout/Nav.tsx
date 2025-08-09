@@ -22,7 +22,8 @@ import {
   LogOut,
   Code,
   CheckSquare,
-  Network
+  Network,
+  Globe
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -52,6 +53,7 @@ const analysisItems = [
 const systemItems = [
     { href: "/status", label: "API Status", icon: Wifi },
     { href: "/apis", label: "API Management", icon: Network },
+    { href: "/discovery", label: "API Discovery", icon: Globe },
     { href: "/admin", label: "System Admin", icon: Settings },
     { href: "/usage", label: "Usage Dashboard", icon: BarChartHorizontal },
     { href: "/queue", label: "Synthesis Queue", icon: FileClock },
