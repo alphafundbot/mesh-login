@@ -61,10 +61,13 @@ export default function OmegaEpochStream() {
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                     {epochs.map(e => (
                         <div key={e.id} className="border-b border-border/50 pb-2 text-xs">
-                            <div className="font-bold text-foreground">🧠 Epoch {e.epoch}</div>
-                            <div className="text-muted-foreground"><span className="font-semibold text-primary/80">Strategy:</span> {e.meta_strategy}</div>
+                            <div className="flex justify-between items-center">
+                                <span className="font-bold text-foreground">🧠 Epoch {e.epoch}</span>
+                                <span className="text-muted-foreground">{e.timestamp.toLocaleString()}</span>
+                            </div>
+                            <div className="text-muted-foreground mt-1"><span className="font-semibold text-primary/80">Strategy:</span> {e.meta_strategy}</div>
                             <div className="text-muted-foreground"><span className="font-semibold text-primary/80">Capital:</span> {e.capital_state}</div>
-                            <div className="text-muted-foreground"><span className="font-semibold text-primary/80">Cognition:</span> {e.cognition_loop}</div>
+                            <div className="text-muted-foreground italic bg-muted/30 p-2 mt-1 rounded-md"><span className="font-semibold not-italic text-primary/80">Cognition:</span> {e.cognition_loop}</div>
                         </div>
                     ))}
                 </div>

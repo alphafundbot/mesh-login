@@ -79,6 +79,10 @@ function DashboardContent() {
             </div>
         </div>
         
+         <div className="grid gap-4">
+            <OmegaEpochStream />
+        </div>
+
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-primary-foreground mb-4">Domains</h2>
            <Carousel
@@ -158,9 +162,6 @@ function DashboardContent() {
               <PortAudit />
               <MeshHydrationAudit />
             </div>
-        </div>
-         <div className="grid gap-4">
-            <OmegaEpochStream />
         </div>
       </div>
     </AppLayout>
