@@ -802,7 +802,7 @@ export default function HistoryClient() {
   const filteredRecommendations = useMemo(() => {
     if (!analysisResult) return [];
     return sortedRecommendations.filter(rec => rec.confidence >= confidenceThreshold);
-  }, [sortedRecommendations, confidenceThreshold]);
+  }, [sortedRecommendations, confidenceThreshold, analysisResult]);
 
   return (
     <div className="space-y-6">
@@ -815,7 +815,7 @@ export default function HistoryClient() {
         {replayCommentary && <ReplayCommentaryDisplay commentary={replayCommentary} />}
 
         {viewMode === 'logs' && (
-            <>
+            <div className="space-y-6">
                 <OverrideHeatmap logs={filteredLogs} onCellClick={handleHeatmapCellClick} />
                 
                 <GlobalClusterPanel logs={filteredLogs} previousLogs={previousPeriodLogs} onClusterClick={handleClusterClick} />
@@ -1000,7 +1000,7 @@ export default function HistoryClient() {
                     </CardContent>
                     </Card>
                 )}
-            </>
+            </div>
         )}
         
         {viewMode === 'feedback' && (
