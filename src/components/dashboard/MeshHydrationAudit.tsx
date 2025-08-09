@@ -20,14 +20,12 @@ export default function MeshHydrationAudit() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Record the time it takes for this component to mount
     setMountTime(Math.round(performance.now()));
 
     const checkFirestore = async () => {
       setLoading(true);
       try {
         const startTime = performance.now();
-        // Ping a known document to check connection status and latency
         const docRef = doc(db, "intelligence_map_cache", "latest");
         await getDoc(docRef);
         const endTime = performance.now();
