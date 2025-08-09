@@ -101,8 +101,8 @@ export default function Nav() {
                     <SidebarMenuSub>
                         {snapshotRegistry.map((item) => (
                         <SidebarMenuSubItem key={item.slug}>
-                            <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/\${item.slug}`}>
-                                <Link href={\`/snapshots/\${item.slug}\`}>
+                            <SidebarMenuSubButton asChild isActive={pathname === `/snapshots/${item.slug}`}>
+                                <Link href={`/snapshots/${item.slug}`}>
                                     {item.label}
                                 </Link>
                             </SidebarMenuSubButton>
