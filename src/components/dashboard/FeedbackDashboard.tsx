@@ -167,6 +167,29 @@ export default function FeedbackDashboard() {
                     ))}
                 </CardContent>
             </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-primary"><ThumbsDown className="h-5 w-5" />Recent Feedback</CardTitle>
+                    <CardDescription>Latest interactions from all strategists.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {feedback.slice(0, 5).map(f => (
+                        <div key={f.id} className="text-xs p-2 rounded-md bg-muted/30">
+                            <div className="flex justify-between items-center">
+                                <span className="font-semibold">{f.role}: {f.strategist}</span>
+                                {f.rating === 'up' ? (
+                                    <Badge variant="outline" className="border-green-500/50 text-green-400">Approved</Badge>
+                                ) : (
+                                    <Badge variant="destructive">Rejected</Badge>
+                                )}
+                            </div>
+                            <p className="text-muted-foreground truncate mt-1">"{f.recommendationText}"</p>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
         </div>
     );
 }
+
+    
