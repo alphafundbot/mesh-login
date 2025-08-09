@@ -17,10 +17,32 @@ import {
     CurrencyVolatilityInputSchema,
     CurrencyVolatilityOutputSchema
 } from '@/lib/types/currency';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 
 export async function analyzeCurrencyVolatility(input: CurrencyVolatilityInput): Promise<CurrencyVolatilityOutput> {
-  return currencyVolatilityFlow(input);
+  const cacheRef = doc(db, "currency_volatility_cache", "latest_analysis");
+  const cacheDoc = await getDoc(cacheRef);
+
+  if (cacheDoc.exists()) {
+    const cacheData = cacheDoc.data();
+    const now = new Date();
+    const cacheTime = cacheData.timestamp.toDate();
+    // Cache is valid for 1 hour
+    if (now.getTime() - cacheTime.getTime() < 60 * 60 * 1000) {
+      return cacheData.analysis as CurrencyVolatilityOutput;
+    }
+  }
+
+  const result = await currencyVolatilityFlow(input);
+
+  await setDoc(cacheRef, {
+    analysis: result,
+    timestamp: serverTimestamp()
+  });
+
+  return result;
 }
 
 const prompt = ai.definePrompt({

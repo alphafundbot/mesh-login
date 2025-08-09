@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -19,10 +19,10 @@ export default function CurrencySignalModule() {
     const [analysisResult, setAnalysisResult] = useState<CurrencyVolatilityOutput | null>(null);
     const { toast } = useToast();
 
-    const handleAnalysis = async () => {
+    const handleAnalysis = useCallback(async () => {
         setLoading(true);
-        setAnalysisResult(null);
         try {
+            // Generate fresh data for every analysis request to simulate live data
             const { currentRates, historicalRates, baseCurrency } = generateCurrencyData();
 
             const result = await analyzeCurrencyVolatility({
@@ -38,23 +38,51 @@ export default function CurrencySignalModule() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [toast]);
     
     useEffect(() => {
         handleAnalysis();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [handleAnalysis]);
 
     const renderLoading = () => (
         <CardContent>
-             <div className="grid grid-cols-2 gap-4">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
+             <div className="space-y-4">
+                <Skeleton className="h-16 w-full" />
+                 <div className="grid grid-cols-2 gap-4">
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                </div>
             </div>
         </CardContent>
     );
+
+    const renderContent = () => {
+        if (!analysisResult) {
+            return (
+                <CardContent>
+                    <p className="text-muted-foreground text-center py-4">No analysis data available.</p>
+                </CardContent>
+            )
+        }
+        return (
+            <CardContent className="space-y-4">
+                <div className={cn("p-3 rounded-lg border", analysisResult.isVolatile ? 'bg-destructive/10 border-destructive/20' : 'bg-green-500/10 border-green-500/20')}>
+                   <div className="font-semibold flex items-center gap-2 mb-2">
+                    {analysisResult.isVolatile ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <Globe className="h-4 w-4 text-green-500" />}
+                    AI Volatility Analysis
+                   </div>
+                   <p className="text-sm text-muted-foreground">{analysisResult.analysis}</p>
+                   {analysisResult.isVolatile && analysisResult.volatileCurrencies.length > 0 && (
+                     <div className="flex flex-wrap gap-2 mt-2">
+                       {analysisResult.volatileCurrencies.map(c => <Badge key={c} variant="destructive">{c}</Badge>)}
+                     </div>
+                   )}
+                </div>
+            </CardContent>
+        )
+    };
 
     return (
         <Card>
@@ -65,24 +93,9 @@ export default function CurrencySignalModule() {
                         <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
                     </Button>
                 </div>
-                <CardDescription>Live Forex rates (USD base). Free plan data is delayed.</CardDescription>
+                <CardDescription>Live Forex rates (USD base). Data is cached for 1 hour.</CardDescription>
             </CardHeader>
-            {loading ? renderLoading() : analysisResult && (
-                <CardContent className="space-y-4">
-                    <div className={cn("p-3 rounded-lg border", analysisResult.isVolatile ? 'bg-destructive/10 border-destructive/20' : 'bg-green-500/10 border-green-500/20')}>
-                       <div className="font-semibold flex items-center gap-2 mb-2">
-                        {analysisResult.isVolatile && <AlertTriangle className="h-4 w-4 text-destructive" />}
-                        AI Volatility Analysis
-                       </div>
-                       <p className="text-sm text-muted-foreground">{analysisResult.analysis}</p>
-                       {analysisResult.isVolatile && analysisResult.volatileCurrencies.length > 0 && (
-                         <div className="flex flex-wrap gap-2 mt-2">
-                           {analysisResult.volatileCurrencies.map(c => <Badge key={c} variant="destructive">{c}</Badge>)}
-                         </div>
-                       )}
-                    </div>
-                </CardContent>
-            )}
+            {loading ? renderLoading() : renderContent()}
         </Card>
     );
 }
