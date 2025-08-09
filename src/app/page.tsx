@@ -160,7 +160,9 @@ function DashboardContent() {
             </div>
             <div className="space-y-4">
               <PortAudit />
-              <MeshHydrationAudit />
+              <ClientOnly>
+                <MeshHydrationAudit />
+              </ClientOnly>
             </div>
         </div>
       </div>
