@@ -47,14 +47,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: role,
         });
       } else {
-        // In a real app, you would set user to `null` here to handle a logged-out state.
-        // For this controlled environment, we'll ensure a default user is always present.
-        setUser({
-            uid: 'dev-user',
-            name: 'Nehemie',
-            email: 'nehemie@stratagem.ai',
-            role: 'Architect'
-        });
+        setUser(null);
       }
       setLoading(false);
     });

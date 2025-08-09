@@ -1,4 +1,9 @@
-import React from "react";
+
+"use client";
+
+import React, { useEffect } from "react";
+import { useUser } from "@/hooks/use-user";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -9,8 +14,30 @@ import {
 import Nav from "./Nav";
 import { Button, buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "../ui/skeleton";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (!loading && !user && pathname !== "/login") {
+      router.push("/login");
+    }
+  }, [user, loading, router, pathname]);
+  
+  if (loading || !user) {
+    return (
+       <div className="flex min-h-screen items-center justify-center">
+          <div className="space-y-4">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-6 w-48" />
+          </div>
+       </div>
+    );
+  }
+
   return (
       <div className="flex min-h-screen">
         <Sidebar collapsible="icon">
