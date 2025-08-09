@@ -32,7 +32,7 @@ export default function FeedbackDashboard() {
 
     useEffect(() => {
         if (!isBrowser() || !user) {
-            if (!user) setLoading(false);
+            setLoading(false);
             return;
         }
 

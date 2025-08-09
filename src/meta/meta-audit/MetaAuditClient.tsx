@@ -36,7 +36,6 @@ const flowFiles = Object.keys(ALL_FILES).filter(path => path.startsWith('/src/ai
 
 export default function MetaAuditClient() {
   const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
   const [auditResults, setAuditResults] = useState<Record<string, AuditResult>>({});
   const [progress, setProgress] = useState(0);
 
@@ -44,11 +43,8 @@ export default function MetaAuditClient() {
   const { user } = useUser();
 
   const fetchResults = useCallback(async () => {
-    if (!isBrowser() || !user) {
-        if (!isBrowser()) setFetching(false);
-        return;
-    }
-    setFetching(true);
+    if (!isBrowser() || !user) return;
+    setLoading(true);
     try {
         const results = await getAuditResults();
         setAuditResults(results);
@@ -56,7 +52,7 @@ export default function MetaAuditClient() {
         console.error("Failed to fetch audit results", error);
         toast({ variant: "destructive", title: "Fetch Error", description: "Could not load prior audit results." });
     } finally {
-        setFetching(false);
+        setLoading(false);
     }
   }, [user, toast]);
   
@@ -141,7 +137,7 @@ export default function MetaAuditClient() {
                 <CardDescription>Persisted analysis for each AI flow module in the mesh.</CardDescription>
             </CardHeader>
             <CardContent>
-                {fetching ? (
+                {loading && !Object.keys(auditResults).length ? (
                     <Skeleton className="h-48 w-full" />
                 ) : (
                 <Accordion type="multiple" className="w-full space-y-2">

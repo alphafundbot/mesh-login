@@ -247,7 +247,7 @@ export default function IntelligenceMap() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if (!isBrowser()) setLoading(false);
+        setLoading(false);
         return;
     }
 

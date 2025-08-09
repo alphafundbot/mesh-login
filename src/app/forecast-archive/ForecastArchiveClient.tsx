@@ -43,7 +43,7 @@ export default function ForecastArchiveClient() {
 
     useEffect(() => {
         if (!isBrowser() || !user) {
-            if (!isBrowser()) setLoading(false);
+            setLoading(false);
             return;
         }
 

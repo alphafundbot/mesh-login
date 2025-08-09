@@ -540,7 +540,7 @@ export default function HistoryClient() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if(!isBrowser()) setLoading(false);
+        setLoading(false);
         return;
     }
 
@@ -700,7 +700,7 @@ export default function HistoryClient() {
 
   useEffect(() => {
     if (!isBrowser() || !user || filteredLogs.length === 0) {
-      if(!isBrowser()) setReplayCommentary(null);
+      setReplayCommentary(null);
       return;
     };
     

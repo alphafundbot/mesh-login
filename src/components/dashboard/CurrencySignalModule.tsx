@@ -47,7 +47,7 @@ export default function CurrencySignalModule() {
     
     useEffect(() => {
         if (!isBrowser() || !user) {
-            if (!isBrowser()) setLoading(false);
+            setLoading(false);
             return;
         }
         handleAnalysis();

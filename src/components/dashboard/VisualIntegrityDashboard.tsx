@@ -130,7 +130,7 @@ export default function VisualIntegrityDashboard() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if (!isBrowser()) setLoadingLogs(false);
+        setLoadingLogs(false);
         return;
     }
     const q = query(collection(firestore, "hud_actions"), orderBy("timestamp", "desc"));

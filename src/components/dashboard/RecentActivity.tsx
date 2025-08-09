@@ -66,7 +66,7 @@ export default function RecentActivity() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-      if (!isBrowser()) setLoadingLogs(false);
+      setLoadingLogs(false);
       return;
     }
 

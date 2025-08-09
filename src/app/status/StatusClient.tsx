@@ -33,7 +33,7 @@ export default function StatusClient() {
 
   useEffect(() => {
     if (!isBrowser() || !user) {
-        if (!user) setLoadingHistory(false);
+        setLoadingHistory(false);
         return;
     }
 
