@@ -458,38 +458,38 @@ export default function IntelligenceMap() {
               </DialogDescription>
             </DialogHeader>
 
-             <div className="mt-4 space-y-2">
-              <h4 className="font-semibold text-sm">Anomalous Domains:</h4>
-              {escalation.anomalousDomains.map((d) => (
-                <div
-                  key={d.domain}
-                  className="flex items-center justify-between p-2 rounded-md bg-muted/50"
-                >
-                  <span className="text-sm">{d.domain}</span>
-                  <div className="flex gap-2">
-                    <Badge
-                      variant={
-                        d.stability < ANOMALY_THRESHOLD
-                          ? "destructive"
-                          : "secondary"
-                      }
-                      className="w-24 justify-center"
+            <div className="mt-4 space-y-2">
+                <h4 className="font-semibold text-sm">Anomalous Domains:</h4>
+                {escalation.anomalousDomains.map((d) => (
+                    <div
+                    key={d.domain}
+                    className="flex items-center justify-between p-2 rounded-md bg-muted/50"
                     >
-                      Stability: {d.stability}
-                    </Badge>
-                    <Badge
-                      variant={
-                        d.security < ANOMALY_THRESHOLD
-                          ? "destructive"
-                          : "secondary"
-                      }
-                      className="w-24 justify-center"
-                    >
-                      Security: {d.security}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+                    <span className="text-sm">{d.domain}</span>
+                    <div className="flex gap-2">
+                        <Badge
+                        variant={
+                            d.stability < ANOMALY_THRESHOLD
+                            ? "destructive"
+                            : "secondary"
+                        }
+                        className="w-24 justify-center"
+                        >
+                        Stability: {d.stability}
+                        </Badge>
+                        <Badge
+                        variant={
+                            d.security < ANOMALY_THRESHOLD
+                            ? "destructive"
+                            : "secondary"
+                        }
+                        className="w-24 justify-center"
+                        >
+                        Security: {d.security}
+                        </Badge>
+                    </div>
+                    </div>
+                ))}
             </div>
 
             {escalation.action ? (
