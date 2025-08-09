@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Timer, DatabaseZap } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { db, app } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
 export default function MeshHydrationAudit() {
@@ -25,8 +25,10 @@ export default function MeshHydrationAudit() {
     const checkFirestore = async () => {
       setLoading(true);
       try {
-        // Add a small delay to ensure Firebase is fully initialized client-side
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Ensure the firebase app is initialized before trying to use its services.
+        if (!app.name) {
+          throw new Error("Firebase app not initialized");
+        }
 
         const startTime = performance.now();
         const docRef = doc(db, "intelligence_map_cache", "latest");
