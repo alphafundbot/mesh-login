@@ -28,8 +28,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // This is a placeholder for mapping Firebase users to app roles.
   // In a real app, this might come from a database or custom claims.
   const getRoleForUser = (firebaseUser: FirebaseUser): Role => {
-    // For now, we'll default to 'Analyst' for any logged-in user.
-    // We can restore the previous default for the known user.
+    // Default to 'Analyst' for any logged-in user.
+    // The pre-existing logic for 'nehemie' can be a stand-in for a role lookup.
     if (firebaseUser.email?.startsWith('nehemie')) {
         return 'Architect';
     }
@@ -47,8 +47,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: role,
         });
       } else {
-        // To maintain a logged-in state for the demo, we can create a default user.
-        // In a real application, you would set user to `null` here.
+        // In a real app, you would set user to `null` here to handle a logged-out state.
+        // For this controlled environment, we'll ensure a default user is always present.
         setUser({
             uid: 'dev-user',
             name: 'Nehemie',
@@ -83,8 +83,5 @@ export const useUser = () => {
   if (context === undefined) {
     throw new Error('useUser must be used within a UserProvider');
   }
-  // To prevent errors in components that expect a user object during the initial loading phase,
-  // we can return a default/mock object or handle the loading state in the component itself.
-  // For simplicity here, we ensure components are robust enough for `user` to be `null`.
   return context;
 };
