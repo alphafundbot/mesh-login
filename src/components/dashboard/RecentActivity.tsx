@@ -174,7 +174,7 @@ export default function RecentActivity() {
   );
 
   return (
-    <Card className="transition-shadow duration-300 hover:shadow-xl">
+    <Card className="transition-shadow duration-300 hover:shadow-xl h-full">
       <CardHeader>
         <div className="flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">

@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -31,6 +32,7 @@ import CurrencySignalModule from "@/components/dashboard/CurrencySignalModule";
 import PortAudit from "@/components/dashboard/PortAudit";
 import { Suspense } from "react";
 import ClientOnly from "@/components/layout/ClientOnly";
+import MeshHydrationAudit from "@/components/dashboard/MeshHydrationAudit";
 
 
 const getStatusColor = (status: string) => {
@@ -148,9 +150,14 @@ function DashboardContent() {
               <CarouselNext className="absolute right-[-20px] top-1/2 -translate-y-1/2" />
             </Carousel>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-            <RecentActivity />
-            <PortAudit />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <RecentActivity />
+            </div>
+            <div className="space-y-4">
+              <PortAudit />
+              <MeshHydrationAudit />
+            </div>
         </div>
       </div>
     </AppLayout>
