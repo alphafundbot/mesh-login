@@ -17,6 +17,9 @@ import {
   Wifi,
   Settings,
   BarChartHorizontal,
+  FileClock,
+  ClipboardList,
+  TestTube,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -31,10 +34,13 @@ import { snapshotRegistry } from "@/lib/snapshots";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/audit", label: "Audit Trail AI", icon: ShieldCheck },
-  { href: "/validator", label: "Config Validator", icon: Binary },
   { href: "/history", label: "Signal Memory", icon: History },
   { href: "/memory-map", label: "Memory Map", icon: Brain },
+];
+
+const analysisItems = [
+  { href: "/audit", label: "Audit Trail AI", icon: ShieldCheck },
+  { href: "/validator", label: "Config Validator", icon: Binary },
   { href: "/analysis-archive", label: "Analysis Archive", icon: Archive },
   { href: "/forecast-archive", label: "Forecast Archive", icon: Eye },
 ];
@@ -43,6 +49,8 @@ const systemItems = [
     { href: "/status", label: "API Status", icon: Wifi },
     { href: "/admin", label: "System Admin", icon: Settings },
     { href: "/usage", label: "Usage Dashboard", icon: BarChartHorizontal },
+    { href: "/queue", label: "Synthesis Queue", icon: FileClock },
+    { href: "/simulation", label: "Simulator", icon: TestTube },
 ];
 
 export default function Nav() {
@@ -91,7 +99,25 @@ export default function Nav() {
               </SidebarMenuSubItem>
           </SidebarMenuSub>
         </SidebarMenuItem>
+
         <SidebarSeparator className="my-2" />
+        <SidebarGroupLabel>Analysis</SidebarGroupLabel>
+        {analysisItems.map((item) => (
+        <SidebarMenuItem key={item.href}>
+          <Link href={item.href}>
+            <SidebarMenuButton
+              isActive={pathname === item.href}
+              tooltip={{ children: item.label }}
+            >
+              <item.icon />
+              <span>{item.label}</span>
+            </SidebarMenuButton>
+          </Link>
+        </SidebarMenuItem>
+      ))}
+
+        <SidebarSeparator className="my-2" />
+         <SidebarGroupLabel>System</SidebarGroupLabel>
         {systemItems.map((item) => (
             <SidebarMenuItem key={item.href}>
                 <Link href={item.href}>
