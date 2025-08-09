@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, onSnapshot, Timestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
+import { isBrowser } from "@/lib/env-check";
 
 type HistoricalCheck = HealthCheckOutput & {
   id: string;
@@ -31,7 +32,10 @@ export default function StatusClient() {
   const { user } = useUser();
 
   useEffect(() => {
-    if (!user) return; // Wait for user to be authenticated
+    if (!user || !isBrowser()) {
+        if(!isBrowser()) setLoadingHistory(false);
+        return;
+    }
 
     const q = query(collection(db, "health_checks"), orderBy("timestamp", "desc"), limit(10));
     const unsubscribe = onSnapshot(q, (snapshot) => {

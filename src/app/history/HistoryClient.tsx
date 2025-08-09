@@ -47,6 +47,7 @@ import FeedbackDashboard from "@/components/dashboard/FeedbackDashboard";
 import { useClusterMomentum } from "@/hooks/use-cluster-momentum";
 import type { ActionLog, Severity, ParsedDetails, TaggedRationale, Recommendation, ClusterInfo, ClusterMap, DomainMetrics } from "@/lib/types";
 import { parseDetails, RISK_WEIGHTS } from "@/lib/types";
+import { isBrowser } from "@/lib/env-check";
 
 
 const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
@@ -522,7 +523,10 @@ export default function HistoryClient() {
   }, [confidenceThreshold]);
 
   useEffect(() => {
-    if (!user) return; // Wait for user to be authenticated
+    if (!user || !isBrowser()) {
+        if(!isBrowser()) setLoading(false);
+        return;
+    }
 
     const q = query(collection(db, "hud_actions"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {

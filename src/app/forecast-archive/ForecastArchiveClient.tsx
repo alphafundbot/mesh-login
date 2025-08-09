@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
+import { isBrowser } from "@/lib/env-check";
 
 interface ArchivedForecast {
     id: string;
@@ -42,7 +43,10 @@ export default function ForecastArchiveClient() {
     const { user } = useUser();
 
     useEffect(() => {
-        if (!user) return; // Wait for user to be authenticated
+        if (!user || !isBrowser()) {
+            if (!isBrowser()) setLoading(false);
+            return;
+        }
 
         const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {

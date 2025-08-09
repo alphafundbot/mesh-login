@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BrainCircuit } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ComposedChart } from 'recharts';
 import { useUser } from "@/hooks/use-user";
+import { isBrowser } from "@/lib/env-check";
 
 interface ForecastAnalysis {
     id: string;
@@ -44,7 +45,10 @@ export default function ForecastMemoryMap() {
     const { user } = useUser();
 
     useEffect(() => {
-        if (!user) return; // Wait for user to be authenticated
+        if (!user || !isBrowser()) {
+            if(!isBrowser()) setLoading(false);
+            return;
+        } 
 
         const q = query(collection(db, "forecast_analysis"), orderBy("timestamp", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {

@@ -25,6 +25,7 @@ import type { PredictiveOverrideOutput, PredictiveOverrideInput } from "@/ai/flo
 import { Bot, GitCompareArrows, ChevronsRight, FileText, TestTube, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/hooks/use-user";
+import { isBrowser } from "@/lib/env-check";
 
 interface ArchivedDiffAnalysis {
     id: string;
@@ -68,7 +69,10 @@ export default function ArchiveClient() {
     const { user } = useUser();
 
     useEffect(() => {
-        if (!user) return; // Wait for user to be authenticated
+        if (!user || !isBrowser()) {
+            if (!isBrowser()) setLoading(false);
+            return;
+        } 
 
         const diffQuery = query(collection(db, "diff_analysis"), orderBy("timestamp", "desc"));
         const simQuery = query(collection(db, "simulation_analysis"), orderBy("timestamp", "desc"));
