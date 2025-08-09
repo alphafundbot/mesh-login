@@ -11,9 +11,9 @@ export default function ModuleDetailPage({
   params: { slug: string; module: string };
 }) {
   const domain = domainData.find((d) => d.slug === params.slug);
-  const module = domain?.modules.find(m => slugify(m) === params.module);
+  const moduleName = domain?.modules.find(m => slugify(m) === params.module);
 
-  if (!domain || !module) {
+  if (!domain || !moduleName) {
     notFound();
   }
 
@@ -22,7 +22,7 @@ export default function ModuleDetailPage({
   return (
     <AppLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <ModuleClient domain={serializableDomain} moduleName={module} />
+        <ModuleClient domain={serializableDomain} moduleName={moduleName} />
       </div>
     </AppLayout>
   );
