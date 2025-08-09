@@ -15,7 +15,6 @@ import { CheckCircle, XCircle, Bot, History, Clock } from "lucide-react";
 import { checkApiHealth, type HealthCheckOutput } from "@/ai/flows/health-check-flow";
 import { Skeleton } from "@/components/ui/skeleton";
 import { firestore } from "@/lib/firebaseConfig";
-import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, orderBy, limit, onSnapshot, Timestamp } from "firebase/firestore";
 import { useUser } from "@/hooks/use-user";
 import { isBrowser } from "@/lib/env-check";
@@ -33,7 +32,7 @@ export default function StatusClient() {
   const { user } = useUser();
 
   useEffect(() => {
-    if (!isBrowser() || !user) {
+    if (!isBrowser() || !user || !firestore) {
         setLoadingHistory(false);
         return;
     }; 

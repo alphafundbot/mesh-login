@@ -539,7 +539,7 @@ export default function HistoryClient() {
   }, [confidenceThreshold]);
 
   useEffect(() => {
-    if (!isBrowser() || !user) {
+    if (!isBrowser() || !user || !firestore) {
         setLoading(false);
         return;
     }
@@ -600,7 +600,7 @@ export default function HistoryClient() {
   }, [allLogs, timeFilter, searchParams]);
 
   const openRationaleModal = useCallback(async (title: string, description: React.ReactNode, rationales: Omit<TaggedRationale, 'tags'>[]) => {
-        if (!isBrowser() || !user) return;
+        if (!isBrowser() || !user || !firestore) return;
         setLoadingRationales(true);
         setTaggedRationales([]);
         setRationaleDialog({ title, description, rationales: [] });
@@ -659,7 +659,7 @@ export default function HistoryClient() {
     }, []);
     
     useEffect(() => {
-        if (!isBrowser() || !user || filteredLogs.length === 0) return;
+        if (!isBrowser() || !user || filteredLogs.length === 0 || !firestore) return;
 
         const autoStart = searchParams.get('autostart');
         const domain = searchParams.get('domain');
@@ -699,7 +699,7 @@ export default function HistoryClient() {
 
   useEffect(() => {
     const startTimeParam = searchParams.get('startTime');
-    if (!isBrowser() || !user || filteredLogs.length === 0 || !startTimeParam) {
+    if (!isBrowser() || !user || filteredLogs.length === 0 || !startTimeParam || !firestore) {
       setReplayCommentary(null);
       setLoadingReplay(false);
       return;
@@ -764,7 +764,7 @@ export default function HistoryClient() {
   }, [searchParams, filteredLogs, toast, user]);
 
   const handleAnalysis = async () => {
-    if (!isBrowser() || !user) return;
+    if (!isBrowser() || !user || !firestore) return;
     setLoadingAnalysis(true);
     setAnalysisResult(null);
     setFeedbackGiven({});
@@ -798,7 +798,7 @@ export default function HistoryClient() {
   };
 
   const handleFeedback = async (recommendation: Recommendation, rating: 'up' | 'down') => {
-    if (!isBrowser() || !user) return;
+    if (!isBrowser() || !user || !firestore) return;
     if (feedbackGiven[recommendation.recommendationId]) return; 
 
     setFeedbackGiven(prev => ({...prev, [recommendation.recommendationId]: rating }));

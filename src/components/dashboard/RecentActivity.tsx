@@ -65,7 +65,7 @@ export default function RecentActivity() {
   
 
   useEffect(() => {
-    if (!isBrowser() || !user) {
+    if (!isBrowser() || !user || !firestore) {
       setLoadingLogs(false);
       return;
     }
@@ -100,7 +100,7 @@ export default function RecentActivity() {
     });
 
     return () => unsubscribe();
-  }, [user, toast, userLoading]);
+  }, [user, toast]);
 
   const handleAnalysis = async () => {
     if (!isBrowser() || !user || !latestLog) {
@@ -131,7 +131,7 @@ export default function RecentActivity() {
 
 
   const handleRefresh = async (isStressTest: boolean) => {
-    if (!isBrowser() || !user) {
+    if (!isBrowser() || !user || !firestore) {
         toast({
             title: "Authentication Error",
             description: "You must be logged in to simulate events.",
@@ -156,7 +156,7 @@ export default function RecentActivity() {
   };
 
   const handleAction = async (action: Action) => {
-    if (!isBrowser() || !user) return;
+    if (!isBrowser() || !user || !firestore) return;
     toast({
       title: "Action Initiated",
       description: `${action} protocol has been initiated by ${user.role}.`,
