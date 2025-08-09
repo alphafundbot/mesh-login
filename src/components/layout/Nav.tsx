@@ -53,6 +53,13 @@ const systemItems = [
     { href: "/simulation", label: "Simulator", icon: TestTube },
 ];
 
+const SidebarGroupLabel = ({children}: {children: React.ReactNode}) => (
+    <div className="px-2 py-1 text-xs font-semibold text-muted-foreground group-data-[collapsible=icon]:hidden">
+        {children}
+    </div>
+)
+
+
 export default function Nav() {
   const pathname = usePathname();
 
