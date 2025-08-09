@@ -4,6 +4,7 @@
  * This is the single source of truth for all service configurations.
  */
 import { config } from 'dotenv';
+import type { FirebaseConfig } from './public';
 
 // Load variables from the single source of truth: .env
 config({ path: '.env' });
@@ -32,40 +33,19 @@ function getEnv(variableName: string): string {
     return value || '';
 }
 
-export interface FirebaseConfig {
-    apiKey: string;
-    authDomain: string;
-    projectId: string;
-    storageBucket: string;
-    messagingSenderId: string;
-    appId: string;
-    measurementId?: string;
-}
 
 export interface GcpConfig {
     geminiApiKey: string;
 }
 
 export interface ServicesConfig {
-    firebase: FirebaseConfig,
     gcp: GcpConfig
 }
-
-const firebaseConfigValues: FirebaseConfig = {
-    apiKey: getEnv('NEXT_PUBLIC_FIREBASE_API_KEY'),
-    authDomain: getEnv('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'),
-    projectId: getEnv('NEXT_PUBLIC_FIREBASE_PROJECT_ID'),
-    storageBucket: getEnv('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'),
-    messagingSenderId: getEnv('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
-    appId: getEnv('NEXT_PUBLIC_FIREBASE_APP_ID'),
-    measurementId: getEnv('NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID')
-};
 
 const gcpConfigValues: GcpConfig = {
     geminiApiKey: getEnv('GEMINI_API_KEY'),
 }
 
 export const servicesConfig: ServicesConfig = {
-    firebase: firebaseConfigValues,
     gcp: gcpConfigValues
 };

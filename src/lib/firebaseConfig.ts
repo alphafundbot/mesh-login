@@ -3,10 +3,10 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, enableNetwork, type Firestore } from 'firebase/firestore';
 import { getAuth, type Auth } from 'firebase/auth';
 import { isBrowser } from './env-check';
-import { servicesConfig } from '@/config/services';
+import { firebasePublicConfig } from '@/config/public';
 
 
-const firebaseConfig = servicesConfig.firebase;
+const firebaseConfig = firebasePublicConfig;
 
 let app: FirebaseApp;
 let firestore: Firestore;
