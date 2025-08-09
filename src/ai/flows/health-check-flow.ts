@@ -41,15 +41,18 @@ export async function checkApiHealth(): Promise<HealthCheckOutput> {
     console.error("API Health Check Error:", e);
     result = { status: 'Error', message: e.message || "An unknown error occurred." };
   }
-
-  try {
-    await addDoc(collection(firestore, "health_checks"), {
-      ...result,
-      timestamp: serverTimestamp(),
-    });
-  } catch (dbError: any) {
-    console.error("Failed to log health check to Firestore:", dbError);
-    // Do not alter the original result if logging fails, just log the error.
+  
+  // Guard against Firestore being undefined on the server
+  if (firestore) {
+    try {
+      await addDoc(collection(firestore, "health_checks"), {
+        ...result,
+        timestamp: serverTimestamp(),
+      });
+    } catch (dbError: any) {
+      console.error("Failed to log health check to Firestore:", dbError);
+      // Do not alter the original result if logging fails, just log the error.
+    }
   }
   
   return result;

@@ -1,6 +1,6 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, enableNetwork } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getFirestore, enableNetwork, type Firestore } from 'firebase/firestore';
+import { getAuth, type Auth } from 'firebase/auth';
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,9 +12,9 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-let app;
-let firestore;
-let auth;
+let app: FirebaseApp;
+let firestore: Firestore;
+let auth: Auth;
 
 if (typeof window !== 'undefined') {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -26,4 +26,6 @@ if (typeof window !== 'undefined') {
     });
 }
 
-export { firebaseApp, firestore, auth };
+// These exports may be undefined on the server, and that's by design.
+// Components should use isBrowser() and useUser() to guard against this.
+export { app as firebaseApp, firestore, auth };

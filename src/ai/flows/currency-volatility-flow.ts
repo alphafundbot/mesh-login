@@ -22,6 +22,11 @@ import { firestore } from '@/lib/firebaseConfig';
 
 
 export async function analyzeCurrencyVolatility(input: CurrencyVolatilityInput): Promise<CurrencyVolatilityOutput> {
+  if (!firestore) {
+    console.warn("Firestore is not initialized. Skipping cache check for currency volatility.");
+    return currencyVolatilityFlow(input);
+  }
+  
   const cacheRef = doc(firestore, "currency_volatility_cache", "latest_analysis");
   const cacheDoc = await getDoc(cacheRef);
 

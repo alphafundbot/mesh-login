@@ -33,6 +33,12 @@ export type CrossDomainIntelligenceOutput = z.infer<typeof CrossDomainIntelligen
 
 
 export async function analyzeCrossDomainIntelligence(input: CrossDomainIntelligenceInput): Promise<CrossDomainIntelligenceOutput> {
+  // This check is important because this flow can be called from server components
+  if (!firestore) {
+    console.warn("Firestore is not initialized. Skipping cache check for cross-domain intelligence.");
+    return crossDomainIntelligenceFlow(input);
+  }
+
   const cacheRef = doc(firestore, "intelligence_map_cache", "latest");
   try {
     const cacheDoc = await getDoc(cacheRef);

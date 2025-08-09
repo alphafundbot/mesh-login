@@ -54,6 +54,10 @@ const getFeedbackSummary = ai.defineTool(
         })).describe("An object where keys are recommendation IDs and values are their feedback counts and original text."),
     },
     async () => {
+        if (!firestore) {
+            console.warn("Firestore is not available. Skipping feedback summary.");
+            return {};
+        }
         const feedbackQuery = query(collection(firestore, 'feedback'));
         const snapshot = await getDocs(feedbackQuery);
         
@@ -156,6 +160,10 @@ export const submitFeedback = ai.defineFlow(
         outputSchema: z.void(),
     },
     async (feedback) => {
+        if (!firestore) {
+            console.error("Firestore is not available. Cannot submit feedback.");
+            return;
+        }
         await addDoc(collection(firestore, "feedback"), {
             ...feedback,
             timestamp: serverTimestamp()
