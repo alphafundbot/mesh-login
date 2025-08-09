@@ -1,4 +1,5 @@
 
+
 import AppLayout from "@/components/layout/AppLayout";
 import { domainData } from "@/lib/domains";
 import { notFound } from "next/navigation";
@@ -29,3 +30,4 @@ export default function ModuleDetailPage({
     </AppLayout>
   );
 }
+
