@@ -1,24 +1,30 @@
 
-import AppLayout from "@/components/layout/AppLayout";
-import { domainData } from "@/lib/domains";
 import { notFound } from "next/navigation";
-import { slugify } from "@/lib/utils";
+import AppLayout from "@/components/layout/AppLayout";
 import ModuleClient from "./ModuleClient";
+import { domainData } from "@/lib/domains";
+import { slugify } from "@/lib/utils";
 
-export default function ModuleDetailPage({
-  params,
-}: {
-  params: { slug: string; module: string };
-}) {
+interface PageProps {
+  params: {
+    slug: string;
+    module: string;
+  };
+}
+
+export default function ModuleDetailPage({ params }: PageProps) {
   const domain = domainData.find((d) => d.slug === params.slug);
-  const moduleName = domain?.modules.find(m => slugify(m) === params.module);
+  if (!domain) {
+    return notFound();
+  }
 
-  if (!domain || !moduleName) {
-    notFound();
+  const moduleName = domain.modules.find((m) => slugify(m) === params.module);
+  if (!moduleName) {
+    return notFound();
   }
 
   // Destructure icon to avoid passing non-serializable props to the client component.
-  // This resolves the React Server Component boundary violation.
+  // This resolves potential React Server Component boundary violations.
   const { icon, ...serializableDomain } = domain;
 
   return (
