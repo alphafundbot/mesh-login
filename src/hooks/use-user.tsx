@@ -43,7 +43,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const tokenResult = await firebaseUser.getIdTokenResult();
         // Roles are securely set on the backend via custom claims
         // and read from the ID token on the client.
-        const role = (tokenResult.claims.role as Role) || 'Analyst';
+        const role = (tokenResult.claims.role as Role) || 'Architect';
         
         setUser({
           uid: firebaseUser.uid,

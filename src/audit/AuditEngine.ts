@@ -26,11 +26,24 @@ interface MPCAuditRuntime {
   computeSecureMetric(secureData: any, metricType: string): Promise<number>;
 }
 
-// Assuming a type definition for monetization metrics
-type MonetizationMetrics = {
+// Define interfaces or types for the monetization metrics
+export interface MonetizationMetrics {
   totalRevenue: number;
   subscribers: number;
   impressions: number;
+  // Further breakdown of revenue by source, signal type, etc.
+  // revenueBySource?: { [source: string]: number }; // e.g., { "SignalDP": 100, "Sellfy": 50 }
+  // revenueBySignalType?: { [signalType: string]: number }; // e.g., { "Quantum": 75, "Fiber": 25 }
+  // Potentially track active subscriptions, churn rate, etc.
+  // activeSubscriptions?: number;
+  // churnRate?: number;
+
+  // Timestamped events related to monetization (e.g., signal published, subscriber added, revenue received)
+  // This provides a granular view of monetization activity.
+  // Each event could potentially be linked back to a specific signal or override.
+  // This structure allows for detailed auditing and introspection of revenue flow.
+  // The details field can contain structured data relevant to the event.
+  // Ensure sensitive information is not included in plain text.
   recentEvents: { timestamp: number; description: string; value?: number }[];
 };
 
@@ -99,14 +112,20 @@ export class AuditEngine {
    * @returns A promise resolving with the latest monetization metrics.
    */
   async getMonetizationMetrics(): Promise<MonetizationMetrics> {
+    /**
+     * TODO: Implement logic to collect actual monetization data here.
+     * This will involve:
+     * - Querying the audit log for specific monetization-related events logged by SignalMonetizer.
+     *   Events could be tagged with types like 'monetization_publish', 'monetization_revenue', 'monetization_subscriber'.
+     * - Aggregating data from these events to calculate total revenue, subscribers, etc.
+     * - Potentially querying external monetization platform APIs directly (though ideally SignalMonetizer handles this and logs events here).
+     * - Using the MPC runtime to compute privacy-preserving aggregate metrics if raw data needs to be kept private.
+     *
+     * This method serves as the source of truth for real-time and historical monetization data for the dashboard and other modules.
+     */
     console.log("AuditEngine: Collecting monetization metrics");
 
-    // TODO: Implement logic to collect actual monetization data.
-    // This could involve:
-    // - Querying the audit log for specific monetization-related events logged by SignalMonetizer.
-    // - Aggregating data from external monetization platform integrations (potentially via SignalMonetizer).
-    // - Using the MPC runtime to compute privacy-preserving aggregate metrics.
-
+    // --- Simulated Data (Replace with actual data collection and aggregation logic) ---
     // --- Simulated Data (Replace with actual data collection logic) ---
     const simulatedMetrics: MonetizationMetrics = {
       totalRevenue: Math.random() * 10000, // Simulate revenue
