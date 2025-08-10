@@ -1,7 +1,5 @@
 "use client";
 
-import LoginForm from "@/components/LoginForm";
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +21,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const { signIn, loading } = useAuth();
+  const { login, loading } = useAuth();
 
   const {
     register,
@@ -34,7 +32,7 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    const error = await signIn(data.email, data.password);
+    const error = await login(data.email, data.password);
     if (error) {
       toast({
         variant: "destructive",

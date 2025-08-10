@@ -2,9 +2,9 @@
 "use client";
 
 import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
-import { ROLES, Role } from '@/lib/roles';
+import { type Role } from '@/lib/roles';
 import { auth } from '@/lib/firebaseConfig';
-import { onIdTokenChanged, User as FirebaseUser } from 'firebase/auth';
+import { onIdTokenChanged, type User as FirebaseUser } from 'firebase/auth';
 import { isBrowser } from '@/lib/env-check';
 
 interface User {
@@ -29,6 +29,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const setUserRole = useCallback((role: Role) => {
     setUser(currentUser => {
         if (!currentUser) return null;
+        // In a real app, this would likely trigger a backend call to update custom claims.
+        // For this simulation, we're just updating client-side state.
+        console.log(`Simulating role change for ${currentUser.name} to ${role}`);
         return { ...currentUser, role: role };
     });
   }, []);
@@ -38,12 +41,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
         return;
     }
-    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         const tokenResult = await firebaseUser.getIdTokenResult();
         // Roles are securely set on the backend via custom claims
         // and read from the ID token on the client.
-        const role = (tokenResult.claims.role as Role) || 'Architect';
+        const role = (tokenResult.claims.role as Role) || 'Architect'; // Default to Architect
         
         setUser({
           uid: firebaseUser.uid,
