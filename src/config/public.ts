@@ -15,7 +15,7 @@ export interface FirebaseConfig {
 // during build or on the client, allowing the app to load and show a proper state.
 export const firebasePublicConfig: FirebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'YOUR_VALID_API_KEY_HERE',
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
     messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',

@@ -4,9 +4,11 @@
  */
 
 // Assuming SignalMonetizer might need to report metrics directly to AuditEngine
+import { meshBus } from "../core/MeshBus";
 // import { SignalMonetizer } from '../monetization/SignalMonetizer'; // Import if direct class interaction needed
 // Assuming a type definition for a data interaction event
 type DataInteractionEvent = {
+ eventType: string; // e.g., 'provisioning', 'monetization', 'signal', 'override'
   timestamp: number;
   source: string; // e.g., module name, external system
   action: string; // e.g., data extracted, data processed, model trained, user accessed
@@ -65,6 +67,18 @@ export class AuditEngine {
     console.log("AuditEngine: Logging data interaction", event);
     // TODO: Implement persistent storage for auditLog (e.g., append to a file, write to a database like BigQuery or Firestore)
     this.auditLog.push(event);
+  }
+
+  /**
+ * Logs an event (provisioning, monetization, signal, etc.) into the Mesh Audit Log.
+ * This is a more general logging method compared to logDataInteraction.
+ * @param eventType - The type of event (e.g., 'provisioning', 'monetization', 'signal').
+ * @param payload - The data associated with the event.
+ */
+  logEvent(eventType: string, payload: any): void {
+    console.log(`AuditEngine: Logging event of type ${eventType}`, payload);
+    // TODO: Implement persistent storage for auditLog (e.g., append to a file, write to a database)
+    this.auditLog.push({ eventType, timestamp: Date.now(), source: payload.source || 'unknown', action: payload.action || 'event', details: payload });
   }
 
   /**
@@ -143,5 +157,18 @@ export class AuditEngine {
 
     console.log("AuditEngine: Monetization metrics collected", simulatedMetrics);
     return simulatedMetrics;
+  }
+
+  /**
+   * Publishes a test audit event to the meshBus.
+   * This is for testing the real-time streaming functionality.
+   */
+  publishTestEvent(): void {
+    const testEvent = {
+      type: 'audit:event',
+      payload: { type: 'test:audit', details: 'This is a test event from AuditEngine', timestamp: Date.now() }
+    };
+    console.log("AuditEngine: Publishing test event to meshBus", testEvent);
+    meshBus.publish(testEvent);
   }
 }
