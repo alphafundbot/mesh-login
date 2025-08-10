@@ -9,7 +9,8 @@ export interface FirebaseConfig {
     measurementId?: string;
 }
 
-// Directly access process.env, which is the standard Next.js way.
+// Directly access process.env with the NEXT_PUBLIC_ prefix,
+// which is the standard Next.js way to expose variables to the browser.
 // Provide empty string fallbacks to prevent crashes if variables are missing
 // during build or on the client, allowing the app to load and show a proper state.
 export const firebasePublicConfig: FirebaseConfig = {

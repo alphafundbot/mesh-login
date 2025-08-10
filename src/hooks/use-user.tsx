@@ -5,6 +5,7 @@ import React, { createContext, useState, useContext, useMemo, useEffect, useCall
 import { ROLES, Role } from '@/lib/roles';
 import { auth } from '@/lib/firebaseConfig';
 import { onIdTokenChanged, User as FirebaseUser } from 'firebase/auth';
+import { isBrowser } from '@/lib/env-check';
 
 interface User {
   uid: string;
@@ -33,7 +34,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (!isBrowser() || !auth) {
         setLoading(false);
         return;
     }
