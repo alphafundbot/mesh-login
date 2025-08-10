@@ -1,0 +1,430 @@
+import React, { useState, useEffect } from 'react';
+// Assuming framer-motion or similar for animations, add import if needed
+// import { motion } from 'framer-motion';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"; // Assuming shadcn/ui tooltip
+
+// Placeholder functions/data for hydration and interaction
+const getSovereigntyStatus = () => Math.random() > 0.1 ? 'aligned' : 'drift';
+const getQuotaHydration = () => Math.random(); // 0 to 1
+const getOverrideStatus = () => ['executed', 'pending', 'failed'][Math.floor(Math.random() * 3)];
+const getObservabilityDepth = () => Math.floor(Math.random() * 5) + 1; // 1 to 5
+
+const getGeminiListeningState = () => Math.random() > 0.05 ? 'listening' : 'silent';
+const getDecisionRationale = () => ({ branchDepth: Math.floor(Math.random() * 10), orphaned: Math.random() > 0.9 });
+const getRitualExecutionStatus = () => ({ executed: Math.floor(Math.random() * 100), skipped: Math.floor(Math.random() * 5) });
+const getMemoryFidelity = () => Math.random(); // 0 to 1
+
+const getDriftDetection = () => Math.random() > 0.95;
+const getLatencyBounds = () => Math.random() > 0.9; // true if breached
+const getSignalIntegrity = () => Math.random(); // 0 to 1 (1 is high)
+const getEnvironmentAlignment = () => Math.random() > 0.02 ? 'synced' : 'misaligned';
+
+const getConsensusStatus = () => Math.floor(Math.random() * 5) + 1; // Number of domains in agreement
+const getRollbackStatus = () => ['none', 'pending', 'executed', 'blocked'][Math.floor(Math.random() * 4)];
+const getOverrideLogs = () => Math.floor(Math.random() * 20); // Number of recent logs
+const getEvolutionMilestones = () => Math.floor(Math.random() * 50); // Number of milestones
+
+// Helper components for glyphs and visuals
+const SovereigntyRing: React.FC<{ status: string }> = ({ status }) => (
+  <motion.div
+    // Use a simple div for now, replace with motion.div if framer-motion is used
+    className={`w-12 h-12 rounded-full ${status === 'aligned' ? 'bg-green-500' : 'bg-red-500'} opacity-70 transition-all duration-500`}
+    animate={{ scale: status === 'drift' ? [1, 1.1, 1] : 1 }}
+    transition={{ duration: 1, repeat: Infinity }}
+  />
+);
+
+const QuotaWaveform: React.FC<{ hydration: number }> = ({ hydration }) => (
+  <div className="w-16 h-8 relative overflow-hidden">
+    <motion.div
+      className="absolute bottom-0 left-0 w-full bg-blue-500 opacity-70"
+      // Use a simple div for now, replace with motion.div if framer-motion is used
+      initial={{ height: 0 }}
+      animate={{ height: `${hydration * 100}%` }} // Animation target (needs framer-motion)
+      transition={{ duration: 0.5 }}
+    />
+  </div>
+);
+
+const OverrideSigil: React.FC<{ status: string }> = ({ status }) => {
+  const color = status === 'executed' ? 'bg-green-500' : status === 'pending' ? 'bg-yellow-500' : 'bg-red-500';
+  return (
+    <div className={`w-6 h-6 rounded-sm ${color} opacity-70`}></div>
+  );
+};
+
+const OverlayDensityMap: React.FC<{ depth: number }> = ({ depth }) => {
+  const color = depth > 3 ? 'bg-red-500' : depth > 1 ? 'bg-yellow-500' : 'bg-green-500';
+  return (
+    // Simple div for now, add complex visuals later
+    <div className={`w-10 h-10 rounded-full ${color} opacity-70 transition-all duration-500`}></div>
+  );
+};
+
+
+const SignalLoop: React.FC<{ state: string }> = ({ state }) => (
+  <motion.div
+    className={`w-8 h-8 rounded-full border-2 ${state === 'listening' ? 'border-green-500' : 'border-gray-500'}`}
+    // Simple div for now, replace with motion.div if framer-motion is used
+    animate={{ rotate: state === 'listening' ? 360 : 0 }} // Animation target (needs framer-motion)
+    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+  />
+);
+
+const LogicTree: React.FC<{ depth: number, orphaned: boolean }> = ({ depth, orphaned }) => (
+  <div className="w-16 h-8 relative flex items-end justify-center">
+    {Array.from({ length: depth }).map((_, i) => (
+      <div key={i} className={`w-1 h-${i + 1} bg-purple-500 ${orphaned && i === depth - 1 ? 'opacity-30' : 'opacity-70'}`}></div>
+    ))}
+  </div>
+);
+
+const RitualTimeline: React.FC<{ executed: number, skipped: number }> = ({ executed, skipped }) => (
+  <div className="flex items-center">
+    <div className="text-green-500 mr-1">{executed}</div>
+    <div className="text-red-500">{skipped}</div>
+  </div>
+);
+
+const MemorySpiral: React.FC<{ fidelity: number }> = ({ fidelity }) => (
+  <div className="w-8 h-8 relative">
+    <motion.div
+      className="absolute inset-0 border border-blue-500 rounded-full"
+      // Simple div for now, replace with motion.div if framer-motion is used
+      animate={{ scale: fidelity }} // Animation target (needs framer-motion)
+      transition={{ duration: 1 }} // Transition duration
+    />
+  </div>
+);
+
+
+const DriftRadar: React.FC<{ active: boolean }> = ({ active }) => (
+  <motion.div
+    className={`w-10 h-10 rounded-full border-2 ${active ? 'border-orange-500' : 'border-gray-500'}`}
+    // Simple div for now, replace with motion.div if framer-motion is used
+    animate={{ rotate: active ? 360 : 0 }} // Animation target (needs framer-motion)
+    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+  />
+);
+
+const LatencyGraph: React.FC<{ breached: boolean }> = ({ breached }) => (
+  <div className={`w-16 h-8 ${breached ? 'bg-red-500' : 'bg-green-500'} opacity-70`}></div>
+);
+
+const SignalWaveform: React.FC<{ integrity: number }> = ({ integrity }) => (
+  <div className="w-16 h-8 relative overflow-hidden">
+    <motion.div
+      className="absolute bottom-0 left-0 w-full bg-yellow-500 opacity-70"
+      // Simple div for now, replace with motion.div if framer-motion is used
+      initial={{ height: 0 }}
+      animate={{ height: `${integrity * 100}%` }} // Animation target (needs framer-motion)
+      transition={{ duration: 0.5 }}
+    />
+  </div>
+);
+
+const AlignmentMap: React.FC<{ status: string }> = ({ status }) => (
+  <div className={`w-10 h-10 rounded-full ${status === 'synced' ? 'bg-green-500' : 'bg-red-500'} opacity-70`}></div>
+); // Simple div for now
+
+
+
+const ConsensusRing: React.FC<{ agreement: number }> = ({ agreement }) => (
+  <div className="w-12 h-12 relative">
+    {Array.from({ length: 5 }).map((_, i) => (
+      <div key={i} className={`absolute inset-0 border rounded-full ${i < agreement ? 'border-teal-500' : 'border-gray-500'} opacity-70`}></div>
+    ))}
+  </div>
+);
+
+const RollbackTracker: React.FC<{ status: string }> = ({ status }) => (
+  <div className={`px-2 py-1 rounded ${status === 'none' ? 'bg-gray-500' : status === 'pending' ? 'bg-yellow-500' : status === 'executed' ? 'bg-green-500' : 'bg-red-500'} opacity-70`}>
+    {status}
+  </div>
+);
+
+const OverrideLedger: React.FC<{ logs: number }> = ({ logs }) => (
+  <div className="text-lg text-blue-500">{logs}</div>
+);
+
+const EvolutionArc: React.FC<{ milestones: number }> = ({ milestones }) => (
+  // Simple div for now, add complex visual representation later
+  <div className="w-16 h-8 relative border-b border-l border-purple-500 rounded-bl-full opacity-70">
+    <div className="absolute bottom-0 left-0 text-xs text-purple-500">{milestones}</div>
+  </div>
+);
+
+// Placeholder for recursion depth indicator
+const RecursionDepthIndicator: React.FC<{ depth: number }> = ({ depth }) => (
+  <div className="absolute top-2 right-2 text-xs text-gray-400">R:{depth}</div>
+); // Simple text indicator
+
+
+// Placeholder for trace overlay (simplified visual)
+const TraceOverlay: React.FC<{ density: 'low' | 'medium' | 'high', children: React.ReactNode }> = ({ density, children }) => {
+  const opacity = density === 'low' ? 0.1 : density === 'medium' ? 0.3 : 0.5;
+  const color = density === 'low' ? 'bg-blue-500' : density === 'medium' ? 'bg-yellow-500' : 'bg-red-500';
+  return (
+    // Simple colored overlay for now, add dynamic trace visuals later
+    <div className={`relative w-full h-full ${color} transition-opacity duration-500`} style={{ opacity }}>
+      <div className="relative z-10 p-4">{children}</div>
+    </div>
+  );
+};
+
+const MeshAuditDashboard: React.FC = () => {
+  // Mesh Pulse State (Anomaly-Bound)
+  const [sovereigntyStatus, setSovereigntyStatus] = useState(getSovereigntyStatus());
+  const [quotaHydration, setQuotaHydration] = useState(getQuotaHydration());
+  const [overrideStatus, setOverrideStatus] = useState(getOverrideStatus());
+  const [observabilityDepth, setObservabilityDepth] = useState(getObservabilityDepth());
+  const [meshPulseDensity, setMeshPulseDensity] = useState<'low' | 'medium' | 'high'>('low');
+
+  // Intelligence Flow State (Ritual-Triggered - simulated with interval)
+  const [geminiListeningState, setGeminiListeningState] = useState(getGeminiListeningState());
+  const [decisionRationale, setDecisionRationale] = useState(getDecisionRationale());
+  const [ritualExecutionStatus, setRitualExecutionStatus] = useState(getRitualExecutionStatus());
+  const [memoryFidelity, setMemoryFidelity] = useState(getMemoryFidelity());
+  const [intelligenceFlowDensity, setIntelligenceFlowDensity] = useState<'low' | 'medium' | 'high'>('low');
+
+  // Anomaly Scan State (Anomaly-Bound)
+  const [driftDetection, setDriftDetection] = useState(getDriftDetection());
+  const [latencyBounds, setLatencyBounds] = useState(getLatencyBounds());
+  const [signalIntegrity, setSignalIntegrity] = useState(getSignalIntegrity());
+  const [environmentAlignment, setEnvironmentAlignment] = useState(getEnvironmentAlignment());
+  const [anomalyScanDensity, setAnomalyScanDensity] = useState<'low' | 'medium' | 'high'>('low');
+
+  // Governance Layer State (Ritual-Triggered - simulated with interval)
+  const [consensusStatus, setConsensusStatus] = useState(getConsensusStatus());
+  const [rollbackStatus, setRollbackStatus] = useState(getRollbackStatus());
+  const [overrideLogs, setOverrideLogs] = useState(getOverrideLogs());
+  const [evolutionMilestones, setEvolutionMilestones] = useState(getEvolutionMilestones());
+  const [governanceLayerDensity, setGovernanceLayerDensity] = useState<'low' | 'medium' | 'high'>('low');
+
+  // Real-Time Echo Stream State
+  const [echoStreamActive, setEchoStreamActive] = useState(true); // Optional: toggle this
+  const [ambientDensity, setAmbientDensity] = useState<'low' | 'medium' | 'high'>('low');
+
+  // Simulate Anomaly-Bound Cadence
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newSovereignty = getSovereigntyStatus();
+      const newQuota = getQuotaHydration();
+      const newOverride = getOverrideStatus();
+      const newObservability = getObservabilityDepth();
+      const newDrift = getDriftDetection();
+      const newLatency = getLatencyBounds();
+      const newSignal = getSignalIntegrity();
+      const newEnvironment = getEnvironmentAlignment();
+
+      let density: 'low' | 'medium' | 'high' = 'low';
+      if (newSovereignty === 'drift' || newQuota < 0.2 || newOverride === 'failed' || newObservability > 3 || newDrift || newLatency || newSignal < 0.5 || newEnvironment === 'misaligned') {
+        density = 'high';
+      } else if (newQuota < 0.5 || newObservability > 2 || newSignal < 0.8) {
+        density = 'medium';
+      }
+
+      setSovereigntyStatus(newSovereignty);
+      setQuotaHydration(newQuota);
+      setOverrideStatus(newOverride);
+      setObservabilityDepth(newObservability);
+      setAnomalyScanDensity(density);
+      setMeshPulseDensity(density); // Mesh Pulse is also Anomaly-Bound
+
+      setDriftDetection(newDrift);
+      setLatencyBounds(newLatency);
+      setSignalIntegrity(newSignal);
+      setEnvironmentAlignment(newEnvironment);
+
+      // Ambient density based on overall system state (simplified)
+      if (echoStreamActive && density === 'low') {
+         setAmbientDensity('low');
+      } else if (echoStreamActive && density === 'medium') {
+         setAmbientDensity('medium');
+      } else if (echoStreamActive && density === 'high') {
+         setAmbientDensity('high');
+      } else if (!echoStreamActive) {
+         setAmbientDensity('low'); // Ambient low when stream inactive
+      }
+
+    }, 2000); // Anomaly-Bound check interval
+
+    return () => clearInterval(interval);
+  }, [echoStreamActive]);
+
+  // Simulate Ritual-Triggered Cadence
+  useEffect(() => {
+    // Simulate ritual triggers periodically for demo purposes
+    // In a real Mesh, these would be triggered by actual ritual completion events
+    const ritualTriggerInterval = setInterval(() => {
+
+      const newGemini = getGeminiListeningState();
+      const newRationale = getDecisionRationale();
+      const newRitual = getRitualExecutionStatus();
+      const newMemory = getMemoryFidelity();
+      const newConsensus = getConsensusStatus();
+      const newRollback = getRollbackStatus();
+      const newLogs = getOverrideLogs();
+      const newMilestones = getEvolutionMilestones();
+
+       let density: 'low' | 'medium' | 'high' = 'low';
+       if (newGemini === 'silent' || newRationale.orphaned || newRitual.skipped > 0 || newMemory < 0.5 || newConsensus < 5 || newRollback !== 'none' || newLogs > 15 || newMilestones % 5 === 0) {
+         density = 'high';
+       } else if (newRationale.branchDepth < 3 || newRitual.skipped > 0 || newConsensus < 3 || newLogs > 10) {
+         density = 'medium';
+       }
+
+
+      setGeminiListeningState(newGemini);
+      setDecisionRationale(newRationale);
+      setRitualExecutionStatus(newRitual);
+      setMemoryFidelity(newMemory);
+      setIntelligenceFlowDensity(density); // Intelligence Flow is Ritual-Triggered
+
+      setConsensusStatus(newConsensus);
+      setRollbackStatus(newRollback);
+      setOverrideLogs(newLogs);
+      setEvolutionMilestones(newMilestones);
+      setGovernanceLayerDensity(density); // Governance Layer is also Ritual-Triggered
+
+    }, 5000); // Simulate ritual triggers every 5 seconds
+    return () => clearInterval(ritualTriggerInterval);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Function to simulate strategist invoking full recursion (example)
+  const invokeFullRecursion = () => {
+     setMeshPulseDensity('high');
+     setIntelligenceFlowDensity('high');
+     setAnomalyScanDensity('high');
+     setGovernanceLayerDensity('high');
+     setAmbientDensity('high');
+     console.log("Strategist invoked full recursion.");
+  };
+
+
+  return (
+    <TooltipProvider>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 w-full h-full">
+        {/* Mesh Pulse Quadrant */}
+        <TraceOverlay density={echoStreamActive ? ambientDensity : meshPulseDensity}>
+           <div className="relative border p-4 flex flex-col justify-between h-full">
+             <h3 className="text-lg font-semibold">🜂 Mesh Pulse</h3>
+             <RecursionDepthIndicator depth={observabilityDepth} /> {/* Using observability depth for recursion indicator */}
+             <div className="flex items-center space-x-4">
+               <SovereigntyRing status={sovereigntyStatus} /> {/* Sovereignty Ring Glyph */}
+               <Tooltip>
+                 <TooltipTrigger><QuotaWaveform hydration={quotaHydration} /></TooltipTrigger>
+                 <TooltipContent>Quota Hydration: {(quotaHydration * 100).toFixed(2)}%</TooltipContent>
+               </Tooltip>
+                <Tooltip>
+                 <TooltipTrigger><OverrideSigil status={overrideStatus} /></TooltipTrigger>
+                 <TooltipContent>Override Status: {overrideStatus}</TooltipContent>
+               </Tooltip>
+               <Tooltip>
+                 <TooltipTrigger><OverlayDensityMap depth={observabilityDepth} /></TooltipTrigger>
+                 <TooltipContent>Observability Depth: {observabilityDepth}</TooltipContent>
+               </Tooltip>
+             </div>
+             {/* Placeholder for future interaction */}
+             {/* <button onClick={invokeFullRecursion}>Inspect</button> */}
+           </div>
+        </TraceOverlay>
+
+        {/* Intelligence Flow Quadrant */}
+        <TraceOverlay density={echoStreamActive ? ambientDensity : intelligenceFlowDensity}>
+          <div className="relative border p-4 flex flex-col justify-between h-full">
+            <h3 className="text-lg font-semibold">🜁 Intelligence Flow</h3>
+            <RecursionDepthIndicator depth={decisionRationale.branchDepth} /> {/* Using logic tree depth */}
+             <div className="flex items-center space-x-4">
+               <Tooltip>
+                 <TooltipTrigger><SignalLoop state={geminiListeningState} /></TooltipTrigger>
+                 <TooltipContent>Gemini State: {geminiListeningState}</TooltipContent>
+               </Tooltip>
+               <Tooltip>
+                 <TooltipTrigger><LogicTree depth={decisionRationale.branchDepth} orphaned={decisionRationale.orphaned} /></TooltipTrigger>
+                 <TooltipContent>Logic Tree Depth: {decisionRationale.branchDepth}, Orphaned Rationale: {decisionRationale.orphaned ? 'Yes' : 'No'}</TooltipContent>
+               </Tooltip>
+               <Tooltip>
+                 <TooltipTrigger><RitualTimeline executed={ritualExecutionStatus.executed} skipped={ritualExecutionStatus.skipped} /></TooltipTrigger> {/* Ritual Timeline Visual */}
+                 <TooltipContent>Rituals Executed: {ritualExecutionStatus.executed}, Skipped: {ritualExecutionStatus.skipped}</TooltipContent>
+               </Tooltip>
+              <Tooltip>
+                 <TooltipTrigger><MemorySpiral fidelity={memoryFidelity} /></TooltipTrigger>
+                 <TooltipContent>Memory Fidelity: {(memoryFidelity * 100).toFixed(2)}%</TooltipContent>
+               </Tooltip>
+            </div>
+          </div>
+        </TraceOverlay>
+
+        {/* Anomaly Scan Quadrant */}
+        <TraceOverlay density={echoStreamActive ? ambientDensity : anomalyScanDensity}>
+          <div className="relative border p-4 flex flex-col justify-between h-full">
+            <h3 className="text-lg font-semibold">🜄 Anomaly Scan</h3>
+            <RecursionDepthIndicator depth={driftDetection || latencyBounds ? 2 : 1} /> {/* Simple depth indicator */}
+             <div className="flex items-center space-x-4">
+               <Tooltip>
+                 <TooltipTrigger><DriftRadar active={driftDetection} /></TooltipTrigger>
+                 <TooltipContent>Drift Detected: {driftDetection ? 'Yes' : 'No'}</TooltipContent>
+               </Tooltip>
+               <Tooltip>
+                 <TooltipTrigger><LatencyGraph breached={latencyBounds} /></TooltipTrigger>
+                 <TooltipContent>Latency Breached: {latencyBounds ? 'Yes' : 'No'}</TooltipContent>
+               </Tooltip>
+               <Tooltip>
+                 <TooltipTrigger><SignalWaveform integrity={signalIntegrity} /></TooltipTrigger>
+                 <TooltipContent>Signal Integrity: {(signalIntegrity * 100).toFixed(2)}%</TooltipContent>
+               </Tooltip>
+               <Tooltip>
+                 <TooltipTrigger><AlignmentMap status={environmentAlignment} /></TooltipTrigger>
+                 <TooltipContent>Environment Alignment: {environmentAlignment}</TooltipContent>
+               </Tooltip>
+            </div>
+          </div>
+        </TraceOverlay>
+
+        {/* Governance Layer Quadrant */}
+        <TraceOverlay density={echoStreamActive ? ambientDensity : governanceLayerDensity}>
+          <div className="relative border p-4 flex flex-col justify-between h-full">
+            <h3 className="text-lg font-semibold">🜃 Governance Layer</h3>
+             <RecursionDepthIndicator depth={consensusStatus} /> {/* Using consensus status as depth indicator */}
+             <div className="flex items-center space-x-4">
+              <Tooltip>
+                 <TooltipTrigger><ConsensusRing agreement={consensusStatus} /></TooltipTrigger>
+                 <TooltipContent>Consensus: {consensusStatus} domains</TooltipContent>
+               </Tooltip>
+               <Tooltip>
+                 <TooltipTrigger><RollbackTracker status={rollbackStatus} /></TooltipTrigger>
+                 <TooltipContent>Rollback Status: {rollbackStatus}</TooltipContent>
+               </Tooltip>
+               <Tooltip>
+                 <TooltipTrigger><OverrideLedger logs={overrideLogs} /></TooltipTrigger>
+                 <TooltipContent>Override Logs: {overrideLogs} entries</TooltipContent>
+               </Tooltip>
+               <Tooltip>
+                 <TooltipTrigger><EvolutionArc milestones={evolutionMilestones} /></TooltipTrigger>
+                 <TooltipContent>Evolution Milestones: {evolutionMilestones}</TooltipContent>
+               </Tooltip>
+            </div>
+          </div>
+        </TraceOverlay>
+
+        {/* Strategist Interaction Area (Placeholder) */}
+        <div className="col-span-1 md:col-span-2 border p-4">
+           <h3 className="text-lg font-semibold">Strategist Console</h3>
+           {/* Add controls for strategist interaction here */}
+           {/* <button onClick={invokeFullRecursion} className="mt-2 p-2 bg-blue-500 text-white rounded">Invoke Full Recursion</button> */}
+           {/* <label className="ml-4"><input type="checkbox" checked={echoStreamActive} onChange={() => setEchoStreamActive(!echoStreamActive)} /> Real-Time Echo Stream</label> */}
+        </div>
+
+      </div>
+    </TooltipProvider>
+  );
+};
+
+export default MeshAuditDashboard;

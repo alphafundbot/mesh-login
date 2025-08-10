@@ -23,7 +23,8 @@ import {
   Code,
   CheckSquare,
   Network,
-  Globe
+  Globe,
+  DollarSign,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -42,6 +43,7 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/history", label: "Signal Memory", icon: History },
   { href: "/memory-map", label: "Memory Map", icon: Brain },
+  { href: "/financials", label: "Financials", icon: DollarSign },
 ];
 
 const analysisItems = [
