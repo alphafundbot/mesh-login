@@ -3,11 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "env:fetch": "node --experimental-specifier-resolution=node scripts/fetchFirebaseConfig.mjs",
-    "dev": "npm run env:fetch && next dev --turbopack",
+    "dev": "next dev --turbopack",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "npm run env:fetch && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
@@ -52,7 +51,6 @@
     "firebase": "12.1.0",
     "framer-motion": "11.3.19",
     "genkit": "1.16.0",
-    "googleapis": "140.0.1",
     "lucide-react": "0.475.0",
     "next": "15.3.3",
     "patch-package": "8.0.0",
