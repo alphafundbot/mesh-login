@@ -1,17 +1,13 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { UserProvider } from "@/hooks/use-user";
 import ClientOnly from "@/components/layout/ClientOnly";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Providers from "@/components/layout/Providers";
 
 export const metadata: Metadata = {
   title: "Stratagem.ai",
   description: "Strategist-grade mesh manifest.",
 };
-
-const queryClient = new QueryClient();
 
 export default function RootLayout({
   children,
@@ -30,14 +26,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <ClientOnly>
-          <QueryClientProvider client={queryClient}>
-            <UserProvider>
-              <SidebarProvider>
-                {children}
-                <Toaster />
-              </SidebarProvider>
-            </UserProvider>
-          </QueryClientProvider>
+          <Providers>
+            {children}
+          </Providers>
         </ClientOnly>
       </body>
     </html>
