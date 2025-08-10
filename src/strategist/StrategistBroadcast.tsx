@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 
 // Assume these modules and types are defined elsewhere
 // import { SignalRelayEngine } from '../signal/SignalRelayEngine';
-// import { UserDirectiveTracker } from '../strategist/UserDirectiveTracker';
+// import { UserDirectiveTracker } from '/src/strategist/UserDirectiveTracker';
 // import { StrategistCalendar } from '../strategist/StrategistCalendar';
 // import { MeshManifest } from '../mesh/MeshManifest.json'; // Conceptual access
 // import { RitualSignal } from '../rituals/types'; // Assume a type for ritual signals
 
-// Assume a type for the broadcast message/signal
+// Assume a type for the broadcast message/signal, potentially including onboarding specific data
 interface BroadcastContent {
   message?: string;
   ritualSignal?: any; // Replace with actual RitualSignal type
@@ -15,10 +15,12 @@ interface BroadcastContent {
 
 interface StrategistBroadcastProps {
   strategistId: string; // Assume strategist identity is passed as prop
+  // Assume a function to initiate user onboarding is available, potentially from FreeAccountConnector
+  onboardUser: (strategistId: string, invitationDetails: any) => Promise<void>;
   // Add other necessary props for integration
 }
 
-const StrategistBroadcast: React.FC<StrategistBroadcastProps> = ({ strategistId }) => {
+const StrategistBroadcast: React.FC<StrategistBroadcastProps> = ({ strategistId, onboardUser }) => {
   const [message, setMessage] = useState('');
   const [ritualSignal, setRitualSignal] = useState<any>(null); // Replace with actual RitualSignal type state
   const [broadcastStatus, setBroadcastStatus] = useState<string | null>(null);
@@ -50,6 +52,17 @@ const StrategistBroadcast: React.FC<StrategistBroadcastProps> = ({ strategistId 
       setBroadcastStatus('Broadcast sent successfully!');
       setMessage('');
       setRitualSignal(null); // Reset ritual signal state
+
+      // Example of integrating with user onboarding
+      if (broadcastContent.ritualSignal && broadcastContent.ritualSignal.type === 'onboardingInvitation') {
+        try {
+          // Assuming the ritual signal contains details needed for onboarding
+          await onboardUser(strategistId, broadcastContent.ritualSignal.onboardingDetails);
+          console.log('Onboarding ritual initiated.');
+        } catch (onboardingError) {
+          console.error('Onboarding ritual failed:', onboardingError);
+        }
+      }
     } catch (error) {
       setBroadcastStatus(`Error sending broadcast: ${error}`);
       console.error('Broadcast failed:', error);
