@@ -2,8 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
+import { Button } from "@radix-ui/react-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -11,12 +10,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { BrainCircuit } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
-const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(1, { message: "Password is required." }),
-});
+import { LoginPayload, LoginPayloadSchema } from "../../lib/types"; // Import from centralized types
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+
+  });
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -26,11 +29,11 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<LoginPayload>({ // Use the imported LoginPayload type
+    resolver: zodResolver(LoginPayloadSchema), // Use the imported LoginPayloadSchema
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginPayload) => { // Use the imported LoginPayload type
     const error = await login(data.email, data.password);
     if (error) {
       toast({

@@ -2,6 +2,7 @@
 
 import { AuditOracle } from '../audit/AuditOracle'; // Assuming AuditOracle is accessible
 import { TranscendenceMap } from '../visualization/TranscendenceMap'; // Assuming TranscendenceMap is accessible
+import { logTelemetryEvent } from './LoginTelemetry'; // Centralized telemetry logging
 
 interface MPCHealthMetrics {
   timestamp: number;
@@ -115,6 +116,10 @@ export class MPCHeartbeat {
 
   private streamHealthMetrics(metrics: MPCHealthMetrics): void {
     console.log('Streaming MPC health metrics:', metrics);
+    // Log telemetry event for MPC heartbeat
+    logTelemetryEvent('mpc:heartbeat', {
+      metadata: metrics,
+    });
     // Conceptual: Stream metrics to AuditOracle and TranscendenceMap
     // This would involve calling functions or dispatching events
     // that these modules listen to.

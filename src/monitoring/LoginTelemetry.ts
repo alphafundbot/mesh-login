@@ -1,10 +1,43 @@
-// src/telemetry/LoginTelemetry.ts
+import { AuditEventSchema } from '../lib/types'; // Using AuditEventSchema for a unified structure
 
-import { AuditTrailVisualizer } from "@/visualization/AuditTrailVisualizer"; // Conceptual import
-import { DevServerPulse } from "@/visualization/DevServerPulse"; // Conceptual import
-import { MeshHydrationMap } from "@/visualization/MeshHydrationMap"; // Conceptual import
+// Define a type for Telemetry events, potentially extending AuditEvent
+export interface TelemetryEvent {
+  eventType: string;
+  uid?: string; // Optional user ID
+  timestamp: string;
+  // Add any other common telemetry fields here
+  metadata?: Record<string, any>; // Optional metadata for event-specific details
+}
 
-// Assume these types and mechanisms are defined elsewhere
+export const logTelemetryEvent = (eventType: string, payload: Partial<TelemetryEvent>) => {
+  const event: TelemetryEvent = {
+    eventType,
+    uid: payload.uid, // Include uid if available
+    timestamp: new Date().toISOString(),
+    metadata: payload.metadata ?? {},
+  };
+
+  // Validate the core structure using AuditEventSchema for consistency
+  // Note: Telemetry events may not include errors
+  const result = AuditEventSchema.safeParse(event);
+  if (!result.success) {
+    console.warn('Invalid telemetry event format:', result.error.format());
+    // Optionally log this validation failure as an audit event
+  }
+
+  // This is the centralized point for dispatching telemetry
+  // Replace with actual telemetry service integration
+  console.log('[TELEMETRY]', result.success ? { ...result.data, metadata: event.metadata } : event);
+};
+
+// --- Below this line are now legacy/deprecated types and functions ---
+
+// These conceptual imports are no longer directly used by the logging function
+// import { AuditTrailVisualizer } from "@/visualization/AuditTrailVisualizer";
+// import { DevServerPulse } from "@/visualization/DevServerPulse";
+// import { MeshHydrationMap } from "@/visualization/MeshHydrationMap";
+
+// This type is now specific to the old `trackAuthFlow` and should be refactored
 type AuthFlowPerformance = {
   startTime: number;
   endTime: number;

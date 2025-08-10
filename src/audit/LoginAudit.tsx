@@ -2,17 +2,10 @@ import React from 'react';
 
 // Assume AuditOverlay.tsx, MeshManifest.json, and StrategistCalendar.ts
 // provide data or APIs for accessing login audit information.
-// Define types for login audit data as needed.
-interface LoginAttempt {
-  timestamp: string;
-  strategistId?: string;
-  status: 'success' | 'failure';
-  error?: string;
-  // Add more fields as needed, e.g., IP address, device info, etc.
-}
+import { AuditEvent } from '../lib/types'; // Import centralized AuditEvent type
 
 interface LoginAuditProps {
-  loginAttempts?: LoginAttempt[];
+  loginAttempts?: AuditEvent[]; // Use centralized AuditEvent type
   // Add props for anomalies, redirect drift, etc.
 }
 
@@ -25,8 +18,9 @@ const LoginAudit: React.FC<LoginAuditProps> = ({ loginAttempts }) => {
           {loginAttempts.map((attempt, index) => (
             <li key={index} className={`border-b py-2 ${attempt.status === 'failure' ? 'text-red-500' : 'text-green-500'}`}>
               <strong>Timestamp:</strong> {attempt.timestamp} |{' '}
-              <strong>Strategist ID:</strong> {attempt.strategistId || 'N/A'} |{' '}
-              <strong>Status:</strong> {attempt.status}
+              <strong>Strategist ID:</strong> {attempt.uid || 'N/A'} |{' '} {/* Use uid from AuditEvent */}
+              {/* Infer status from eventType or presence of error */}
+              <strong>Status:</strong> {attempt.eventType.includes('FAILURE') ? 'failure' : 'success'}
               {attempt.error && <p className="text-sm">Error: {attempt.error}</p>}
             </li>
           ))}

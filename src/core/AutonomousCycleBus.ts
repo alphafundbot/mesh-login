@@ -1,5 +1,7 @@
 // src/core/AutonomousCycleBus.ts
 
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
+
 /**
  * @module AutonomousCycleBus
  * @description Mock bus for managing autonomous development cycles within the project.

@@ -1,5 +1,8 @@
 // src/core/Router.ts
 
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
+import { logAuditEvent } from '../lib/authAuditLogger'; // Centralized audit logging
+
 /**
  * Represents the Strategist-grade signal router across mesh domains.
  * Responsible for mapping invocation paths, resolving cross-domain dependencies,
@@ -13,7 +16,7 @@ export class Router {
    *          a list of module IDs for parallel execution, or a specific ritual identifier.
    */
   public async mapInvocation(signal: any): Promise<string | string[] | { ritual: string, target: string } | null> {
-    console.log("Router: Mapping invocation for signal:", signal);
+    logTelemetryEvent('router:map_invocation_attempt', { metadata: { signal: signal } });
     // TODO: Implement complex logic to analyze the signal and determine the routing path
     // This should involve:
     // 1. Parsing the signal to understand the requested operation and target domain/module.
@@ -23,11 +26,11 @@ export class Router {
 
     // Placeholder logic: Simply route based on a 'target' property in the signal
  if (signal && signal.target) {
-      console.log(`Router: Routing signal to target: ${signal.target}`);
+      logTelemetryEvent('router:invocation_mapped', { metadata: { signal: signal, target: signal.target } });
       return signal.target;
     }
 
-    console.warn("Router: Could not map invocation for signal:", signal);
+    logAuditEvent('router:invocation_mapping_failed', { error: 'Could not map invocation', metadata: { signal: signal } });
     return null; // Indicate that routing failed
   }
 
@@ -39,7 +42,7 @@ export class Router {
    * @returns A promise resolving to a status indicating if dependencies are met or actions taken.
    */
   public async resolveDependencies(invocationRequest: any): Promise<boolean> {
- console.log("Router: Resolving dependencies for invocation:", invocationRequest);
+    logTelemetryEvent('router:dependency_resolution_attempt', { metadata: { request: invocationRequest } });
     // TODO: Implement logic to check and resolve cross-domain dependencies.
     // This could involve querying the Cloud RAM Cloud for data, coordinating with
     // other MPC instances in different domains, or triggering prerequisite rituals.
@@ -49,7 +52,7 @@ export class Router {
     // 3. Initiating sub-invocations or data fetches to satisfy dependencies.
 
     // Placeholder logic: Assume dependencies are always resolved for now
-    console.log("Router: Dependencies resolved (placeholder).");
+    logTelemetryEvent('router:dependencies_resolved', { metadata: { request: invocationRequest, status: 'resolved' } });
     return true; // Indicate success
   }
 
@@ -61,7 +64,7 @@ export class Router {
    * @returns A promise resolving to the final routed target or path.
    */
   public async routeLatencyAware(invocationRequest: any): Promise<string | null> {
- console.log("Router: Routing latency-aware invocation:", invocationRequest);
+    logTelemetryEvent('router:latency_aware_routing_attempt', { metadata: { request: invocationRequest } });
     // TODO: Implement sophisticated logic to evaluate network conditions,
     // module load, and domain proximity to determine the optimal route.
     // Key considerations:
@@ -71,11 +74,11 @@ export class Router {
 
     // Placeholder logic: Simply route to the target specified in the request for now
     if (invocationRequest && invocationRequest.target) {
-      console.log(`Router: Latency-aware routing to target: ${invocationRequest.target}`);
+      logTelemetryEvent('router:latency_aware_routing_successful', { metadata: { request: invocationRequest, target: invocationRequest.target } });
       return invocationRequest.target;
     }
 
-    console.warn("Router: Could not perform latency-aware routing for invocation:", invocationRequest);
+    logAuditEvent('router:latency_aware_routing_failed', { error: 'Could not perform latency-aware routing', metadata: { request: invocationRequest } });
     return null;
   }
 
@@ -83,9 +86,9 @@ export class Router {
    * Initializes the Router, setting up any necessary internal state or connections.
    */
   public async initialize(): Promise<void> {
- console.log("Router: Initializing...");
+    logTelemetryEvent('router:initializing', {});
     // TODO: Implement initialization logic, e.g., loading routing tables,
     // establishing connections to domain controllers.
-    console.log("Router: Initialization complete.");
+    logTelemetryEvent('router:initialized', {});
   }
 }

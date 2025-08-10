@@ -1,4 +1,6 @@
 import { ManualOpportunity } from "./types"; // Assuming ManualOpportunity is defined in a types file
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
+import { logAuditEvent } from '../lib/authAuditLogger'; // Centralized audit logging
 
 // Conceptual internal module for discovering marketplace opportunities
 // This would contain the logic for interacting with various platform APIs
@@ -7,7 +9,7 @@ const MarketplaceDiscoveryEngine = {
   discover: (tags: string[]): ManualOpportunity[] => {
     // Placeholder logic for discovering opportunities
     console.log(`Discovering marketplace opportunities with tags: ${tags.join(', ')}`);
-    const opportunities: ManualOpportunity[] = [
+    logTelemetryEvent('marketplace:discovery_attempt', { metadata: { tags: tags } });    const opportunities: ManualOpportunity[] = [
       {
         id: 'manual_opp_1',
         description: 'Develop a signal processing algorithm',
@@ -27,6 +29,7 @@ const MarketplaceDiscoveryEngine = {
         roiTier: 'Tier 4',
       },
     ];
+    logTelemetryEvent('marketplace:opportunities_discovered', { metadata: { count: opportunities.length, tags: tags } });
     return opportunities;
   },
 };
@@ -37,7 +40,7 @@ const ManualOpportunityTracker = {
 
   addOpportunity: (opportunity: ManualOpportunity): void => {
     ManualOpportunityTracker.opportunities.push(opportunity);
-    console.log(`Tracked new opportunity: ${opportunity.id}`);
+    logTelemetryEvent('marketplace:opportunity_tracked', { metadata: { opportunityId: opportunity.id } });
   },
 
   getOpportunities: (): ManualOpportunity[] => {
@@ -49,22 +52,24 @@ export class MarketplaceIntegrator {
   private connectedPlatforms: string[] = [];
 
   connectToPlatform(platformName: string, credentials: any): boolean {
-    // Placeholder logic for connecting to a platform
     console.log(`Attempting to connect to ${platformName}...`);
+    logTelemetryEvent('marketplace:connect_attempt', { metadata: { platform: platformName } });
     // In a real implementation, this would involve using credentials
     // to authenticate with the platform's API.
     if (credentials) { // Simple check for demonstration
       this.connectedPlatforms.push(platformName);
       console.log(`Successfully connected to ${platformName}`);
+      logTelemetryEvent('marketplace:connect_success', { metadata: { platform: platformName } });
       return true;
     }
     console.log(`Failed to connect to ${platformName}`);
+    logAuditEvent('marketplace:connect_failed', { error: 'Invalid credentials or connection failed', metadata: { platform: platformName } });
     return false;
   }
 
   discoverOpportunities(strategistTags: string[]): ManualOpportunity[] {
     if (this.connectedPlatforms.length === 0) {
-      console.warn("No platforms connected. Cannot discover opportunities.");
+      logAuditEvent('marketplace:discovery_skipped', { error: 'No platforms connected', metadata: { tags: strategistTags } });
       return [];
     }
 

@@ -1,3 +1,5 @@
+// src/security/CredentialPulseMonitor.ts
+
 // src/monitoring/CredentialPulseMonitor.ts
 
 /**
@@ -23,6 +25,8 @@ interface CredentialPulseVisualizationData {
  * Monitors and provides real-time pulse data for credentials.
  */
 export class CredentialPulseMonitor {
+
+ import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
 
   // Placeholder for internal monitoring state (e.g., usage counters, historical data)
   private credentialState: { [key: string]: { usage: number; history: number[] } } = {};
@@ -76,7 +80,7 @@ export class CredentialPulseMonitor {
     const averageUsage = usageHistory.length > 0 ? usageHistory.reduce((sum, u) => sum + u, 0) / usageHistory.length : 0;
     const drift = state.usage - averageUsage;
     const anomalyFlag = state.usage > (averageUsage * 2 + 5); // Example anomaly condition
-
+ 
     return {
       secretName,
       realTimeUsage: state.usage,
@@ -85,6 +89,11 @@ export class CredentialPulseMonitor {
       anomalyFlag,
     };
   }
+ 
+  /**
+   * Gathers pulse data from all monitored secrets for visualization.
+   * @returns Data prepared for visualization in the TranscendenceMap.
+   */
 
   /**
    * Gathers pulse data from all monitored secrets for visualization.
@@ -123,4 +132,8 @@ export class CredentialPulseMonitor {
       anomalyHighlights,
     };
   }
+ 
+  // Export an instance if needed elsewhere
+  // export const credentialPulseMonitor = new CredentialPulseMonitor();
+
 }

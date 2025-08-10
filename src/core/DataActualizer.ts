@@ -1,5 +1,7 @@
 // src/core/DataActualizer.ts
 
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
+
 // Mock implementation for a Universal Data Actualization Layer.
 
 interface PredictedData {
@@ -14,24 +16,42 @@ interface EnrichedState {
 
 export class DataActualizer {
   /**
-   * Mock method to simulate predictive data synthesis.
+   * Mock method to simulate predictive data synthesis and log telemetry.
    * @param query - A string representing the query for anticipated data.
    * @returns Mock predicted data.
    */
   anticipate(query: string): PredictedData {
-    console.log(`DataActualizer: Anticipating data for query: ${query}`);
     // Simulate predictive data synthesis
-    return { predicted: true, payload: { latency: 42, signal: 'stable', queryEcho: query } };
+    const predictedData: PredictedData = { predicted: true, payload: { latency: 42, signal: 'stable', queryEcho: query } };
+
+    // Log telemetry event for anticipation
+    logTelemetryEvent('data_actualizer:anticipated', {
+      metadata: {
+        query: query,
+        predictedData: predictedData,
+      },
+    });
+
+    return predictedData;
   }
 
   /**
-   * Mock method to simulate retro-causal data structuring.
+   * Mock method to simulate retro-causal data structuring and log telemetry.
    * @param state - The current state object to retro-actualize.
    * @returns Mock enriched state.
    */
   retroActualize(state: any): EnrichedState {
-    console.log(`DataActualizer: Retro-actualizing state:`, state);
     // Simulate retro-causal data structuring
-    return { actualized: true, enrichedState: { ...state, timestamp: Date.now(), retroEffect: 'applied' } };
+    const enrichedState: EnrichedState = { actualized: true, enrichedState: { ...state, timestamp: new Date().toISOString(), retroEffect: 'applied' } }; // Use ISO string for consistency
+
+    // Log telemetry event for retro-actualization
+    logTelemetryEvent('data_actualizer:retro_actualized', {
+      metadata: {
+        originalState: state,
+        enrichedState: enrichedState,
+      },
+    });
+
+    return enrichedState;
   }
 }

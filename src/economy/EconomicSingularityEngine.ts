@@ -1,5 +1,7 @@
 // src/economy/EconomicSingularityEngine.ts
 
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
+
 // Assume these types and modules are defined elsewhere:
 // import { ValueSaturationMap } from '../visualization/ValueSaturationMap'; // Conceptual visualization target
 // import { SingularityForecastEngine } from './SingularityForecastEngine';
@@ -42,6 +44,13 @@ export class EconomicSingularityEngine {
    * @returns The current status of the singularity pursuit.
    */
   public pursueSingularity(strategistObjective: StrategistObjective, realities: string[]): SingularityStatus {
+    // Log telemetry event for the start of singularity pursuit
+    logTelemetryEvent('singularity:pursuit_started', {
+      metadata: {
+        strategistObjective: strategistObjective,
+        realities: realities,
+      },
+    });
     // For conceptual scaffolding, this function will update the internal status
     // based on simulated interactions with other modules.
 
@@ -64,8 +73,10 @@ export class EconomicSingularityEngine {
     // orchestrating hyper nano trading, yield fusion, resource allocation, etc.
     // This is represented conceptually for now.
 
-    console.log(`Economic Singularity Engine: Pursuing singularity in realities: ${realities.join(', ')}`);
-    console.log(`Current Singularity Status:`, this.singularityStatus);
+    // Log telemetry event for the updated singularity status
+    logTelemetryEvent('singularity:status_updated', {
+      metadata: this.singularityStatus,
+    });
 
     return this.singularityStatus;
   }

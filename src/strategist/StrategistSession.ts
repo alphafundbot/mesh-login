@@ -1,20 +1,83 @@
 // src/strategist/StrategistSession.ts
 
-interface StrategistSessionData {
-  strategistId: string;
-  accessTier: string;
-  loginTimestamp: number;
-}
+import { StrategistUser, StrategistUserSchema } from '../lib/types';
 
-const SESSION_STORAGE_KEY = 'strategistSession';
+const SESSION_STORAGE_KEY = process.env.NEXT_PUBLIC_SESSION_KEY ?? 'meshStrategistSession';
+const SESSION_EXPIRY_MS = 1000 * 60 * 60 * 24; // 24 hours
+
+type StoredSession = {
+  strategist: StrategistUser;
+  timestamp: number;
+};
+
+export const StrategistSession = {
+  // 🧭 Persist strategist session with timestamp
+  setSession: (user: StrategistUser): void => {
+    try {
+      const payload: StoredSession = {
+        strategist: user,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
+    } catch (err) {
+      console.error('Failed to save strategist session:', err);
+    }
+  },
+
+  // 🔍 Retrieve strategist session
+  getSession: (): StrategistUser | null => {
+    try {
+      const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!raw) return null;
+
+      const parsed: StoredSession = JSON.parse(raw);
+      const { strategist, timestamp } = parsed;
+
+      // Expiry check
+      if (Date.now() - timestamp > SESSION_EXPIRY_MS) {
+        StrategistSession.clearSession();
+        return null;
+      }
+
+      // Schema validation
+      const result = StrategistUserSchema.safeParse(strategist);
+      return result.success ? result.data : null;
+    } catch (err) {
+      console.error('Failed to load strategist session:', err);
+    }
+    return null;
+  },
+
+  // 🆔 Get strategist UID
+  getStrategistId: (): string | null => {
+    const session = StrategistSession.getSession();
+    return session?.uid ?? null;
+  },
+
+  // 🧹 Clear strategist session
+  clearSession: (): void => {
+    try {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (err) {
+      console.error('Failed to clear strategist session:', err);
+    }
+  },
+};
+// src/strategist/StrategistSession.ts
+
+import { StrategistUser, StrategistUserSchema } from '../lib/types';
+
+const SESSION_STORAGE_KEY = process.env.NEXT_PUBLIC_SESSION_KEY ?? 'meshStrategistSession';
+
+const EXPIRY_MS = 1000 * 60 * 60 * 24; // 24 hours
 
 export const StrategistSession = {
   // Persists session data to storage
-  saveSession: (sessionData: StrategistSessionData): void => {
+  setSession: (user: StrategistUser): void => {
     try {
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({...user, timestamp: Date.now()}));
       // Conceptual integration: Notify other modules of session start/update
-      // FreeAccountConnector.onSessionUpdate(sessionData);
+      // FreeAccountConnector.onSessionUpdate(user);
       // IncomeSanctum.onSessionUpdate(sessionData);
       // SignalConsensusEngine.onSessionUpdate(sessionData);
     } catch (error) {
@@ -24,13 +87,17 @@ export const StrategistSession = {
   },
 
   // Retrieves session data from storage
-  getSession: (): StrategistSessionData | null => {
+  getSession: (): StrategistUser | null => {
     try {
-      const sessionDataString = localStorage.getItem(SESSION_STORAGE_KEY);
-      if (sessionDataString) {
-        const sessionData: StrategistSessionData = JSON.parse(sessionDataString);
-        // Optional: Add validation or session expiry check
-        return sessionData;
+      const sessionString = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (sessionString) {
+        const parsed = StrategistUserSchema.safeParse(JSON.parse(sessionString));
+        if (parsed.success) {
+          const session = parsed.data;
+          const now = Date.now();
+          if ((session as any).timestamp && now - (session as any).timestamp > EXPIRY_MS) return null;
+          return session;
+        }
       }
       return null;
     } catch (error) {
@@ -43,7 +110,7 @@ export const StrategistSession = {
   // Clears session data from storage
   clearSession: (): void => {
     try {
-      localStorage.removeItem(SESSION_STORAGE_KEY);
+      localStorage.removeItem(SESSION_STORAGE_KEY, );
       // Conceptual integration: Notify other modules of session end
       // FreeAccountConnector.onSessionEnd();
       // IncomeSanctum.onSessionEnd();
@@ -59,10 +126,11 @@ export const StrategistSession = {
     return StrategistSession.getSession() !== null;
   },
 
-  // Gets the strategist ID from the current session
+
+  // Gets the strategist UID from the current session
   getStrategistId: (): string | null => {
     const session = StrategistSession.getSession();
-    return session ? session.strategistId : null;
+    return session ? session.uid : null;
   },
 
   // Gets the access tier from the current session

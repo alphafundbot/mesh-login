@@ -1,11 +1,13 @@
 // src/hooks/use-auth.ts
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { setStrategistSession, clearStrategistSession } from '@/lib/StrategistSession';
-import { requestKeysFromMPC } from '@/lib/mpc-client'; // Stubbed call
-import { logAuditEvent, logTelemetry } from '@/lib/telemetry';
-import { StrategistUser } from '@/types/auth-models'; // Defined in data model spec
+import { setSession, clearSession } from '../strategist/StrategistSession'; // Use centralized StrategistSession
+import { requestKeysFromMPC } from '../lib/mpc-client'; // Stubbed call
+import { logAuditEvent } from '../lib/authAuditLogger'; // Use centralized audit logger
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Use centralized telemetry logger
+import { StrategistUser } from '../lib/types'; // Use centralized StrategistUser type
 
 /**
  * useAuth — Ritualized strategist authentication hook.
@@ -17,6 +19,7 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
 
   const auth = getAuth();
+  const router = useRouter(); // Initialize useRouter
 
   // 🔑 Login function: Firebase Auth + session + MPC + audit
   const login = useCallback(async (email: string, password: string) => {
@@ -41,12 +44,15 @@ export function useAuth() {
       await requestKeysFromMPC(strategistUser.uid);
 
       // 🧭 Session handoff
-      setStrategistSession(strategistUser);
+ setSession(strategistUser); // Use centralized setSession
 
       // 📡 Audit + telemetry
       logAuditEvent('LOGIN_SUCCESS', strategistUser);
-      logTelemetry('auth:login', { uid: strategistUser.uid });
+      logTelemetryEvent('auth:login_success', { uid: strategistUser.uid, metadata: { email: strategistUser.email } }); // Use logTelemetryEvent
 
+      // Redirect on successful login
+      router.push('/');
+      
       setUser(strategistUser);
     } catch (err: any) {
       const message = err.message || 'Login failed';
@@ -64,9 +70,13 @@ export function useAuth() {
 
     try {
       await signOut(auth);
-      clearStrategistSession();
+      clearSession(); // Use centralized clearSession
       logAuditEvent('LOGOUT_SUCCESS', { uid: user?.uid });
-      logTelemetry('auth:logout', { uid: user?.uid });
+      logTelemetryEvent('auth:logout_success', { uid: user?.uid }); // Use logTelemetryEvent
+
+      // Redirect on logout
+      router.push('/login');
+
       setUser(null);
     } catch (err: any) {
       const message = err.message || 'Logout failed';
