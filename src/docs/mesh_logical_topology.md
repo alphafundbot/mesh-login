@@ -13,8 +13,8 @@ This document describes the intended logical architecture and interaction patter
 
 ## Interaction Patterns:
 
--   **Strategist (User) ↔ MeshDashboard:** Direct interaction via web interface. User views data, triggers actions, configures settings, and receives notifications. Access controlled by IAM roles.
--   **MeshDashboard ↔ Backend APIs (via Next.js API routes):** MeshDashboard frontend communicates with backend API routes (e.g., `/api/status`, `/api/financial-data`, `/api/gemini`). These API routes handle data fetching, processing, and interaction with other backend modules or external services. Access controlled at the API route level (authentication, authorization).
+-   **Strategist (User) ↔ MeshDashboard:** Direct interaction via web interface. User views data, triggers actions, configures settings, and receives notifications. Access controlled by IAM roles defined in `src/lib/roles.ts`.
+-   **MeshDashboard ↔ Backend APIs (via Next.js API routes):** All external and frontend interactions are funneled through the Next.js API routes, which act as a secure gateway. These routes enforce authentication and authorization before processing requests or interacting with backend modules.
 -   **Backend APIs ↔ Modules:** Backend API routes call functions or services provided by core backend modules.
     -   API routes might call `firebase-proxy` functions to interact with external APIs.
     -   API routes might interact with the `Audit-engine` to trigger audits or retrieve audit results.
@@ -25,12 +25,28 @@ This document describes the intended logical architecture and interaction patter
 -   **Modules ↔ Databases/Data Stores:** Modules access shared data stores (e.g., Firestore, other databases) for configuration, state, logs, and operational data. Access controlled by database security rules and service account permissions.
 -   **Modules ↔ External Services:** Modules (primarily via `firebase-proxy` or dedicated integrations) interact with external services (Gemini API, planned financial platforms like Stripe/Metamask, telecommunications services). Access controlled by API keys, service accounts, and secure protocols.
 
-## Security Boundaries and Interaction Points:
+## API Endpoints & Interaction Points
 
--   **API Gateway:** The Next.js API routes effectively act as a gateway for frontend-to-backend communication, enforcing authentication and authorization.
--   **Inter-Module Communication:** Secure channels (e.g., internal APIs with authentication/authorization, message queues with access control) should be used for communication between backend modules.
--   **External Service Integrations:** Dedicated, secure connectors or the `firebase-proxy` with strict credential management and access policies should handle interactions with external services.
--   **Database Access:** Database security rules and principle of least privilege for service accounts accessing data stores are critical.
--   **Container Boundaries:** Containerization provides a basic isolation layer between modules.
+The primary entry point for external systems to interact with the mesh is through its Next.js API routes. Authentication is required, and actions are governed by the IAM roles defined in `src/lib/roles.ts`.
+
+-   **`/api/status`**
+    -   **Method:** GET
+    -   **Purpose:** Provides health status for various internal and external APIs.
+    -   **Required Permission:** `viewApiStatus`
+
+-   **`/api/financial-data`**
+    -   **Method:** GET
+    -   **Purpose:** Retrieves financial metrics and data for the dashboard.
+    -   **Required Permission:** `viewFinancials`
+
+-   **`/api/gemini`**
+    -   **Method:** POST
+    -   **Purpose:** A proxy for making requests to the Gemini AI API. The request body should contain a `prompt` field.
+    -   **Required Permission:** `useGeminiApi` (Note: This is a conceptual permission that needs to be defined in `src/lib/roles.ts` to be enforced.)
+
+-   **`/api/health`**
+    -   **Method:** GET
+    -   **Purpose:** A simple, unauthenticated health check endpoint for the MeshDashboard service itself. Returns a 200 OK response if the service is running.
+    -   **Required Permission:** None
 
 This logical topology provides a framework for understanding how the different parts of the mesh are designed to work together. Future improvements will focus on hardening these interaction points and adding new modules to enhance capabilities and revenue generation.
