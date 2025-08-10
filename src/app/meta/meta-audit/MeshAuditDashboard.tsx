@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// Assuming framer-motion or similar for animations, add import if needed
-// import { motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Tooltip,
   TooltipContent,
@@ -32,7 +31,6 @@ const getEvolutionMilestones = () => Math.floor(Math.random() * 50); // Number o
 // Helper components for glyphs and visuals
 const SovereigntyRing: React.FC<{ status: string }> = ({ status }) => (
   <motion.div
-    // Use a simple div for now, replace with motion.div if framer-motion is used
     className={`w-12 h-12 rounded-full ${status === 'aligned' ? 'bg-green-500' : 'bg-red-500'} opacity-70 transition-all duration-500`}
     animate={{ scale: status === 'drift' ? [1, 1.1, 1] : 1 }}
     transition={{ duration: 1, repeat: Infinity }}
@@ -43,9 +41,8 @@ const QuotaWaveform: React.FC<{ hydration: number }> = ({ hydration }) => (
   <div className="w-16 h-8 relative overflow-hidden">
     <motion.div
       className="absolute bottom-0 left-0 w-full bg-blue-500 opacity-70"
-      // Use a simple div for now, replace with motion.div if framer-motion is used
       initial={{ height: 0 }}
-      animate={{ height: `${hydration * 100}%` }} // Animation target (needs framer-motion)
+      animate={{ height: `${hydration * 100}%` }}
       transition={{ duration: 0.5 }}
     />
   </div>
@@ -70,8 +67,7 @@ const OverlayDensityMap: React.FC<{ depth: number }> = ({ depth }) => {
 const SignalLoop: React.FC<{ state: string }> = ({ state }) => (
   <motion.div
     className={`w-8 h-8 rounded-full border-2 ${state === 'listening' ? 'border-green-500' : 'border-gray-500'}`}
-    // Simple div for now, replace with motion.div if framer-motion is used
-    animate={{ rotate: state === 'listening' ? 360 : 0 }} // Animation target (needs framer-motion)
+    animate={{ rotate: state === 'listening' ? 360 : 0 }}
     transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
   />
 );
@@ -95,9 +91,8 @@ const MemorySpiral: React.FC<{ fidelity: number }> = ({ fidelity }) => (
   <div className="w-8 h-8 relative">
     <motion.div
       className="absolute inset-0 border border-blue-500 rounded-full"
-      // Simple div for now, replace with motion.div if framer-motion is used
-      animate={{ scale: fidelity }} // Animation target (needs framer-motion)
-      transition={{ duration: 1 }} // Transition duration
+      animate={{ scale: fidelity }}
+      transition={{ duration: 1 }}
     />
   </div>
 );
@@ -106,8 +101,7 @@ const MemorySpiral: React.FC<{ fidelity: number }> = ({ fidelity }) => (
 const DriftRadar: React.FC<{ active: boolean }> = ({ active }) => (
   <motion.div
     className={`w-10 h-10 rounded-full border-2 ${active ? 'border-orange-500' : 'border-gray-500'}`}
-    // Simple div for now, replace with motion.div if framer-motion is used
-    animate={{ rotate: active ? 360 : 0 }} // Animation target (needs framer-motion)
+    animate={{ rotate: active ? 360 : 0 }}
     transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
   />
 );
@@ -120,9 +114,8 @@ const SignalWaveform: React.FC<{ integrity: number }> = ({ integrity }) => (
   <div className="w-16 h-8 relative overflow-hidden">
     <motion.div
       className="absolute bottom-0 left-0 w-full bg-yellow-500 opacity-70"
-      // Simple div for now, replace with motion.div if framer-motion is used
       initial={{ height: 0 }}
-      animate={{ height: `${integrity * 100}%` }} // Animation target (needs framer-motion)
+      animate={{ height: `${integrity * 100}%` }}
       transition={{ duration: 0.5 }}
     />
   </div>
@@ -294,7 +287,6 @@ const MeshAuditDashboard: React.FC = () => {
 
     }, 5000); // Simulate ritual triggers every 5 seconds
     return () => clearInterval(ritualTriggerInterval);
-    return () => clearInterval(interval);
   }, []);
 
   // Function to simulate strategist invoking full recursion (example)
