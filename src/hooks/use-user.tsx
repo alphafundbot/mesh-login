@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
@@ -16,7 +15,6 @@ interface User {
 interface UserContextType {
   user: User | null;
   loading: boolean;
-  setUserRole: (role: Role) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -26,9 +24,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const getRoleForUser = (firebaseUser: FirebaseUser): Role => {
-    if (firebaseUser.email?.startsWith('nehemie')) {
-        return 'Architect';
-    }
+    // TODO: Fetch user role securely from Firebase Custom Claims or backend service
+    // For now, default to Analyst or other basic role
     return 'Analyst';
   }
 
@@ -56,14 +53,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-
-  const setUserRole = (role: Role) => {
-    if (ROLES.includes(role) && user) {
-      setUser(prevUser => prevUser ? ({ ...prevUser, role }) : null);
-    }
-  };
-
-  const contextValue = useMemo(() => ({ user, loading, setUserRole }), [user, loading]);
+  const contextValue = useMemo(() => ({ user, loading }), [user, loading]);
 
   return (
     <UserContext.Provider value={contextValue}>

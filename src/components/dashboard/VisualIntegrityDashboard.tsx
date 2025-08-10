@@ -31,7 +31,7 @@ import type { ActionLog, Severity, TaggedRationale, ClusterInfo, ClusterMap } fr
 import { parseDetails, RISK_WEIGHTS } from "@/lib/types";
 import { useUser } from "@/hooks/use-user";
 import { isBrowser } from "@/lib/env-check";
-
+import { canUserPerform } from "@/lib/roles";
 
 const calculateClusters = (rationales: TaggedRationale[]): ClusterMap => {
     const clusters: ClusterMap = new Map();
@@ -116,6 +116,8 @@ export default function VisualIntegrityDashboard() {
   const [rationaleForecast, setRationaleForecast] = useState<RationaleForecastOutput | null>(null);
   const [globalClusters, setGlobalClusters] = useState<ClusterMap>(new Map());
   const [confidenceThreshold, setConfidenceThreshold] = useState(0);
+
+  const userRole = user?.role || 'Guest'; // Get user role, default to 'Guest'
 
   const { currentLogs, previousPeriodLogs } = useMemo(() => {
     const now = Date.now();

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -31,6 +30,10 @@ import type { ActionLog } from "@/lib/types";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/hooks/use-user";
 import { isBrowser } from "@/lib/env-check";
+import { canUserPerform } from "@/lib/roles"; // Import canUserPerform
+
+// Define the required action for backfill (adjust as needed based on roles.ts)
+const REQUIRED_ACTION = 'Rollback'; // Example: assuming only Architects can rollback
 
 export default function AdminClient() {
   const [loading, setLoading] = useState(false);
@@ -39,6 +42,9 @@ export default function AdminClient() {
   const { toast } = useToast();
   const { user } = useUser();
 
+  // Determine if the user has permission
+  const hasPermission = user ? canUserPerform(user.role, REQUIRED_ACTION) : false;
+
   const addLog = (message: string) => {
     setLogs((prev) => [`[${new Date().toLocaleTimeString()}] ${message}`, ...prev]);
   };
@@ -46,6 +52,13 @@ export default function AdminClient() {
   const handleBackfill = async () => {
     if (!isBrowser() || !user) {
         toast({ title: "Error", description: "You must be logged in to perform this action."});
+        return;
+    }
+
+    // Check user permissions before proceeding
+    if (!hasPermission) {
+        toast({ title: "Permission Denied", description: "Your role does not have permission to perform this action." });
+        addLog("Permission denied for backfill.");
         return;
     }
 
@@ -80,11 +93,11 @@ export default function AdminClient() {
         const forecastId = forecastDoc.id;
 
         addLog(`Processing forecast ${forecastId} from ${forecastTimestamp.toLocaleString()}...`);
-        
+
         const sevenDays = 7 * 24 * 60 * 60 * 1000;
         const logStartTime = new Date(forecastTimestamp.getTime());
         const logEndTime = new Date(logStartTime.getTime() + sevenDays);
-        
+
         const logsQuery = query(
             collection(firestore, "hud_actions"),
             where("timestamp", ">=", logStartTime),
@@ -99,11 +112,11 @@ export default function AdminClient() {
             setProgress(((i + 1) / forecastsToProcess.length) * 100);
             continue;
         }
-        
+
         const logsString = relevantLogs
             .map(log => `[${(log.timestamp as any)?.toDate()?.toISOString() || ''}] ${log.action} by ${log.role} '${log.strategist}': ${log.details}`)
             .join("\n");
-        
+
         addLog(`Found ${relevantLogs.length} logs. Generating AI commentary...`);
 
         const commentary = await generateReplayCommentary({
@@ -113,7 +126,7 @@ export default function AdminClient() {
 
         const forecastDocRef = doc(firestore, "forecast_analysis", forecastId);
         await updateDoc(forecastDocRef, { commentary });
-        
+
         addLog(`Successfully generated and saved commentary for forecast ${forecastId}.`);
         setProgress(((i + 1) / forecastsToProcess.length) * 100);
       }
@@ -147,20 +160,21 @@ export default function AdminClient() {
           </CardTitle>
           <CardDescription>
             Automatically generate and persist replay commentary for all
-            historical forecasts that lack it. This requires an authenticated session.
+            historical forecasts that lack it.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={handleBackfill} disabled={loading || !user}>
+          <Button onClick={handleBackfill} disabled={loading || !user || !hasPermission}>
             <RefreshCw
               className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
             />
             {loading ? "Backfilling..." : "Start Backfill"}
           </Button>
            {!user && <p className="text-xs text-muted-foreground mt-2">Please log in to enable this feature.</p>}
+           {user && !hasPermission && <p className="text-xs text-muted-foreground mt-2">Your role does not have permission to perform this action.</p>}
         </CardContent>
       </Card>
-        
+
         {loading && (
             <div className="space-y-2">
                 <Progress value={progress} className="w-full" />

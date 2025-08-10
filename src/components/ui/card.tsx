@@ -10,7 +10,9 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      // Aligned with docs/mesh_dashboard_component_spec_card.md and docs/design_language.md
+      "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/50",
+      // Existing classes for default styling
       className
     )}
     {...props}

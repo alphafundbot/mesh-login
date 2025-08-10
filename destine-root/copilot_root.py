@@ -3,7 +3,7 @@ import random
 import logging
 import time
 from datetime import datetime
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 # ─── Flask App Initialization ──────────────────────────────────────────
 app = Flask(__name__)
@@ -41,6 +41,10 @@ def detect_au_drift():
     logging.info(f"AU drift detected: {drift_detected}")
     return drift_detected
 
+# ─── API Key Authentication ────────────────────────────────────────────
+expected_api_key = os.getenv('API_KEY')
+
+
 # ─── Hydration Failure Logging ─────────────────────────────────────────
 def log_hydration_failure(message: str):
     timestamp = datetime.now().isoformat()
@@ -66,31 +70,52 @@ def simulate_heartbeat():
 # ─── Flask Endpoints ───────────────────────────────────────────────────
 @app.route('/status')
 def status():
-    hydration_ok = validate_hydration()
-    au_ok = check_au_connection()
-    drift_detected = detect_au_drift()
-    overall_status = "operational" if hydration_ok and au_ok and not drift_detected else "degraded"
-    return jsonify({
-        "copilot-root": overall_status,
-        "AU-connect": "connected" if au_ok else "disconnected",
-        "hydration_status": "hydrated" if hydration_ok else "not hydrated",
-        "drift_detected": drift_detected,
-        "timestamp": datetime.now().isoformat()
-    })
+    provided_api_key = request.headers.get('X-API-Key')
+    # ISO 27001/27002 Consideration: Implement comprehensive input validation and resource limits for production.
+    # This basic check prevents unauthorized access but more robust validation is needed.
+    if not provided_api_key or provided_api_key != expected_api_key:
+        return jsonify({"message": "Unauthorized: Invalid or missing API key"}), 401
+
+    try:
+        hydration_ok = validate_hydration()
+        au_ok = check_au_connection()
+        drift_detected = detect_au_drift()
+        overall_status = "operational" if hydration_ok and au_ok and not drift_detected else "degraded"
+        return jsonify({
+            "copilot-root": overall_status,
+            "AU-connect": "connected" if au_ok else "disconnected",
+            "hydration_status": "hydrated" if hydration_ok else "not hydrated",
+            "drift_detected": drift_detected,
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logging.error(f"An error occurred in /status: {e}")
+        return jsonify({"message": "Internal Server Error"}), 500
 
 @app.route('/visual')
 def visual():
-    hydration_ok = validate_hydration()
-    au_ok = check_au_connection()
-    drift_detected = detect_au_drift()
-    heartbeat_signal = simulate_heartbeat()
-    return jsonify({
-        "hydration_status": "hydrated" if hydration_ok else "not hydrated",
-        "au_connection_status": "connected" if au_ok else "disconnected",
-        "drift_detected": drift_detected,
-        "heartbeat": heartbeat_signal,
-        "timestamp": datetime.now().isoformat()
-    })
+    provided_api_key = request.headers.get('X-API-Key')
+    # ISO 27001/27002 Consideration: Implement comprehensive input validation and resource limits for production.
+    # This basic check prevents unauthorized access but more robust validation is needed.
+    if not provided_api_key or provided_api_key != expected_api_key:
+        return jsonify({"message": "Unauthorized: Invalid or missing API key"}), 401
+
+    try:
+        hydration_ok = validate_hydration()
+        au_ok = check_au_connection()
+        drift_detected = detect_au_drift()
+        heartbeat_signal = simulate_heartbeat()
+        return jsonify({
+            "hydration_status": "hydrated" if hydration_ok else "not hydrated",
+            "au_connection_status": "connected" if au_ok else "disconnected",
+            "drift_detected": drift_detected,
+            "heartbeat": heartbeat_signal,
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logging.error(f"An error occurred in /visual: {e}")
+        return jsonify({"message": "Internal Server Error"}), 500
+
 
 # ─── Main Orchestration Loop ───────────────────────────────────────────
 def main():

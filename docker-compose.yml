@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mesh-dashboard:
-    build: .
+    build: ./MeshDashboard
     ports:
       - "9002:9002"
     healthcheck:
@@ -16,7 +16,7 @@ services:
       - meshnet
 
   destine-root:
-    build: .
+    build: ./destine-root
     ports:
       - "8080:8080"
     healthcheck:
@@ -30,7 +30,7 @@ services:
       - meshnet
 
   firebase-proxy:
-    build: .
+    build: ./firebase-proxy
     ports:
       - "4000:4000"
     healthcheck:
@@ -44,7 +44,7 @@ services:
       - meshnet
 
   audit-engine:
-    build: .
+    build: ./audit-engine
     ports:
       - "5000:5000"
     healthcheck:
