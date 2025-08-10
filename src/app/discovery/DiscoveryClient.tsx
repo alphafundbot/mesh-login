@@ -10,21 +10,21 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { discoverApis, type ApiDiscoveryOutput } from '@/ai/flows/api-discovery-flow';
+import { syncKnownPlatforms, type PlatformMeta } from '@/ai/flows/api-discovery-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Globe, PlusCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function DiscoveryClient() {
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<ApiDiscoveryOutput>([]);
+  const [results, setResults] = useState<PlatformMeta[]>([]);
   const { toast } = useToast();
 
   const handleDiscover = async () => {
     setLoading(true);
     setResults([]);
     try {
-      const apis = await discoverApis();
+      const apis = await syncKnownPlatforms();
       setResults(apis);
       toast({
         title: 'Discovery Complete',
@@ -57,8 +57,8 @@ export default function DiscoveryClient() {
             {results.map((api) => (
             <Card key={api.id} className="flex items-center justify-between p-4">
                 <div>
-                    <h3 className="font-semibold">{api.title}</h3>
-                    <p className="text-sm text-muted-foreground">{api.id} (v{api.version})</p>
+                    <h3 className="font-semibold">{api.name}</h3>
+                    <p className="text-sm text-muted-foreground">{api.id}</p>
                 </div>
                 <Button variant="outline" size="icon" disabled>
                     <PlusCircle className="h-4 w-4" />
