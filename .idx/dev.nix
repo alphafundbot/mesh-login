@@ -1,48 +1,21 @@
-# To learn more about how to use Nix to configure your environment
-# see: https://firebase.google.com/docs/studio/customize-workspace
-{pkgs}: {
-  # Which nixpkgs channel to use.
-  channel = "stable-24.11"; # or "unstable"
-  # Use https://search.nixos.org/packages to find packages
-  packages = [
+nix
+let
+  pkgs = import <nixpkgs> { };
+in
+
+pkgs.mkShell {
+  # Add the packages you need here, including podman, fuse-overlayfs, nano, nodejs_20, docker_28, zulu
+  buildInputs = [
+    pkgs.podman
+    pkgs.fuse-overlayfs
+    pkgs.nano
     pkgs.nodejs_20
     pkgs.docker_28
     pkgs.zulu
-    pkgs.podman
   ];
-  # Sets environment variables in the workspace
-  env = {
-    GEMINI_API_KEY = "AIzaSyA-b-vFxeHw9RFuIbNfIN9ORQIo6FQr2sc";
-  };
-  # This adds a file watcher to startup the firebase emulators. The emulators will only start if
-  # a firebase.json file is written into the user's directory
-  services.firebase.emulators = {
-    # Disabling because we are using prod backends right now
-    detect = false;
-    projectId = "demo-app";
-    services = ["auth" "firestore"];
-  };
-  idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
-    extensions = [
-      # "vscodevim.vim"
-    ];
-    workspace = {
-      onCreate = {
-        default.openFiles = [
-          "src/app/page.tsx"
-        ];
-      };
-    };
-    # Enable previews and customize configuration
-    previews = {
-      enable = true;
-      previews = {
-        web = {
-          command = ["npm" "run" "dev" "--" "--port" "$PORT" "--hostname" "0.0.0.0"];
-          manager = "web";
-        };
-      };
-    };
-  };
+
+  # Add the shellHook for HOME export
+  shellHook = ''
+    export HOME=${toString pkgs.lib.getEnv "HOME"}
+  '';
 }
