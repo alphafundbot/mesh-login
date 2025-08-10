@@ -16,6 +16,7 @@ This document describes the intended logical architecture and interaction patter
 -   **Strategist (User) ↔ MeshDashboard:** Direct interaction via web interface. User views data, triggers actions, configures settings, and receives notifications. Access controlled by IAM roles.
 -   **MeshDashboard ↔ Backend APIs (via Next.js API routes):** MeshDashboard frontend communicates with backend API routes (e.g., `/api/status`, `/api/financial-data`, `/api/gemini`). These API routes handle data fetching, processing, and interaction with other backend modules or external services. Access controlled at the API route level (authentication, authorization).
 -   **Backend APIs ↔ Modules:** Backend API routes call functions or services provided by core backend modules.
+
     -   API routes might call `firebase-proxy` functions to interact with external APIs.
     -   API routes might interact with the `Audit-engine` to trigger audits or retrieve audit results.
     -   API routes will interact with the `Autonomous Resource Manager` for resource data and controls (planned).

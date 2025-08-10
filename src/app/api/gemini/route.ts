@@ -1,20 +1,24 @@
 // src/app/api/gemini/route.ts
 import { generateGeminiContent } from '@/server/mpc/geminiClient';
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/firebaseConfig'; // Import Firebase Auth
-import { getIdTokenResult } from 'firebase/auth'; // Import function to get ID token and claims
-import { canUserPerform } from '@/lib/roles'; // Import canUserPerform
+import { canUserPerform } from '@/lib/roles';
+import { auth } from 'firebase-admin';
 
-// Define the required action for using the Gemini API (adjust as needed based on roles.ts)
-const REQUIRED_ACTION = 'useGeminiApi'; // Example: define a new action
+// Define the required action for using the Gemini API
+const REQUIRED_ACTION = 'useGeminiApi';
 
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('Authorization');
-    const idToken = authHeader?.split('Bearer ')[1];
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new NextResponse('Unauthorized: Missing or invalid token', { status: 401 });
+    }
+    const idToken = authHeader.split('Bearer ')[1];
+    const decodedToken = await auth().verifyIdToken(idToken);
+    const userRole = (decodedToken.role || 'Analyst') as any;
 
-    if (!idToken) {
-      return new NextResponse('Unauthorized', { status: 401 });
+    if (!canUserPerform(userRole, REQUIRED_ACTION)) {
+      return new NextResponse('Forbidden: Insufficient permissions', { status: 403 });
     }
 
     const { prompt } = await req.json();
