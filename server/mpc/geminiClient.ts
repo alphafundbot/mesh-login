@@ -51,3 +51,24 @@ export async function generateGeminiContent(prompt: string): Promise<any> {
     throw new Error(`Gemini API request failed with status: ${error.response?.status}`);
   }
 }
+
+// Function to get Firebase config from environment variables
+export function getFirebaseConfig() {
+  const firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  };
+
+  // Basic validation (optional, but recommended)
+  for (const key in firebaseConfig) {
+    if (!firebaseConfig[key as keyof typeof firebaseConfig]) {
+      console.warn(`Firebase config missing environment variable: ${key}. Ensure secrets are configured in Google Secret Manager and apphosting.yaml.`);
+    }
+  }
+
+  return firebaseConfig;
+}

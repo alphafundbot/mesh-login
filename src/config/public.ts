@@ -1,9 +1,4 @@
 
-function getEnv(key: string): string {
-  const val = process.env[key];
-  if (!val) throw new Error(`Missing env var: ${key}`);
-  return val;
-}
 export interface FirebaseConfig {
     apiKey: string;
     authDomain: string;
@@ -14,12 +9,15 @@ export interface FirebaseConfig {
     measurementId?: string;
 }
 
+// Directly access process.env, which is the standard Next.js way.
+// Provide empty string fallbacks to prevent crashes if variables are missing
+// during build or on the client, allowing the app to load and show a proper state.
 export const firebasePublicConfig: FirebaseConfig = {
-    apiKey: getEnv('NEXT_PUBLIC_FIREBASE_API_KEY'),
-    authDomain: getEnv('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'),
-    projectId: getEnv('NEXT_PUBLIC_FIREBASE_PROJECT_ID'),
-    storageBucket: getEnv('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'),
-    messagingSenderId: getEnv('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
-    appId: getEnv('NEXT_PUBLIC_FIREBASE_APP_ID'),
-    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
 };
