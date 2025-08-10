@@ -1,5 +1,6 @@
 import { Insight, StrategistEmotion, Node, Ritual, DreamTrace } from './types'; // Assuming types are defined here
 
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
 declare const meshManifest: { [key: string]: Node }; // Assume meshManifest is globally available or imported
 declare const strategistDreamModel: { trace: (nodeId: string) => DreamTrace | undefined }; // Assume strategistDreamModel is globally available or imported
 
@@ -13,6 +14,13 @@ export function generateInsight(params: {
   emotion: StrategistEmotion;
   ritualHistory: Ritual[];
 }): Insight {
+  logTelemetryEvent('insight:generate_start', {
+    metadata: {
+      nodeId: params.nodeId,
+      emotion: params.emotion,
+      ritualHistoryLength: params.ritualHistory.length,
+    },
+  });
   const { nodeId, emotion, ritualHistory } = params;
 
   const signal = meshManifest[nodeId];
@@ -22,7 +30,7 @@ export function generateInsight(params: {
   const dreamEcho = dreamTrace?.emotion || 'neutral';
   const monetizationHint = signal.revenue > 500 ? '🔥 High-yield node' : '🧊 Low monetization';
 
-  return {
+  const insight: Insight = {
     summary,
     dreamEcho,
     monetizationHint,
@@ -30,3 +38,5 @@ export function generateInsight(params: {
     // Add other relevant data points based on ritualHistory or other factors
   };
 }
+  logTelemetryEvent('insight:generate_end', { metadata: { insight: insight } });
+ return insight;

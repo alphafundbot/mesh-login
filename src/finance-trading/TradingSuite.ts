@@ -111,9 +111,7 @@ export class TradingSuite {
    * @param strategist The strategist associated with this income.
    */
   feedIncomeToHyperNanoEngine(amount: number, source: string, strategist: StrategistModel): void {
-    logTelemetryEvent('trading:feed_income_to_nano_engine:start', {
- metadata: { amount: amount, source: source, strategistId: strategist.id },
-    });
+    logTelemetryEvent('trading:feed_income_to_nano_engine:start', { metadata: { amount, source, strategistId: strategist.id } });
 
 
     // Log the raw income before feeding to the engine
@@ -130,10 +128,7 @@ export class TradingSuite {
     // Assume the nano engine processes value and periodically outputs amplified profits
     // This output would then trigger the distribution mechanism below.
   }
- logTelemetryEvent('trading:feed_income_to_nano_engine:end', {
- metadata: { amount: amount, source: source, strategistId: strategist.id },
-    });
-
+ 
 
   /**
    * Receives amplified profits from the Hyper Nano Trading Engine and distributes

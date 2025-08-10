@@ -1,3 +1,4 @@
+
 # MeshDashboard Information Architecture
 
 This document outlines the information architecture and navigation structure of the MeshDashboard. It is presented in a hierarchical format, similar to a sitemap.

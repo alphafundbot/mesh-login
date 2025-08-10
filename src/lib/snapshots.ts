@@ -1,5 +1,7 @@
 
 import telecomSignalHistory from './telecom-signal-history-2025-08-08.json';
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
+
 
 export interface Snapshot {
     slug: string;
@@ -23,4 +25,10 @@ export const snapshotRegistry: Snapshot[] = [
 
 export const getSnapshotBySlug = (slug: string): Snapshot | undefined => {
     return snapshotRegistry.find(s => s.slug === slug);
+};
+
+export const getSnapshotBySlug = (slug: string): Snapshot | undefined => {
+    const snapshot = snapshotRegistry.find(s => s.slug === slug);
+    logTelemetryEvent('snapshot:get_by_slug', { metadata: { slug, found: !!snapshot } });
+ return snapshot;
 }

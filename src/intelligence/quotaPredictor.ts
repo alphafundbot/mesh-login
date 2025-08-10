@@ -1,5 +1,8 @@
 // src/intelligence/quotaPredictor.ts
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Assuming centralized telemetry logging path
+
 export function predictQuotaExhaustion(history: number[]): string {
+  logTelemetryEvent('quota:prediction_start', { metadata: { historyLength: history.length } });
   if (history.length === 0) {
     return "Not enough data to predict quota exhaustion."
   }
@@ -9,5 +12,7 @@ export function predictQuotaExhaustion(history: number[]): string {
   }
   const remaining = 50 - history.length;
   const projectedTime = remaining / avgRate;
-  return `Projected exhaustion in ${projectedTime.toFixed(2)} hours.`;
+  const message = `Projected exhaustion in ${projectedTime.toFixed(2)} hours.`;
+  logTelemetryEvent('quota:prediction_end', { metadata: { projectedTime, message } });
+  return message;
 }

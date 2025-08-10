@@ -8,6 +8,7 @@
     pkgs.nodejs_20
     pkgs.docker_28
     pkgs.zulu
+    pkgs.podman
   ];
   # Sets environment variables in the workspace
   env = {

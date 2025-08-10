@@ -30,6 +30,7 @@ interface SignalMonetizerConfig {
   platforms: PlatformConfig[];
   walletCore: WalletCore; // Reference to the WalletCore
   auditEngine: any; // Type hint for the AuditEngine
+  signalConsensusEngine: any; // Type hint for the SignalConsensusEngine
   monetizationEnabled: boolean; // Flag to enable/disable real-time monetization
 }
 
@@ -37,13 +38,16 @@ export class SignalMonetizer {
  private platforms: PlatformConfig[];
  private auditEngine: any; // Reference to the AuditEngine
  private walletCore: WalletCore;
-    platforms: PlatformConfig[];
-    signalConsensusEngine: any; // Type hint for the SignalConsensusEngine
-    auditEngine: any; // Type hint for the AuditEngine
-  }) {
+ private signalConsensusEngine: any; // Reference to the SignalConsensusEngine
+  private monetizationEnabled: boolean; // Flag to enable/disable real-time monetization
+
+
+  constructor(config: SignalMonetizerConfig) {
     this.platforms = config.platforms;
     this.auditEngine = config.auditEngine;
+    this.signalConsensusEngine = config.signalConsensusEngine;
     this.walletCore = config.walletCore;
+    this.monetizationEnabled = config.monetizationEnabled;
     console.log("SignalMonetizer initialized with platforms:", this.platforms.map(p => p.platform));
     console.log(`Real-time monetization enabled: ${config.monetizationEnabled}`);
   }
@@ -55,11 +59,11 @@ export class SignalMonetizer {
    * @param sourceModule The module originating the signal (e.g., QuantumSignalRouter).
    */
   async publishSignal(signal: any, sourceModule: string): Promise<void> {
- if (!this.monetizationEnabled) {
- console.log("Real-time monetization is disabled. Skipping signal publishing.");
- return;
-    }
- console.log(`SignalMonetizer publishing signal from ${sourceModule}:`, signal);
+    if (!this.monetizationEnabled) {
+      console.log("Real-time monetization is disabled. Skipping signal publishing.");
+
+      return;
+    } console.log(`SignalMonetizer publishing signal from ${sourceModule}:`, signal);
     // TODO: Implement logic to get the processed signal from SignalConsensusEngine
     // const processedSignal = this.signalConsensusEngine.getProcessedSignal(signal, sourceModule);
 
@@ -68,28 +72,28 @@ export class SignalMonetizer {
  console.log(`Attempting to publish signal to ${platformConfig.platform}...`);
         // TODO: Call platform-specific API method for publishing
  await this.integrateWithPlatformAPI(platformConfig, signal);
-
         // TODO: Track publishing metrics (latency, success/failure) in AuditEngine
+ if (this.auditEngine && this.auditEngine.logMonetizationEvent) {
  this.auditEngine.logMonetizationEvent(platformConfig.platform, 'publish', {
  signalId: signal.id || 'N/A', // Assuming signal has an ID
  status: 'success',
  latency: Math.random() * 100, // Simulated latency
  eventType: 'publish_success',
  platform: platformConfig.platform,
- sourceModule: sourceModule,
- metadata: {
+ sourceModule: sourceModule, // Pass sourceModule
+ metadata: { // Log a preview of the signal
  signalPreview: signal ? signal.substring(0, 50) : 'N/A' // Log a preview of the signal
-        },
+ }
  });
-      } catch (error) {
+ }
+      } catch (error: any) {
         console.error(`Error publishing to ${platformConfig.platform}:`, error);
         // TODO: Log error in AuditEngine
         // this.auditEngine.logMonetizationEvent(platformConfig.platform, 'publish', {
         //   signalId: signal.id,
-        //   status: 'failed',
         //   error: error.message,
         //   eventType: 'publish_failed',
-        //   platform: platformConfig.platform,
+        //   platform: platformConfig.platform, // Pass platform
         // });
       }
     }
@@ -102,9 +106,8 @@ export class SignalMonetizer {
    * @param signal The signal payload to send.
    */
   private async integrateWithPlatformAPI(platformConfig: PlatformConfig, signal: any): Promise<void> {
-    // Simulate interaction with platform APIs
-    console.log(`Simulating API call to ${platformConfig.platform} for signal:`, signal);
-    
+
+ console.log(`Simulating API call to ${platformConfig.platform} for signal:`, signal);
     switch (platformConfig.platform) {
       case 'SignalDP':
  console.log("Simulating SignalDP syndication...");
@@ -130,29 +133,32 @@ export class SignalMonetizer {
    * This could be triggered periodically or by platform callbacks.
    */
   async trackMonetizationMetrics(): Promise<void> {
- if (!this.monetizationEnabled) {
- console.log("Real-time monetization is disabled. Skipping metric tracking.");
- return;
-    }
- console.log("SignalMonetizer fetching and tracking monetization metrics...");
+    if (!this.monetizationEnabled) {
+      console.log("Real-time monetization is disabled. Skipping metric tracking.");
+
+      return;
+    } console.log("SignalMonetizer fetching and tracking monetization metrics...");
     for (const platformConfig of this.platforms) {
       try {
         console.log(`Fetching metrics from ${platformConfig.platform} (simulated)...`);
         // TODO: Call platform-specific API to fetch metrics (impressions, subscribers, revenue)
  const metrics = await this.fetchPlatformMetrics(platformConfig);
 
- console.log(`Received metrics for ${platformConfig.platform}:`, metrics);
+        console.log(`Received metrics for ${platformConfig.platform}:`, metrics);
+ if (this.auditEngine && this.auditEngine.logMonetizationMetrics) {
  this.auditEngine.logMonetizationMetrics(platformConfig.platform, metrics);
+ }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error fetching metrics from ${platformConfig.platform}:`, error);
         // TODO: Log error in AuditEngine
         // this.auditEngine.logMonetizationEvent(platformConfig.platform, 'fetch_metrics', {
         //   status: 'failed',
-        //   error: error.message,
         // });
-        console.error(`Error fetching metrics from ${platformConfig.platform}:`, error);
-        this.auditEngine.logMonetizationEvent(platformConfig.platform, 'fetch_metrics_failed', { error: error.message });
+        if (this.auditEngine && this.auditEngine.logMonetizationEvent) {
+          this.auditEngine.logMonetizationEvent(platformConfig.platform, 'fetch_metrics', { status: 'failed', error: error.message });
+
+        }
       }
     }
   }
@@ -169,7 +175,6 @@ export class SignalMonetizer {
         // TODO: Implement SignalDP API calls
         return { impressions: Math.floor(Math.random() * 1000), revenue: Math.random() * 100 }; // Placeholder
       case 'Sellfy':
- case 'Sellfy':
         // TODO: Implement Sellfy API calls
         return { subscribers: Math.floor(Math.random() * 100), revenue: Math.random() * 500 }; // Placeholder
       case 'MQL5':
@@ -248,11 +253,12 @@ export class SignalMonetizer {
  status: 'success',
  latency: Math.random() * 100, // Simulated latency
  });
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error publishing to ${platformConfig.platform}:`, error);
         // TODO: Log error in AuditEngine
         // this.auditEngine.logMonetizationEvent(platformConfig.platform, 'publish', {
         //   signalId: signal.id,
+
         //   status: 'failed',
         //   error: error.message,
         // });
@@ -266,8 +272,8 @@ export class SignalMonetizer {
    * @param platformConfig The configuration for the platform.
    * @param signal The signal payload to send.
    */
-  private async integrateWithPlatformAPI(platformConfig: PlatformConfig, signal: any): Promise<void> {
-    // Simulate interaction with platform APIs
+  private async integrateWithPlatformAPI(
+    platformConfig: PlatformConfig, signal: any): Promise<void> {
     console.log(`Simulating API call to ${platformConfig.platform} for signal:`, signal);
     
     switch (platformConfig.platform) {
@@ -306,7 +312,7 @@ export class SignalMonetizer {
  this.auditEngine.logMonetizationMetrics(platformConfig.platform, metrics);
 
       } catch (error) {
-        console.error(`Error fetching metrics from ${platformConfig.platform}:`, error);
+        console.error(`Error fetching metrics from ${platformConfig.platform}:`, (error as Error).message);
         // TODO: Log error in AuditEngine
         // this.auditEngine.logMonetizationEvent(platformConfig.platform, 'fetch_metrics', {
         //   status: 'failed',

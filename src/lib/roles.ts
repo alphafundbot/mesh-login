@@ -1,4 +1,6 @@
 
+import { logTelemetryEvent } from "../monitoring/LoginTelemetry";
+
 export const ROLES = ["Architect", "Analyst", "Operator"] as const;
 export type Role = typeof ROLES[number];
 
@@ -38,5 +40,7 @@ const PERMISSIONS: Record<Role, readonly Action[]> = {
 };
 
 export const canUserPerform = (role: Role, action: Action): boolean => {
-  return PERMISSIONS[role].includes(action);
+  const hasPermission = PERMISSIONS[role].includes(action);
+  logTelemetryEvent('permission:check', { metadata: { role, action, result: hasPermission } });
+  return hasPermission;
 };

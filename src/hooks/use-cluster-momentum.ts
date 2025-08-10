@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import type { ActionLog, Severity, TaggedRationale, ClusterInfo } from '@/lib/types';
 import { parseDetails, RISK_WEIGHTS } from '@/lib/types';
 
+declare const logTelemetryEvent: (eventName: string, properties?: Record<string, any>) => void;
 
 export function useClusterMomentum(cluster: ClusterInfo | undefined, previousLogs: ActionLog[]): {
   riskDelta: number;
@@ -41,6 +42,13 @@ export function useClusterMomentum(cluster: ClusterInfo | undefined, previousLog
         });
 
         const riskDelta = cluster.riskScore - previousScore;
+
+        logTelemetryEvent('cluster_momentum_calculated', {
+            clusterTag: cluster.tag,
+            previousLogsCount: previousLogs.length,
+            previousScore: previousScore,
+            riskDelta: riskDelta,
+        });
 
         return { riskDelta, previousScore };
     }, [cluster, previousLogs]);

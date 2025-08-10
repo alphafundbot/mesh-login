@@ -6,6 +6,7 @@ import { type Role } from '@/lib/roles';
 import { auth } from '@/lib/firebaseConfig';
 import { onIdTokenChanged, type User as FirebaseUser } from 'firebase/auth';
 import { isBrowser } from '@/lib/env-check';
+import { logTelemetryEvent } from '@/monitoring/LoginTelemetry';
 
 interface User {
   uid: string;
@@ -29,6 +30,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const setUserRole = useCallback((role: Role) => {
     setUser(currentUser => {
         if (!currentUser) return null;
+ logTelemetryEvent('user:set_role', { userId: currentUser.uid, newRole: role });
         // In a real app, this would likely trigger a backend call to update custom claims.
         // For this simulation, we're just updating client-side state.
         console.log(`Simulating role change for ${currentUser.name} to ${role}`);
@@ -42,6 +44,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
     }
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+ logTelemetryEvent('auth:state_changed', { userLoggedIn: !!firebaseUser });
       if (firebaseUser) {
         const tokenResult = await firebaseUser.getIdTokenResult();
         // Roles are securely set on the backend via custom claims

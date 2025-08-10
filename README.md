@@ -1,5 +1,7 @@
 # Stratagem.ai - Strategist Grade Mesh Manifest
 
+# Strategist IAM Mutation Module
+
 This repository contains the source code for Stratagem.ai, a strategist-grade Heads-Up Display (HUD) for monitoring and interacting with complex, multi-domain mesh systems.
 
 ## Core Architecture

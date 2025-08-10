@@ -1,5 +1,7 @@
 // src/state/syncStore.ts
 
+import { logTelemetryEvent } from "../monitoring/LoginTelemetry";
+
 const syncTimestamps: Record<string, number> = {};
 
 /**
@@ -9,7 +11,9 @@ const syncTimestamps: Record<string, number> = {};
  * @returns The last sync timestamp (epoch milliseconds), or 0 if none.
  */
 export function getLastSync(connectorId: string): number {
-    return syncTimestamps[connectorId] || 0;
+ const lastSync = syncTimestamps[connectorId] || 0;
+ logTelemetryEvent('sync:get_last_sync', { metadata: { connectorId, lastSyncTimestamp: lastSync } });
+ return lastSync;
 }
 
 /**
@@ -18,5 +22,6 @@ export function getLastSync(connectorId: string): number {
  * @param timestamp The timestamp to set (epoch milliseconds).
  */
 export function setLastSync(connectorId: string, timestamp: number): void {
-    syncTimestamps[connectorId] = timestamp;
+ syncTimestamps[connectorId] = timestamp;
+ logTelemetryEvent('sync:set_last_sync', { metadata: { connectorId, newSyncTimestamp: timestamp } });
 }

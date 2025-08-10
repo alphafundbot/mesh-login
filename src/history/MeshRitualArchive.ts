@@ -5,6 +5,7 @@ interface Ritual {
 }
 
 let ritualArchive: Ritual[] = [];
+declare const logTelemetryEvent: (eventName: string, eventData?: Record<string, any>) => Promise<void>;
 
 export function store(ritual: Ritual): void {
   ritualArchive.push(ritual);

@@ -36,7 +36,7 @@ interface SignalRoute {
   endLat: number;
   endLon: number;
   bandwidth: number;
-  endLon: number;
+  latency: number; // Added latency
 }
 
 const Globe: React.FC = () => {
@@ -137,7 +137,7 @@ const MeshGlobe: React.FC<MeshGlobeProps> = ({ selectedModule }) => {
     }, 500); // Check and clean up every 500ms
 
     const handleFocusModeToggle = (event: any) => {
-      }
+      // Handle focus mode toggle logic here if needed
     };
 
     meshBus.subscribe(handleAuditSpike);

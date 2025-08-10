@@ -26,8 +26,6 @@ interface CredentialPulseVisualizationData {
  */
 export class CredentialPulseMonitor {
 
- import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
-
   // Placeholder for internal monitoring state (e.g., usage counters, historical data)
   private credentialState: { [key: string]: { usage: number; history: number[] } } = {};
 
@@ -90,11 +88,6 @@ export class CredentialPulseMonitor {
     };
   }
  
-  /**
-   * Gathers pulse data from all monitored secrets for visualization.
-   * @returns Data prepared for visualization in the TranscendenceMap.
-   */
-
   /**
    * Gathers pulse data from all monitored secrets for visualization.
    * @returns Data prepared for visualization in the TranscendenceMap.

@@ -14,7 +14,7 @@ import { StrategistUser } from '../lib/types'; // Use centralized StrategistUser
  * Implements login, logout, session handoff, MPC key retrieval, and audit-grade introspection.
  */
 export function useAuth() {
-  const [user, setUser] = useState<StrategistUser | null>(null);
+  const [user, setUser] = useState<StrategistUser | null>(null); // Correct state initialization
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +44,7 @@ export function useAuth() {
       await requestKeysFromMPC(strategistUser.uid);
 
       // 🧭 Session handoff
- setSession(strategistUser); // Use centralized setSession
+ setSession(strategistUser); // Use centralized setSession and correct function name
 
       // 📡 Audit + telemetry
       logAuditEvent('LOGIN_SUCCESS', strategistUser);

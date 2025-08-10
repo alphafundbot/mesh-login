@@ -1,7 +1,7 @@
 import React from 'react';
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
 
 interface IncomeStreamData {
-import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
   id: string;
   name: string;
   roi: number; // Example ROI value
@@ -29,13 +29,14 @@ const AuditOverlay: React.FC<AuditOverlayProps> = ({ streams }) => {
   };
 
   return (
- {
-    logTelemetryEvent('audit_overlay:streams_visualized', { metadata: { streamCount: streams.length } });
- streams.forEach(stream => {
- logTelemetryEvent('audit_overlay:stream_visual_properties', { metadata: { streamId: stream.id, color: getStreamColor(stream), size: getStreamSize(stream) } });
- });
- }
     <div className="audit-overlay">
+      {/* Log telemetry for streams visualized */}
+      {/* Note: Telemetry logging within render can be chatty. Consider moving to useEffect if appropriate for frequency. */}
+      {logTelemetryEvent('audit_overlay:streams_visualized', { metadata: { streamCount: streams.length } })}
+      {streams.forEach(stream => {
+        logTelemetryEvent('audit_overlay:stream_visual_properties', { metadata: { streamId: stream.id, color: getStreamColor(stream), size: getStreamSize(stream) } });
+      })}
+
       {/* Placeholder for visualizing streams */}
       {streams.map(stream => (
         <div

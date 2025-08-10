@@ -12,8 +12,7 @@ import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
 declare const StreamBinder: StreamBinder;
 declare const FusionManifest: FusionManifest;
 declare const YieldAmplifier: YieldAmplifier;
-
-
+// Corrected the misplaced closing brace for the `if` statement
 export class YieldFusionEngine {
   /**
    * Merges multiple income streams into composite rituals for exponential ROI.
@@ -36,6 +35,7 @@ export class YieldFusionEngine {
         metadata: { strategistId },
       });
       throw new Error("Sovereign override required: Only the root strategist can merge income streams.");
+    }
 
     // Encode fusion logic by interacting with StreamBinder, FusionManifest, and YieldAmplifier
     const boundStreams = StreamBinder.bind(streams);

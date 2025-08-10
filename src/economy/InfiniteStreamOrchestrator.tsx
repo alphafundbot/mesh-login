@@ -50,10 +50,6 @@ const InfiniteStreamOrchestrator: React.FC<InfiniteStreamOrchestratorProps> = ()
       <h2>Infinite Stream Orchestration</h2>
       {/* Placeholder UI for monitoring and triggering deployments */}
       {/* <p>Orchestration Status: {isOrchestrating ? 'Active' : 'Idle'}</p> */}
-      {/* {error && <p className="text-red-500">Error: {error}</p>} */}
-      {/* <button onClick={() => deployNewIncomeRitual(/* Pass a ritual definition */)}>
-        Deploy New Income Ritual
-      </button> */}
       {/* <div>
         <h3>Deployed Rituals:</h3>
         {deployedRituals.length === 0 ? <p>No rituals deployed yet.</p> : (

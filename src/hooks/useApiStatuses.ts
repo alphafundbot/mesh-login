@@ -1,6 +1,7 @@
 // /hooks/useApiStatuses.ts
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { logTelemetryEvent } from '../monitoring/telemetry';
 
 export interface ApiStatus {
   id: string;
@@ -11,8 +12,15 @@ export interface ApiStatus {
 }
 
 async function fetchStatuses(): Promise<ApiStatus[]> {
-  const { data } = await axios.get('/api/status');
-  return data;
+  logTelemetryEvent('apiStatus:fetch_start');
+  try {
+    const { data } = await axios.get('/api/status');
+    logTelemetryEvent('apiStatus:fetch_success', { count: data.length });
+    return data;
+  } catch (error) {
+    logTelemetryEvent('apiStatus:fetch_failure', { error: error.message });
+    throw error;
+  }
 }
 
 export function useApiStatuses() {

@@ -45,6 +45,7 @@ import { Label } from "@/components/ui/label";
 import FeedbackDashboard from "@/components/dashboard/FeedbackDashboard";
 import { useClusterMomentum } from "@/hooks/use-cluster-momentum";
 import type { ActionLog, Severity, ParsedDetails, TaggedRationale, Recommendation, ClusterInfo, ClusterMap, DomainMetrics } from "@/lib/types";
+import { logTelemetryEvent } from "@/lib/telemetry";
 import { parseDetails, RISK_WEIGHTS } from "@/lib/types";
 import { isBrowser } from "@/lib/env-check";
 
@@ -543,6 +544,7 @@ export default function HistoryClient() {
         setLoading(false);
         return;
     }
+    logTelemetryEvent('HistoryClient.fetchLogs.start', { userId: user?.id });
 
     setLoading(true);
     const q = query(collection(firestore, "hud_actions"), orderBy("timestamp", "desc"));
@@ -558,6 +560,7 @@ export default function HistoryClient() {
           timestamp: (data.timestamp as Timestamp)?.toDate() || new Date(),
         };
       });
+    logTelemetryEvent('HistoryClient.fetchLogs.complete', { userId: user?.id, logCount: fetchedLogs.length });
       setAllLogs(fetchedLogs);
       setLoading(false);
     }, (error) => {
@@ -568,6 +571,7 @@ export default function HistoryClient() {
         description: "Could not fetch Signal Memory logs.",
       });
       setLoading(false);
+    logTelemetryEvent('HistoryClient.fetchLogs.error', { userId: user?.id, error: error.message });
     });
 
     return () => unsubscribe();
@@ -575,14 +579,15 @@ export default function HistoryClient() {
 
   const { filteredLogs, previousPeriodLogs } = useMemo(() => {
     const now = Date.now();
+    logTelemetryEvent('HistoryClient.filterLogs.start', { timeFilter, totalLogs: allLogs.length });
     let currentLogs: ActionLog[];
     let previousLogs: ActionLog[];
 
     const startTimeParam = searchParams.get('startTime');
-    const startTime = startTimeParam ? new Date(startTimeParam).getTime() : now;
-
+    const startTime = startTimeParam ? new Date(startTimeParam).getTime() : now; 
+    
     if (timeFilter === "all") {
-      return { filteredLogs: allLogs, previousPeriodLogs: [] };
+ logTelemetryEvent('HistoryClient.filterLogs.complete', { timeFilter, totalLogs: allLogs.length, filteredLogs: allLogs.length, previousLogs: 0 });      return { filteredLogs: allLogs, previousPeriodLogs: [] };
     }
 
     const filterMilliseconds = timeFilter === "24h" ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
@@ -596,6 +601,7 @@ export default function HistoryClient() {
       return (startTime - logTime >= filterMilliseconds) && (startTime - logTime < 2 * filterMilliseconds);
     });
 
+    logTelemetryEvent('HistoryClient.filterLogs.complete', { timeFilter, totalLogs: allLogs.length, filteredLogs: currentLogs.length, previousLogs: previousLogs.length });
     return { filteredLogs: currentLogs, previousPeriodLogs: previousLogs };
   }, [allLogs, timeFilter, searchParams]);
 
@@ -628,6 +634,7 @@ export default function HistoryClient() {
     }, [toast, user]);
 
     const handleHeatmapCellClick = useCallback((domain: string, severity: Severity) => {
+        logTelemetryEvent('HistoryClient.handleHeatmapCellClick', { domain, severity });
         const relevantLogs = filteredLogs.filter(log => {
             const d = parseDetails(log.details);
             return d.isOverride && d.severity === severity && d.domains?.includes(domain)
@@ -648,6 +655,7 @@ export default function HistoryClient() {
     }, [filteredLogs, openRationaleModal]);
 
      const handleClusterClick = useCallback((cluster: ClusterInfo) => {
+        logTelemetryEvent('HistoryClient.handleClusterClick', { clusterTag: cluster.tag, rationaleCount: cluster.items.length });
         const title = `Rationale Cluster: "${cluster.tag}"`;
         const description = <>Showing {cluster.items.length} rationales related to this cluster.</>;
         
@@ -766,6 +774,7 @@ export default function HistoryClient() {
   const handleAnalysis = async () => {
     if (!isBrowser() || !user || !firestore) return;
     setLoadingAnalysis(true);
+    logTelemetryEvent('HistoryClient.handleAnalysis.start', { userId: user?.id, filteredLogCount: filteredLogs.length });
     setAnalysisResult(null);
     setFeedbackGiven({});
     try {
@@ -780,24 +789,28 @@ export default function HistoryClient() {
           description: `There are no action logs to analyze in the selected time window.`,
         });
         setLoadingAnalysis(false);
+        logTelemetryEvent('HistoryClient.handleAnalysis.noLogs', { userId: user?.id, filteredLogCount: filteredLogs.length });
         return;
       }
       
       const result = await analyzeSignalHistory({ actionLogs: logsString });
+    logTelemetryEvent('HistoryClient.handleAnalysis.complete', { userId: user?.id, filteredLogCount: filteredLogs.length, analysisResult: result ? 'success' : 'failure' });
       setAnalysisResult(result);
     } catch (error) {
-      console.error("AI analysis failed:", error);
+      console.error("AI analysis failed:", error); // Keep console.error for debugging
       toast({
         variant: "destructive",
         title: "Analysis Failed",
         description: "Could not get AI-powered analysis. Please try again.",
       });
+ logTelemetryEvent('HistoryClient.handleAnalysis.error', { userId: user?.id, filteredLogCount: filteredLogs.length, error: error.message });
     } finally {
       setLoadingAnalysis(false);
     }
   };
 
   const handleFeedback = async (recommendation: Recommendation, rating: 'up' | 'down') => {
+    logTelemetryEvent('HistoryClient.handleFeedback.start', { userId: user?.id, recommendationId: recommendation.recommendationId, rating });
     if (!isBrowser() || !user || !firestore) return;
     if (feedbackGiven[recommendation.recommendationId]) return; 
 
@@ -816,6 +829,7 @@ export default function HistoryClient() {
             role: user.role,
         });
     } catch (error) {
+        logTelemetryEvent('HistoryClient.handleFeedback.error', { userId: user?.id, recommendationId: recommendation.recommendationId, rating, error: error.message });
         console.error("Failed to submit feedback:", error);
         toast({
             variant: "destructive",

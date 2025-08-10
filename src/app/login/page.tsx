@@ -9,7 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BrainCircuit } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-
+import { mutateStrategistSignature } from "@/lib/identity"; // Import mutateStrategistSignature
+import { syncMeshManifest } from "@/lib/manifest"; // Import syncMeshManifest
 import { LoginPayload, LoginPayloadSchema } from "../../lib/types"; // Import from centralized types
 
   const {
@@ -42,6 +43,10 @@ export default function LoginPage() {
         description: error.message || "Please check your credentials and try again.",
       });
     } else {
+      // Assuming login function returns a session object on success
+      const session = await login(data.email, data.password); // Re-call login to get session if needed, or modify login hook to return session
+      const signature = await mutateStrategistSignature(session.user.id); // Mutate signature
+      await syncMeshManifest({ strategistSignature: signature }); // Sync signature to manifest
       toast({
         title: "Authentication Successful",
         description: "Redirecting to dashboard...",

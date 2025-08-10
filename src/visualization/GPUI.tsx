@@ -195,41 +195,41 @@ const GPUI: React.FC<GPUIProps> = ({ moduleData, dependencyData, onGlyphClick })
         );
       })}
 
-      {/* TODO: Implement getGlyphComponent and getGlyphPosition helper functions */}
-      function getGlyphComponent(type: string): React.ComponentType<any> {
-          // Map type to actual glyph component
-          switch (type) {
-              case 'selfHeal': return SelfHealGlyph;
-              case 'rollback': return RollbackGlyph;
-              case 'signals': return SignalsGlyph;
-              case 'auditEngine': return AuditEngineGlyph;
-              case 'compliance': return ComplianceGlyph;
-              case 'monitoring': return MonitoringGlyph;
-              case 'anomaly': return AnomalyGlyph;
-              // Add cases for other glyph types
-              default: return ({ children }: { children?: React.ReactNode }) => <div>{children}</div>; // Default or error component
-          }
-      }
-
-      function getGlyphPosition(moduleId: string): React.CSSProperties {
-          // Define positioning logic based on module ID or type
-          // This should align with the quadrant layout in MeshAuditDashboard
-          // Example placeholder positions:
-          const positions: { [key: string]: React.CSSProperties } = {
-              'selfheal': { top: '10%', left: '10%' },
-              'rollback': { top: '20%', left: '30%' },
-              'signals': { top: '30%', left: '50%' },
-              'audit-engine': { top: '10%', left: '60%' },
-              'compliance': { top: '20%', left: '80%' },
-              'monitoring': { top: '40%', left: '70%' },
-              'anomaly': { top: '50%', left: '90%' },
-              // Define positions for all other modules
-          };
-          return positions[moduleId] || { top: '50%', left: '50%' }; // Default position
-      }
-
     </div>
   );
 };
+
+// TODO: Implement getGlyphComponent and getGlyphPosition helper functions
+function getGlyphComponent(type: string): React.ComponentType<any> {
+    // Map type to actual glyph component
+    switch (type) {
+        case 'selfHeal': return SelfHealGlyph;
+        case 'rollback': return RollbackGlyph;
+        case 'signals': return SignalsGlyph;
+        case 'auditEngine': return AuditEngineGlyph;
+        case 'compliance': return ComplianceGlyph;
+        case 'monitoring': return MonitoringGlyph;
+        case 'anomaly': return AnomalyGlyph;
+        // Add cases for other glyph types
+        default: return ({ children }: { children?: React.ReactNode }) => <div>{children}</div>; // Default or error component
+    }
+}
+
+function getGlyphPosition(moduleId: string): React.CSSProperties {
+    // Define positioning logic based on module ID or type
+    // This should align with the quadrant layout in MeshAuditDashboard
+    // Example placeholder positions:
+    const positions: { [key: string]: React.CSSProperties } = {
+        'selfheal': { top: '10%', left: '10%' },
+        'rollback': { top: '20%', left: '30%' },
+        'signals': { top: '30%', left: '50%' },
+        'audit-engine': { top: '10%', left: '60%' },
+        'compliance': { top: '20%', left: '80%' },
+        'monitoring': { top: '40%', left: '70%' },
+        'anomaly': { top: '50%', left: '90%' },
+        // Define positions for all other modules
+    };
+    return positions[moduleId] || { top: '50%', left: '50%' }; // Default position
+}
 
 export default GPUI;

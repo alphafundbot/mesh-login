@@ -1,4 +1,3 @@
-// cli/mesh.ts
 #!/usr/bin/env node
 import yargs from 'yargs';
 

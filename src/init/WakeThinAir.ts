@@ -1,6 +1,8 @@
 // src/init/WakeThinAir.ts
 
 /**
+import { logTelemetryEvent } from '../monitoring/Telemetry'; // Assuming a centralized telemetry logging module
+
  * The Wake Thin Air component is responsible for bootstrapping the mesh
  * from a null or low-power state, detecting silent drift, and
  * triggering alerts for the strategist.
@@ -15,6 +17,7 @@ class WakeThinAir {
    * This involves bringing core components online and establishing initial connections.
    */
   initializeModulesFromNullState(): void {
+    logTelemetryEvent('wakethinair:initialize_start');
     console.log("Wake Thin Air: Initializing modules from null state...");
     // TODO: Implement comprehensive module initialization logic.
     // This should involve a defined sequence:
@@ -24,6 +27,7 @@ class WakeThinAir {
     // 4. Load and apply initial strategist directives or fallback plans if no persistent memory is found.
     // 5. Bring higher-level modules (e.g., MPC, specific domain handlers) online based on the loaded configuration.
   }
+  
 
   /**
    * Actively monitors the mesh for signs of silent drift or un ύ anticipated state changes.
@@ -31,6 +35,7 @@ class WakeThinAir {
    * explicitly reported by monitoring or anomaly detection systems.
    */
   detectSilentDrift(): void {
+    logTelemetryEvent('wakethinair:drift_detection_start');
     console.log("Wake Thin Air: Conducting silent drift detection scan...");
     // TODO: Implement sophisticated silent drift detection logic.
     // This should leverage multiple signals:
@@ -41,6 +46,7 @@ class WakeThinAir {
     // If drift is detected, trigger a strategist alert with contextual data.
     // Example: if (potentialDriftDetected) { this.triggerStrategistAlert("Potential silent drift detected in network topology.", "medium"); }
 
+    logTelemetryEvent('wakethinair:drift_detection_end');
   }
 
   /**
@@ -50,6 +56,10 @@ class WakeThinAir {
    * @param severity - The severity level of the alert (e.g., 'low', 'medium', 'high').
    */
   triggerStrategistAlert(message: string, severity: 'low' | 'medium' | 'high'): void {
+    logTelemetryEvent('wakethinair:alert_triggered', {
+      message: message,
+      severity: severity,
+    });
     console.log(`Wake Thin Air: Triggering strategist alert [${severity}] - ${message}`);
     // TODO: Implement a robust strategist alert mechanism.
     // 1. Send a structured alert payload to the strategist dashboard/interface for immediate visualization and action.

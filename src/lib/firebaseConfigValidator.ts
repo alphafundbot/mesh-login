@@ -1,5 +1,6 @@
 // src/lib/firebaseConfigValidator.ts
 
+import { logTelemetryEvent } from '@/monitoring/LoginTelemetry'; // Adjust path as necessary
 import { firebasePublicConfig } from "../config/public";
 
 interface FirebaseConfig {
@@ -12,6 +13,8 @@ interface FirebaseConfig {
 }
 
 export function validateFirebaseConfig(config: FirebaseConfig): void {
+  logTelemetryEvent('config:firebase_validation_start');
+
   const requiredFields: (keyof FirebaseConfig)[] = [
     'apiKey',
     'authDomain',
@@ -23,11 +26,14 @@ export function validateFirebaseConfig(config: FirebaseConfig): void {
 
   for (const field of requiredFields) {
     if (!config[field]) {
+      logTelemetryEvent('config:firebase_validation_error', { metadata: { missingField: field } });
       throw new Error(`Firebase config error: "${field}" is missing or empty.`);
     }
   }
+
+  logTelemetryEvent('config:firebase_validation_success');
 }
-ts
+
 // src/lib/firebaseConfigValidator.ts
 
 import { firebasePublicConfig } from "../config/public";

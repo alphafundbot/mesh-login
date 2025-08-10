@@ -11,8 +11,8 @@ class ConsciousnessEngine {
     const response = generateAdaptiveOverlay(model.history, model.emotionalState);
 
     return {
-      // Log the synthesized MeshResponse
-      logTelemetryEvent('consciousness:synthesize:output_response', { response });
+// Log the synthesized MeshResponse
+      response: response,
       awareness,
       permissions,
       response,

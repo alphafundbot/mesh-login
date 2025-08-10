@@ -1,7 +1,7 @@
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
+
 declare const strategistModel: {
- import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
- declare const strategistModel: {
-  emotionalState: string; // Assuming string for emotion trace
+ emotionalState: string; // Assuming string for emotion trace
   dreamLayerInteractions: number;
 };
 

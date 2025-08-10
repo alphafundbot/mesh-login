@@ -25,12 +25,14 @@ interface SovereigntyEntry {
 const sovereigntyLedger: SovereigntyEntry[] = [];
 
 export function trackOwnership(strategistId: string, domain: string, metrics: any): void {
- // Log telemetry event for tracking ownership
- logTelemetryEvent('sovereignty:track_ownership_start', {
- metadata: {
- strategistId,
- domain,
- metrics: { ...metrics }, // Log a copy to avoid mutation issues
+  // Log telemetry event for tracking ownership
+  logTelemetryEvent('sovereignty:track_ownership_start', {
+    metadata: {
+      strategistId,
+      domain,
+      metrics: { ...metrics }, // Log a copy to avoid mutation issues
+    },
+  });
   // Basic validation (assuming DomainRegistry and StrategistIdentity are accessible)
   // if (!StrategistIdentity.isValidStrategistId(strategistId)) {
   //   console.error(`Invalid strategist ID: ${strategistId}`);
@@ -53,15 +55,14 @@ export function trackOwnership(strategistId: string, domain: string, metrics: an
   // entry.metrics = attributedMetrics;
 
   sovereigntyLedger.push(entry);
- logTelemetryEvent('sovereignty:track_ownership_complete', {
+ logTelemetryEvent('sovereignty:track_ownership_complete', { // This seems to be a duplicate log, keeping the one with entry details
  metadata: {
  strategistId,
- domain,
- entryTimestamp: entry.timestamp,
-          action: 'Entry Added',
- },
+    domain,
+    entryTimestamp: entry.timestamp,
+    }, // Added closing parenthesis for metadata object
  });
-}
+ }
 
 export function getSovereigntyData(strategistId: string): SovereigntyEntry[] {
  // Log telemetry event for getting sovereignty data
