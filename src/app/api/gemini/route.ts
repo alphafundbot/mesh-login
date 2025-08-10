@@ -1,6 +1,6 @@
 // src/app/api/gemini/route.ts
-import { generateGeminiContent } from '@/server/mpc/geminiClient';
 import { NextRequest, NextResponse } from 'next/server';
+import { generateGeminiContent } from '../../../server/mpc/geminiClient.ts';
 import { canUserPerform } from '@/lib/roles';
 import { auth } from 'firebase-admin';
 

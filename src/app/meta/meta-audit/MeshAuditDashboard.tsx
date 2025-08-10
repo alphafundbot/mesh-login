@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import * as d3 from 'd3';
 import {
   Tooltip,
   TooltipContent,
@@ -157,6 +158,54 @@ const RecursionDepthIndicator: React.FC<{ depth: number }> = ({ depth }) => (
   <div className="absolute top-2 right-2 text-xs text-gray-400">R:{depth}</div>
 ); // Simple text indicator
 
+// Helper function for dynamic control point calculation
+function getControlPoint(start: { x: number; y: number }, end: { x: number; y: number }, latency: number, weight: number) {
+  const midX = (start.x + end.x) / 2;
+  const midY = (start.y + end.y) / 2;
+
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  const curvatureFactor = Math.min(latency / 200, 1) * 0.5 + weight * 0.1; // Adjusted latency scaling
+  const offset = distance * curvatureFactor * 0.2; // Control the intensity of curvature
+
+  // Calculate a point perpendicular to the line connecting start and end points
+  const controlPointX = midX + (-dy * offset) / distance;
+  const controlPointY = midY + (dx * offset) / distance;
+
+  return {
+    x: controlPointX,
+    y: controlPointY,
+  };
+}
+
+// Helper functions for visual mapping (implement color gradients and thickness scales)
+function getLatencyColor(latency: number): string {
+  // Implement a color gradient logic (e.g., green to red)
+  return latency < 50 ? 'green' : latency < 200 ? 'yellow' : 'red'; // Placeholder logic
+}
+
+function getWeightThickness(weight: number): number {
+  // Implement a thickness scale logic
+  return 1 + weight * 0.5; // Placeholder logic
+}
+
+
+// Placeholder simulation functions for meta-layer (Moved from inside component)
+const simulateDependencies = () => { /* Fetch/simulate dependency data */
+  // Return placeholder dependency data with weight, latency, and type
+  return {
+    'selfheal': [ { target: 'rollback', weight: 2, latency: 50, type: 'dynamic' }, { target: 'signals', weight: 1, latency: 30, type: 'static' } ],
+    'rollback': [ { target: 'signals', weight: 3, latency: 150, type: 'dynamic' } ],
+    'audit-engine': [ { target: 'compliance', weight: 1, latency: 20, type: 'static' }, { target: 'monitoring', weight: 2, latency: 40, type: 'dynamic' } ],
+    'compliance': [],
+    'monitoring': [ { target: 'anomaly', weight: 3, latency: 80, type: 'anomaly-bound' } ],
+    'anomaly': [],
+    // Add more simulated dependencies here with weight, latency, and type
+  };
+};
+
 
 // Placeholder for trace overlay (simplified visual)
 const TraceOverlay: React.FC<{ density: 'low' | 'medium' | 'high', children: React.ReactNode }> = ({ density, children }) => {
@@ -289,6 +338,18 @@ const MeshAuditDashboard: React.FC = () => {
     return () => clearInterval(ritualTriggerInterval);
   }, []);
 
+  // New state for meta-layer
+  const [metaLayerState, setMetaLayerState] = useState({
+    isVisible: true,
+    density: 'medium',
+    focusMode: 'dependencies' as 'dependencies' | 'lineage' | 'influence',
+    dependencies: simulateDependencies(), // Initialize with simulated data
+    ritualLineage: {}, // Placeholder for ritual lineage data
+    strategistInfluence: {}, // Placeholder for strategist influence data
+    interactionMode: 'passive',
+    modulePositions: {}, // State to store actual module glyph positions
+  });
+
   // Function to simulate strategist invoking full recursion (example)
   const invokeFullRecursion = () => {
      setMeshPulseDensity('high');
@@ -297,6 +358,158 @@ const MeshAuditDashboard: React.FC = () => {
      setGovernanceLayerDensity('high');
      setAmbientDensity('high');
      console.log("Strategist invoked full recursion.");
+  };
+
+  // Ref for the SVG element
+  const svgRef = useRef<SVGSVGElement>(null); // Specify SVGElement type
+
+  // Refs for module glyph elements (These need to be attached to the actual glyph components)
+  const selfHealRef = useRef<HTMLDivElement>(null);
+  const rollbackRef = useRef<HTMLDivElement>(null);
+  const signalsRef = useRef<HTMLDivElement>(null);
+  const auditEngineRef = useRef<HTMLDivElement>(null);
+  const complianceRef = useRef<HTMLDivElement>(null);
+  const monitoringRef = useRef<HTMLDivElement>(null);
+  const anomalyRef = useRef<HTMLDivElement>(null);
+  // Add refs for all other module glyph elements
+
+  // Effect to capture and update module glyph positions
+  useEffect(() => {
+    const updateModulePositions = () => {
+      const positions: { [key: string]: { x: number; y: number } } = {};
+      const svg = svgRef.current;
+
+      if (!svg) return; // Only update if SVG ref is available
+
+      const svgRect = svg.getBoundingClientRect();
+
+      // Helper function to get the center coordinates of an element relative to the SVG container
+      const getElementCenter = (element: HTMLElement) => {
+          const rect = element.getBoundingClientRect();
+
+          // Get the SVG's current transformation matrix
+          const svgMatrix = svg.getScreenCTM();
+
+          if (!svgMatrix) {
+               return { x: 0, y: 0 }; // Fallback if matrix is not available
+          }
+
+          // Calculate the center of the element in viewport coordinates
+          const elementCenterX = rect.left + rect.width / 2;
+          const elementCenterY = rect.top + rect.height / 2;
+
+          // Create an SVGPoint for the element's center in viewport coordinates
+          const svgPoint = svg.createSVGPoint();
+          svgPoint.x = elementCenterX;
+          svgPoint.y = elementCenterY;
+
+          // Transform the viewport coordinates to SVG canvas coordinates
+          const svgCanvasPoint = svgPoint.matrixTransform(svgMatrix.inverse());
+
+          return {
+              x: svgCanvasPoint.x,
+              y: svgCanvasPoint.y,
+          };
+      };
+
+      // Get positions of rendered module glyph elements
+      if (selfHealRef.current) positions['selfheal'] = getElementCenter(selfHealRef.current);
+      if (rollbackRef.current) positions['rollback'] = getElementCenter(rollbackRef.current);
+      if (signalsRef.current) positions['signals'] = getElementCenter(signalsRef.current);
+      if (auditEngineRef.current) positions['audit-engine'] = getElementCenter(auditEngineRef.current);
+      if (complianceRef.current) positions['compliance'] = getElementCenter(complianceRef.current);
+      if (monitoringRef.current) positions['monitoring'] = getElementCenter(monitoringRef.current);
+      if (anomalyRef.current) positions['anomaly'] = getElementCenter(anomalyRef.current);
+      // Add logic to get positions for all other module glyph elements
+
+      setMetaLayerState(prevState => ({ ...prevState, modulePositions: positions }));
+    };
+
+    // Update positions initially and on window resize
+    updateModulePositions();
+    window.addEventListener('resize', updateModulePositions);
+
+    // Observe mutations to the DOM which might indicate layout shifts
+    const observer = new MutationObserver(updateModulePositions);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+
+
+    return () => {
+      window.removeEventListener('resize', updateModulePositions);
+      observer.disconnect(); // Clean up the observer
+    };
+  }, [svgRef.current]); // Re-run when SVG ref becomes available
+
+  // Effect for rendering dependencies when data, focus mode, or module positions change
+  useEffect(() => {
+    if (metaLayerState.isVisible && metaLayerState.focusMode === 'dependencies' && svgRef.current) {
+      const svg = d3.select(svgRef.current);
+      svg.selectAll('path').remove(); // Clear previous paths
+
+      const modulePositions = metaLayerState.modulePositions;
+
+      // Render dependency lines/arcs
+      Object.entries(metaLayerState.dependencies).forEach(([sourceModule, targetModules]) => {
+        if (modulePositions[sourceModule]) {
+          (targetModules as any[]).forEach(dependency => {
+            const targetModule = dependency.target;
+            const weight = dependency.weight || 1;
+            const latency = dependency.latency || 0;
+            const invocationType = dependency.type || 'static';
+
+            if (modulePositions[targetModule]) {
+              const sourcePos = modulePositions[sourceModule];
+              const targetPos = modulePositions[targetModule];
+
+              // Calculate control point dynamically
+              const controlPoint = getControlPoint(sourcePos, targetPos, latency, weight);
+
+              // Use D3 path generator for a quadratic curve
+              const path = d3.path();
+              path.moveTo(sourcePos.x, sourcePos.y);
+              path.quadraticCurveTo(controlPoint.x, controlPoint.y, targetPos.x, targetPos.y);
+
+              svg.append('path')
+                .attr('d', path.toString())
+                .attr('stroke', getLatencyColor(latency))
+                .attr('stroke-width', getWeightThickness(weight))
+                .attr('fill', 'none'); // No fill for lines
+
+              // Apply line style based on invocation type
+              if (invocationType === 'dashed') {
+                svg.select('path:last-child').style('stroke-dasharray', ('5, 5'));
+              } else if (invocationType === 'pulsing') {
+                // TODO: Implement pulsing animation on the path
+              }
+
+              // TODO: Implement ripple animation on invocation events
+              // TODO: Refine curved path logic based on dependency type or latency (beyond initial implementation)
+            }
+          });
+        }
+      });
+    }
+  }, [metaLayerState.isVisible, metaLayerState.focusMode, metaLayerState.dependencies, metaLayerState.modulePositions]); // Add modulePositions as a dependency
+
+  // Placeholder simulation functions (will be replaced with actual data fetching/event listeners)
+  const simulateMeshPulseAnomalyBound = () => { /* Implement anomaly detection logic */ return {}; };
+  const simulateAnomalyScanAnomalyBound = () => { /* Implement anomaly detection logic */ return {}; };
+  const simulateIntelligenceFlowRitualTriggered = () => { /* Implement ritual trigger logic */ return {}; };
+  const simulateGovernanceLayerRitualTriggered = () => { /* Implement ritual trigger logic */ return {}; };
+  const simulateRealTimeEcho = () => { /* Implement real-time telemetry */ return {}; };
+
+  // Placeholder simulation functions for meta-layer (Moved from inside component)
+  const simulateRitualLineage = () => { /* Fetch/simulate ritual lineage data */ return {}; };
+  const simulateStrategistInfluence = () => { /* Fetch/simulate strategist influence data */ return {}; };
+
+  // Function to toggle meta-layer visibility (placeholder)
+  const toggleMetaLayerVisibility = () => {
+    setMetaLayerState(prevState => ({ ...prevState, isVisible: !prevState.isVisible }));
+  };
+
+  // Function to change meta-layer focus mode (placeholder)
+  const setMetaLayerFocusMode = (mode: 'dependencies' | 'lineage' | 'influence') => {
+    setMetaLayerState(prevState => ({ ...prevState, focusMode: mode }));
   };
 
 

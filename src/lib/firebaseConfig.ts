@@ -1,6 +1,12 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, enableNetwork, type Firestore } from 'firebase/firestore';
 import { getAuth, type Auth } from 'firebase/auth';
+
+// Import the public Firebase configuration.
+// This configuration is loaded from environment variables prefixed with NEXT_PUBLIC_,
+// ensuring that sensitive keys are not hardcoded in the codebase.
+// For more details on secure credential handling, refer to docs/security_best_practices.md.
+
 import { isBrowser } from './env-check';
 import { firebasePublicConfig } from '@/config/public';
 
