@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { createContext, useState, useContext, useMemo, useEffect, useCallback } from 'react';
 import { ROLES, Role } from '@/lib/roles';
 import { auth } from '@/lib/firebaseConfig';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { onIdTokenChanged, User as FirebaseUser } from 'firebase/auth';
 
 interface User {
   uid: string;
@@ -15,6 +16,7 @@ interface User {
 interface UserContextType {
   user: User | null;
   loading: boolean;
+  setUserRole: (role: Role) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -23,21 +25,25 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const getRoleForUser = (firebaseUser: FirebaseUser): Role => {
-    // TODO: Fetch user role securely from Firebase Custom Claims or backend service
-    // For now, default to Analyst or other basic role
-    return 'Analyst';
-  }
+  const setUserRole = useCallback((role: Role) => {
+    setUser(currentUser => {
+        if (!currentUser) return null;
+        return { ...currentUser, role: role };
+    });
+  }, []);
 
   useEffect(() => {
-    // Guard against running on the server
     if (typeof window === 'undefined') {
         setLoading(false);
         return;
     }
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const role = getRoleForUser(firebaseUser);
+        const tokenResult = await firebaseUser.getIdTokenResult();
+        // Roles are securely set on the backend via custom claims
+        // and read from the ID token on the client.
+        const role = (tokenResult.claims.role as Role) || 'Analyst';
+        
         setUser({
           uid: firebaseUser.uid,
           name: firebaseUser.displayName || firebaseUser.email || 'Strategist',
@@ -53,7 +59,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const contextValue = useMemo(() => ({ user, loading }), [user, loading]);
+  const contextValue = useMemo(() => ({ user, loading, setUserRole }), [user, loading, setUserRole]);
 
   return (
     <UserContext.Provider value={contextValue}>

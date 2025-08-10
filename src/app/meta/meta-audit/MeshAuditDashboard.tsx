@@ -6,6 +6,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+
 } from "@/components/ui/tooltip"; // Assuming shadcn/ui tooltip
 
 // Placeholder functions/data for hydration and interaction
@@ -334,6 +335,27 @@ const MeshAuditDashboard: React.FC = () => {
       setEvolutionMilestones(newMilestones);
       setGovernanceLayerDensity(density); // Governance Layer is also Ritual-Triggered
 
+      // --- Start: Monetization Overlay Data Update ---
+      // TODO: Replace with actual data fetching from AuditEngine or SignalMonetizer
+      const simulatedMonetizationData = {
+        publishedSignals: Math.floor(Math.random() * 500), // Simulated number of published signals
+        activeSubscribers: Math.floor(Math.random() * 1000000), // Simulated active subscribers
+        revenueAccrued: parseFloat((Math.random() * 10000).toFixed(2)), // Simulated revenue
+        platformStatus: { // Simulated status for each platform
+          signalDP: Math.random() > 0.1 ? 'active' : 'inactive',
+          sellfy: Math.random() > 0.05 ? 'active' : 'inactive',
+          mql5: Math.random() > 0.15 ? 'active' : 'inactive',
+        },
+        flowIntegrity: Math.random(), // Simulated flow integrity (0 to 1)
+      };
+
+      setMonetizationData(simulatedMonetizationData);
+      // TODO: Adjust monetizationOverlayDensity based on monetization data anomalies
+      let monetizationDensity: 'low' | 'medium' | 'high' = 'low';
+      if (simulatedMonetizationData.flowIntegrity < 0.8 || simulatedMonetizationData.platformStatus.signalDP === 'inactive' || simulatedMonetizationData.platformStatus.sellfy === 'inactive' || simulatedMonetizationData.platformStatus.mql5 === 'inactive') {
+         monetizationDensity = 'high';
+      } else if (simulatedMonetizationData.flowIntegrity < 0.95) { monetizationDensity = 'medium'; }
+      setMonetizationOverlayDensity(monetizationDensity);
     }, 5000); // Simulate ritual triggers every 5 seconds
     return () => clearInterval(ritualTriggerInterval);
   }, []);
@@ -349,6 +371,21 @@ const MeshAuditDashboard: React.FC = () => {
     interactionMode: 'passive',
     modulePositions: {}, // State to store actual module glyph positions
   });
+
+  // New state for Monetization Overlay
+  const [monetizationData, setMonetizationData] = useState({
+    publishedSignals: 0,
+    activeSubscribers: 0,
+    revenueAccrued: 0,
+    platformStatus: {
+      signalDP: 'inactive',
+      sellfy: 'inactive',
+      mql5: 'inactive',
+    },
+    flowIntegrity: 1,
+  });
+  const [monetizationOverlayDensity, setMonetizationOverlayDensity] = useState<'low' | 'medium' | 'high'>('low');
+
 
   // Function to simulate strategist invoking full recursion (example)
   const invokeFullRecursion = () => {
@@ -512,7 +549,7 @@ const MeshAuditDashboard: React.FC = () => {
     setMetaLayerState(prevState => ({ ...prevState, focusMode: mode }));
   };
 
-
+ // --- Render the Dashboard ---
   return (
     <TooltipProvider>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 w-full h-full">
@@ -626,6 +663,74 @@ const MeshAuditDashboard: React.FC = () => {
            {/* <button onClick={invokeFullRecursion} className="mt-2 p-2 bg-blue-500 text-white rounded">Invoke Full Recursion</button> */}
            {/* <label className="ml-4"><input type="checkbox" checked={echoStreamActive} onChange={() => setEchoStreamActive(!echoStreamActive)} /> Real-Time Echo Stream</label> */}
         </div>
+
+         {/* Monetization Overlay Quadrant (New) */}
+         {/* This quadrant visualizes the recursive monetization orchestration flow */}
+         <TraceOverlay density={monetizationOverlayDensity}>
+           <div className="relative border p-4 flex flex-col justify-between h-full">
+             <h3 className="text-lg font-semibold">💲 Monetization Flow</h3>
+             {/* Inspirations from visuals: Data Monetization, Signal Flow, Automated Flows */}
+             {/* TODO: Connect to actual data from SignalMonetizer and AuditEngine */}
+             {/* TODO: Design glyphs and animations inspired by the retrieved visuals */}
+
+             <div className="flex items-center space-x-4">
+               {/* Glyph for Published Signals */}
+               <Tooltip>
+                 <TooltipTrigger>
+                    {/* Example Glyph: A spinning currency symbol or graph */}
+                   <motion.div
+                     className="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center text-black text-lg font-bold opacity-70"
+                     animate={{ rotate: 360 }}
+                     transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                   >
+                     {monetizationData.publishedSignals}
+                   </motion.div>
+                 </TooltipTrigger>
+                 <TooltipContent>Published Signals: {monetizationData.publishedSignals}</TooltipContent>
+               </Tooltip>
+
+               {/* Glyph for Revenue Accrued */}
+               <Tooltip>
+                 <TooltipTrigger>
+                   {/* Example Glyph: A growing bar chart or a coin stack */}
+                   <motion.div
+                     className="w-16 h-8 bg-green-500 opacity-70 flex items-center justify-center text-black font-bold"
+                     initial={{ width: '0%' }}
+                     animate={{ width: `${Math.min(monetizationData.revenueAccrued / 10000 * 100, 100)}%` }} // Scale to max 10000 for visualization
+                     transition={{ duration: 1 }}
+                   >
+                     ${monetizationData.revenueAccrued.toFixed(0)}
+                   </motion.div>
+                 </TooltipTrigger>
+                 <TooltipContent>Revenue Accrued: ${monetizationData.revenueAccrued.toFixed(2)}</TooltipContent>
+               </Tooltip>
+
+               {/* Placeholder for Platform Status Indicators */}
+               {/* TODO: Add visual indicators for SignalDP, Sellfy, MQL5 status (active/inactive) */}
+               {/* Example: Small colored dots or icons */}
+               <div className="flex flex-col space-y-1">
+                 <div className={`w-4 h-4 rounded-full ${monetizationData.platformStatus.signalDP === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                 <div className={`w-4 h-4 rounded-full ${monetizationData.platformStatus.sellfy === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                 <div className={`w-4 h-4 rounded-full ${monetizationData.platformStatus.mql5 === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+               </div>
+
+               {/* Placeholder for Flow Integrity Indicator */}
+               {/* Example: A line graph or a pulse */}
+               <Tooltip>
+                 <TooltipTrigger>
+                   <SignalWaveform integrity={monetizationData.flowIntegrity} /> {/* Reusing SignalWaveform for flow integrity */}
+                 </TooltipTrigger>
+                 <TooltipContent>Flow Integrity: {(monetizationData.flowIntegrity * 100).toFixed(2)}%</TooltipContent>
+               </Tooltip>
+
+             </div>
+              {/* TODO: Add flow lines and animations to visualize the data flow between glyphs */}
+
+              {/* Comments for connection and refinement */}
+              {/* The data for this quadrant should come from AuditEngine and SignalMonetizer */}
+              {/* Refine glyphs and flow lines based on actual metrics and the retrieved visuals */}
+           </div>
+        </TraceOverlay>
 
       </div>
     </TooltipProvider>
