@@ -13,14 +13,14 @@ import { useUser } from "./use-user";
 export function useAuth() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { user } = useUser();
+  const [error, setError] = useState<string | null>(null);
 
-  const signIn = async (email: string, password: string):Promise<Error | null> => {
+  const login = async (email: string, password: string) => {
     setLoading(true);
+    setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/");
-      return null;
     } catch (error: any) {
       console.error("Login failed:", error);
       return error;
@@ -41,5 +41,5 @@ export function useAuth() {
     }
   };
 
-  return { user, loading, signIn, logOut };
+  return { login, loading, error };
 }
