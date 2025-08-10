@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import axios from 'axios';
-import { collection, writeBatch } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebaseConfig';
 import { isBrowser } from '@/lib/env-check';
 
@@ -44,7 +44,7 @@ export async function syncKnownPlatforms(): Promise<PlatformMeta[]> {
     };
   }).slice(0, 100); // Limit to 100 to avoid excessive writes
 
-  // Only write to Firestore on the server-side, where it's properly initialized
+  // Only write to Firestore if not in a browser context and Firestore is available.
   if (!isBrowser() && firestore) {
       const batch = writeBatch(firestore);
       const platformsRef = collection(firestore, 'platforms');
