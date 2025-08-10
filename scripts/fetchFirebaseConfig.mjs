@@ -11,6 +11,13 @@ dotenv.config();
 //   FIREBASE_WEB_APP → your Firebase Web App ID (starts with "1:…:web:…")
 const { GCP_PROJECT_ID, FIREBASE_WEB_APP } = process.env;
 
+// This function checks if GOOGLE_APPLICATION_CREDENTIALS is set.
+// It's a simple way to detect if we're in a configured GCP environment.
+function inGcpEnvironment() {
+    return !!process.env.GOOGLE_APPLICATION_CREDENTIALS;
+}
+
+
 if (!GCP_PROJECT_ID || !FIREBASE_WEB_APP) {
   console.error(
     '❌ Missing GCP_PROJECT_ID or FIREBASE_WEB_APP in your environment.'
@@ -19,6 +26,18 @@ if (!GCP_PROJECT_ID || !FIREBASE_WEB_APP) {
 }
 
 async function main() {
+  
+  // If not in a GCP environment (e.g., local dev), skip the fetch.
+  if (!inGcpEnvironment()) {
+    console.warn('⚠️ GOOGLE_APPLICATION_CREDENTIALS not set. Skipping Firebase config fetch.');
+    console.warn('   Ensure .env.local is populated manually for local development.');
+     if (!fs.existsSync(path.resolve(process.cwd(), '.env.local'))) {
+      fs.writeFileSync(path.resolve(process.cwd(), '.env.local'), '');
+      console.log('✅ Created empty .env.local file.');
+    }
+    return;
+  }
+
   // Authenticate via Application Default Credentials
   const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/firebase.readonly']
@@ -54,6 +73,15 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error(err);
-  process.exit(1);
+  console.error('An error occurred during Firebase config fetch:', err.message);
+  // Allow the build to continue in non-GCP environments
+  if (!inGcpEnvironment()) {
+    console.log('Proceeding with build despite fetch error in non-GCP environment.');
+    if (!fs.existsSync(path.resolve(process.cwd(), '.env.local'))) {
+      fs.writeFileSync(path.resolve(process.cwd(), '.env.local'), '');
+    }
+    process.exit(0);
+  } else {
+     process.exit(1);
+  }
 });
