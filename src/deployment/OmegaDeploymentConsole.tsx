@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
 // Assume these hooks and types are defined elsewhere
 // import { useOmegaProductionStatus } from './hooks/useOmegaProductionStatus';
 // import { OmegaProductionStatus } from './types/omegaProduction';
@@ -22,17 +23,20 @@ const OmegaDeploymentConsole: React.FC<OmegaDeploymentConsoleProps> = () => {
   });
 
   const handlePause = () => {
-    console.log('Pause command sent');
+ logTelemetryEvent('deployment:command_sent', { command: 'Pause' });
+    console.log('Pause command sent'); // Keep console.log for dev visibility
     // Implement pause logic
   };
 
   const handleResume = () => {
-    console.log('Resume command sent');
+ logTelemetryEvent('deployment:command_sent', { command: 'Resume' });
+    console.log('Resume command sent'); // Keep console.log for dev visibility
     // Implement resume logic
   };
 
   const handleOverride = () => {
-    console.log('Override command sent');
+ logTelemetryEvent('deployment:command_sent', { command: 'Override' });
+    console.log('Override command sent'); // Keep console.log for dev visibility
     // Implement override logic
   };
 
@@ -61,6 +65,11 @@ const OmegaDeploymentConsole: React.FC<OmegaDeploymentConsoleProps> = () => {
     // Add more complex status simulation as needed
 
     return () => clearTimeout(timer); // Cleanup
+  }, []);
+
+  useEffect(() => {
+    // Log status whenever it changes
+    logTelemetryEvent('deployment:status_updated', { status });
   }, []);
 
 

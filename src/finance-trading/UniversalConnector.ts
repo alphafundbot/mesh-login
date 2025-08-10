@@ -1,5 +1,7 @@
 // src/finance-trading/UniversalConnector.ts
 
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
+
 /**
  * Represents a connection to an external financial or trading platform.
  */

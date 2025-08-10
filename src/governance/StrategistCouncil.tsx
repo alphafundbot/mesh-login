@@ -3,6 +3,7 @@ import React from 'react';
 // Assume these modules and types are defined elsewhere
 // import { CouncilManifest } from '../governance/CouncilManifest.json';
 // import { StrategistVoteEngine } from '../governance/StrategistVoteEngine.ts';
+// import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Assume telemetry logging is available
 // import { ResourceConsensus } from '../governance/ResourceConsensus.ts';
 // import { CouncilPulse } from '../visualization/CouncilPulse.tsx';
 
@@ -18,22 +19,36 @@ const StrategistCouncil: React.FC<StrategistCouncilProps> = ({ strategistId }) =
 
   // Placeholder functions for interacting with governance modules
   const fetchProposals = async () => {
+    logTelemetryEvent('council:fetch_proposals_started', { metadata: { strategistId } });
     // const councilManifest = await fetch('/api/councilManifest'); // Example API call
     // setProposals(councilManifest.proposals);
     console.log('Fetching proposals...');
+    // Assuming fetch is successful and proposals are set to state
+    // logTelemetryEvent('council:fetch_proposals_completed', { metadata: { strategistId, proposalCount: councilManifest.proposals.length } });
   };
 
   const submitVote = async (proposalId: string, vote: 'yes' | 'no') => {
+    logTelemetryEvent('council:submit_vote_started', { metadata: { strategistId, proposalId, vote } });
     // await StrategistVoteEngine.submitVote(strategistId, proposalId, vote);
     console.log(`Strategist ${strategistId} voting ${vote} on proposal ${proposalId}`);
     // Update voting status
+    // Assuming vote submission is successful
+    // logTelemetryEvent('council:submit_vote_completed', { metadata: { strategistId, proposalId, vote, status: 'success' } });
   };
 
   const initiateGovernanceRitual = async (ritualType: string) => {
+    logTelemetryEvent('council:initiate_ritual_started', { metadata: { strategistId, ritualType } });
     // await ResourceConsensus.initiateRitual(ritualType, strategistId);
     console.log(`Strategist ${strategistId} initiating governance ritual: ${ritualType}`);
     // Trigger visualization update
+    // Assuming ritual initiation is successful
+    // logTelemetryEvent('council:initiate_ritual_completed', { metadata: { strategistId, ritualType, status: 'initiated' } });
   };
+
+  // Log strategist accessing the council panel
+  React.useEffect(() => {
+    logTelemetryEvent('council:panel_accessed', { metadata: { strategistId } });
+  }, [strategistId]);
 
   React.useEffect(() => {
     fetchProposals();

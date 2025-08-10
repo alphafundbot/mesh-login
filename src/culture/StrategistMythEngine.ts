@@ -4,6 +4,7 @@
  * @returns A MythFragment object representing the myth.
  */
 function generateMyth(history: RitualHistory): MythFragment {
+  logTelemetryEvent('generateMyth:start', { metadata: { history } });
   const { strategist, ritualType, timestamp, module } = history;
 
   const title = `The Ascension of ${strategist}`;
@@ -15,4 +16,5 @@ function generateMyth(history: RitualHistory): MythFragment {
     glyph,
     narrative,
   };
+  logTelemetryEvent('generateMyth:end', { metadata: { mythFragment: { title, glyph, narrative } } });
 }

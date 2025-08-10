@@ -1,4 +1,6 @@
 declare const strategistModel: {
+ import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
+ declare const strategistModel: {
   emotionalState: string; // Assuming string for emotion trace
   dreamLayerInteractions: number;
 };
@@ -19,10 +21,19 @@ interface DreamVote {
 }
 
 function submitDreamProposal(proposal: DreamProposal): DreamVote {
-  return {
+  logTelemetryEvent('dream_parliament:submit_proposal', {
+ metadata: { proposal: proposal },
+  });
+
+  const dreamVote: DreamVote = {
     proposalId: `dream_${Date.now()}`, // Using timestamp for uniqueness
     emotionTrace: strategistModel.emotionalState,
     voteWeight: strategistModel.dreamLayerInteractions * 2,
     status: 'pending',
   };
+
+  logTelemetryEvent('dream_parliament:proposal_vote_created', {
+ metadata: { vote: dreamVote },
+  });
+ return dreamVote;
 }

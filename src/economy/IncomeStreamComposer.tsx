@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
 // Assume these types and functions are defined elsewhere
 // import { StrategistArchetype } from '@/strategist/types';
 // import { createIncomeRitual, refineIncomeRitual } from '@/rituals/incomeRitualExecutor';
@@ -22,6 +23,11 @@ const IncomeStreamComposer: React.FC<IncomeStreamComposerProps> = () => {
   const archetypeOptions = ['Architect', 'Hunter', 'Monetizer', 'Weaver', 'Oracle', 'Ritualist'];
 
   const handleCreateRitual = () => {
+    logTelemetryEvent('income_composer:create_ritual_start', {
+      metadata: {
+        ritualName, monetizationLogic: monetizationLogic.substring(0, 100) + '...', targetROI, selectedArchetype,
+      },
+    });
     // Placeholder for creating a new income ritual
     console.log('Creating Income Ritual:', { ritualName, monetizationLogic, targetROI, selectedArchetype });
     // const newRitual: IncomeRitualDefinition = {
@@ -37,10 +43,17 @@ const IncomeStreamComposer: React.FC<IncomeStreamComposerProps> = () => {
     setMonetizationLogic('');
     setTargetROI('');
     setSelectedArchetype(null);
+    logTelemetryEvent('income_composer:create_ritual_complete', {
+      metadata: {
+        ritualName, status: 'initiated_conceptual',
+      },
+    });
   };
 
   const handleRefineRitual = () => {
     // Placeholder for refining an existing income ritual
+    logTelemetryEvent('income_composer:refine_ritual_start', { metadata: {} }); // Add relevant data if refining a specific ritual
+
     console.log('Refining Income Ritual...');
     // refineIncomeRitual(/* ritual ID or definition */);
   };

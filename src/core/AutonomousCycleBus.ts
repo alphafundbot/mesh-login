@@ -1,6 +1,6 @@
 // src/core/AutonomousCycleBus.ts
 
-import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
+import { logTelemetryEvent } from '../lib/telecom-signal-logs'; // Centralized telemetry logging
 
 /**
  * @module AutonomousCycleBus
@@ -23,6 +23,7 @@ export const AutonomousCycleBus = {
   dispatch(task: string) {
     console.log(`[AutonomousCycleBus] Dispatching task: "${task}"`);
     this.cycles.push({ task, timestamp: Date.now() });
+ logTelemetryEvent('AutonomousCycleBus', `Task dispatched: "${task}"`);
     // In a real system, this would trigger agent execution or task queues
   },
 
@@ -41,6 +42,7 @@ export const AutonomousCycleBus = {
     ];
     const randomTask = mockTasks[Math.floor(Math.random() * mockTasks.length)];
     this.dispatch(randomTask);
+ logTelemetryEvent('AutonomousCycleBus', 'Autonomous cycle evolved');
   },
 
   /**

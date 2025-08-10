@@ -1,4 +1,6 @@
 // src/governance/MeshSovereigntyLedger.ts
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
+// src/governance/MeshSovereigntyLedger.ts
 
 // Assume DomainRegistry.ts, YieldAttributionEngine.ts, and StrategistIdentity.ts exist
 
@@ -23,6 +25,12 @@ interface SovereigntyEntry {
 const sovereigntyLedger: SovereigntyEntry[] = [];
 
 export function trackOwnership(strategistId: string, domain: string, metrics: any): void {
+ // Log telemetry event for tracking ownership
+ logTelemetryEvent('sovereignty:track_ownership_start', {
+ metadata: {
+ strategistId,
+ domain,
+ metrics: { ...metrics }, // Log a copy to avoid mutation issues
   // Basic validation (assuming DomainRegistry and StrategistIdentity are accessible)
   // if (!StrategistIdentity.isValidStrategistId(strategistId)) {
   //   console.error(`Invalid strategist ID: ${strategistId}`);
@@ -45,17 +53,37 @@ export function trackOwnership(strategistId: string, domain: string, metrics: an
   // entry.metrics = attributedMetrics;
 
   sovereigntyLedger.push(entry);
-  console.log(`Sovereignty tracked for strategist ${strategistId} in domain ${domain}`);
+ logTelemetryEvent('sovereignty:track_ownership_complete', {
+ metadata: {
+ strategistId,
+ domain,
+ entryTimestamp: entry.timestamp,
+          action: 'Entry Added',
+ },
+ });
 }
 
 export function getSovereigntyData(strategistId: string): SovereigntyEntry[] {
+ // Log telemetry event for getting sovereignty data
+ logTelemetryEvent('sovereignty:get_data_start', {
+ metadata: {
+ strategistId,
+ },
+ });
   // Basic validation
   // if (!StrategistIdentity.isValidStrategistId(strategistId)) {
   //   console.error(`Invalid strategist ID: ${strategistId}`);
   //   return [];
   // }
 
-  return sovereigntyLedger.filter(entry => entry.strategistId === strategistId);
+  const data = sovereigntyLedger.filter(entry => entry.strategistId === strategistId);
+ logTelemetryEvent('sovereignty:get_data_complete', {
+ metadata: {
+ strategistId,
+ numberOfEntries: data.length,
+ },
+ });
+ return data;
 }
 
 // Optional: Add functions for purging old data, summarizing data, etc.

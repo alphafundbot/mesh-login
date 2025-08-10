@@ -12,12 +12,15 @@
 // import { getCurrentMonetizationArchetypes } from './MonetizationSanctifier'; // Conceptual import
 
 export function evolveArchetypes(currentArchetypes: any[], telemetry: any): ArchetypeMutation[] {
+  logTelemetryEvent('evolveArchetypes', { status: 'start', currentArchetypesCount: currentArchetypes ? currentArchetypes.length : 0, telemetry: telemetry });
+
   const mutations: ArchetypeMutation[] = [];
 
   // Conceptual: Load current archetypes from MonetizationSanctifier if not provided
   // const currentArchetypes = providedArchetypes || getCurrentMonetizationArchetypes();
 
   // Logic to analyze telemetry and propose mutations
+  // Log if data is missing before returning
   if (!currentArchetypes || !telemetry) {
     console.error("ArchetypeEvolver: Missing current archetypes or telemetry data.");
     return mutations; // Return empty array if data is missing
@@ -60,6 +63,7 @@ export function evolveArchetypes(currentArchetypes: any[], telemetry: any): Arch
     // Add more mutation logic based on different telemetry metrics and archetype parameters
   });
 
+  logTelemetryEvent('evolveArchetypes', { status: 'end', proposedMutationsCount: mutations.length, mutations: mutations });
   return mutations;
 }
 

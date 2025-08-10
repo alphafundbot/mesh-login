@@ -38,10 +38,12 @@ export class DesignTokenReceiver {
    * @param tokens The design tokens object.
    */
   ingestTokens(tokens: DesignTokens): void {
+    logTelemetryEvent('DesignTokenReceiver.ingestTokens.start', { numTokens: Object.keys(tokens).length });
     this.designTokens = tokens;
     console.log("Design tokens ingested.");
     // TODO: Add validation for ingested tokens
     // TODO: Trigger application of tokens to styling
+    logTelemetryEvent('DesignTokenReceiver.ingestTokens.end', { status: 'success', numTokens: Object.keys(tokens).length });
   }
 
   /**
@@ -49,10 +51,12 @@ export class DesignTokenReceiver {
    * @param mapping The token mapping object.
    */
   defineMapping(mapping: TokenMapping): void {
+    logTelemetryEvent('DesignTokenReceiver.defineMapping.start', { numMappingEntries: Object.keys(mapping).length });
     this.tokenMapping = mapping;
     console.log("Design token mapping defined.");
     // TODO: Validate mapping against ingested tokens
     // TODO: Potentially generate CSS variables or utility classes based on mapping
+    logTelemetryEvent('DesignTokenReceiver.defineMapping.end', { status: 'success', numMappingEntries: Object.keys(mapping).length });
   }
 
   /**
@@ -63,6 +67,7 @@ export class DesignTokenReceiver {
   applyTokensToStyles(): void {
     if (!this.designTokens || !this.tokenMapping) {
       console.warn("Cannot apply tokens: Design tokens or mapping missing.");
+      logTelemetryEvent('DesignTokenReceiver.applyTokensToStyles.end', { status: 'skipped', reason: 'tokens or mapping missing' });
       return;
     }
 
@@ -87,6 +92,7 @@ export class DesignTokenReceiver {
     // }
 
     console.log("Design tokens applied (conceptual).");
+    logTelemetryEvent('DesignTokenReceiver.applyTokensToStyles.end', { status: 'success' });
   }
 
   /**
@@ -99,6 +105,7 @@ export class DesignTokenReceiver {
   getMappedStyle(category: keyof TokenMapping, tokenKey: string): string | undefined {
       if (!this.tokenMapping || !this.tokenMapping[category]) {
           console.warn(`Mapping for category '${category}' not found.`);
+          logTelemetryEvent('DesignTokenReceiver.getMappedStyle', { status: 'failed', reason: 'mapping category not found', category, tokenKey });
           return undefined;
       }
       return this.tokenMapping[category]![tokenKey];

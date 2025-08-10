@@ -2,6 +2,7 @@ import { WalletCore } from './WalletCore'; // Assume WalletCore class exists
 import { calculateRevenue, RevenueStream } from './RevenueStream'; // Assume calculateRevenue function and RevenueStream type exist
 import { storeAuditEntry, AuditLedger } from './AuditLedger'; // Assume storeAuditEntry function and AuditLedger type exist
 import { calculateIncentive, StrategistIncentives } from './StrategistIncentives'; // Assume calculateIncentive function and StrategistIncentives type exist
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
 import { StrategistModel } from './StrategistModel'; // Assume StrategistModel type exists
 import { SignalNode } from './SignalNode'; // Assume SignalNode type exists
 
@@ -25,6 +26,10 @@ export class TradingSuite {
    * @param strategist The strategist associated with the revenue.
    */
   processNodeRevenue(node: SignalNode, strategist: StrategistModel): void {
+    logTelemetryEvent('trading:process_node_revenue:start', {
+ metadata: { nodeId: node.id, strategistId: strategist.id },
+    });
+
     // All incoming revenue is now channeled into the hyper nano trading engine
     const revenue = calculateRevenue(node);
     // Instead of depositing directly, feed it to the nano engine
@@ -41,6 +46,10 @@ export class TradingSuite {
     // Incentives based on raw revenue are now calculated *after* hyper nano trading,
     // based on the *actualized value* and strategic performance within the nano engine.
     // The incentive calculation and distribution is moved to distributeHyperNanoProfits.
+ logTelemetryEvent('trading:process_node_revenue:end', {
+ metadata: { revenue: revenue, strategistId: strategist.id },
+    });
+
   }
 
   /**
@@ -50,6 +59,10 @@ export class TradingSuite {
    * @param details Details of the trade operation.
    */
   executeTrade(strategist: StrategistModel, details: any): void {
+    logTelemetryEvent('trading:execute_trade:start', {
+ metadata: { strategistId: strategist.id, details: details },
+    });
+
     // Direct manual trades via external platforms are now also subject to the
     // hyper nano trading pipeline for amplification.
     const manualTradeValue = details.amount; // Assuming amount is in details
@@ -69,6 +82,10 @@ export class TradingSuite {
             timestamp: Date.now(),
         });
     }
+ logTelemetryEvent('trading:execute_trade:end', {
+ metadata: { strategistId: strategist.id, tradeValue: manualTradeValue, incentiveAmount: incentiveAmount },
+    });
+
   }
 
   /**
@@ -94,6 +111,11 @@ export class TradingSuite {
    * @param strategist The strategist associated with this income.
    */
   feedIncomeToHyperNanoEngine(amount: number, source: string, strategist: StrategistModel): void {
+    logTelemetryEvent('trading:feed_income_to_nano_engine:start', {
+ metadata: { amount: amount, source: source, strategistId: strategist.id },
+    });
+
+
     // Log the raw income before feeding to the engine
     this.auditLedger.storeAuditEntry({
       strategist: strategist.id,
@@ -108,6 +130,10 @@ export class TradingSuite {
     // Assume the nano engine processes value and periodically outputs amplified profits
     // This output would then trigger the distribution mechanism below.
   }
+ logTelemetryEvent('trading:feed_income_to_nano_engine:end', {
+ metadata: { amount: amount, source: source, strategistId: strategist.id },
+    });
+
 
   /**
    * Receives amplified profits from the Hyper Nano Trading Engine and distributes
@@ -116,6 +142,11 @@ export class TradingSuite {
    * @param amplifiedProfit The actualized value from the hyper nano engine.
    */
   distributeHyperNanoProfits(strategist: StrategistModel, amplifiedProfit: number): void {
+    logTelemetryEvent('trading:distribute_nano_profits:start', {
+ metadata: { strategistId: strategist.id, amplifiedProfit: amplifiedProfit },
+    });
+
+
     // Placeholder: Logic to apply ROI splitting rules (based on demographics, groups, user, etc.)
     // Assume ROI rules are fetched from the ROIControlPanel's configuration.
     const userShare = amplifiedProfit * strategist.roiSplit.user; // Assuming ROI split is stored on strategist model
@@ -144,6 +175,10 @@ export class TradingSuite {
       metadata: { userShare, vaultShare },
       timestamp: Date.now(),
     });
+ logTelemetryEvent('trading:distribute_nano_profits:end', {
+ metadata: { strategistId: strategist.id, amplifiedProfit: amplifiedProfit, userShare: userShare, vaultShare: vaultShare },
+    });
+
   }
 
   // Additional methods to interface with the Hyper Nano Trading Engine for monitoring,

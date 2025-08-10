@@ -1,5 +1,7 @@
 // src/core/strategistModel.ts
 
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
+
 /**
  * @module strategistModel
  * @description Mock model representing strategist cognitive state and intent for recursive integration.
@@ -37,6 +39,19 @@ export const strategistModel = {
       this.ritualDepth = Math.max(0, this.ritualDepth - 0.01);
     }
     // In a real scenario, this would involve more complex cognitive modeling.
+  },
+
+  /**
+   * @method getModel
+   * @description Returns the current state of the strategist model.
+   * @returns {object} The strategist model state.
+   */
+  getModel() {
+ return {
+ engagementScore: this.engagementScore,
+ focusZones: this.focusZones,
+ ritualDepth: this.ritualDepth,
+ };
   },
 
   // Add more properties or methods as needed for the strategist model

@@ -2,6 +2,7 @@ import React from 'react';
 
 // Assume AuditOverlay.tsx, MeshManifest.json, and StrategistCalendar.ts
 // provide data or APIs for accessing login audit information.
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
 import { AuditEvent } from '../lib/types'; // Import centralized AuditEvent type
 
 interface LoginAuditProps {
@@ -14,6 +15,9 @@ const LoginAudit: React.FC<LoginAuditProps> = ({ loginAttempts }) => {
     <div className="login-audit-panel">
       <h3 className="text-lg font-semibold mb-4">Strategist Login Audit</h3>
       {loginAttempts && loginAttempts.length > 0 ? (
+        // Log the number of login attempts being displayed
+        logTelemetryEvent('login_audit:displaying_attempts', { metadata: { count: loginAttempts.length } }),
+
         <ul>
           {loginAttempts.map((attempt, index) => (
             <li key={index} className={`border-b py-2 ${attempt.status === 'failure' ? 'text-red-500' : 'text-green-500'}`}>

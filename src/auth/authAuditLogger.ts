@@ -1,6 +1,7 @@
 ts
 // src/auth/authAuditLogger.ts
 
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
 interface AuditEngine {
   logEvent(eventName: string, data?: any): void;
 }
@@ -16,20 +17,25 @@ class AuthAuditLogger {
     if (this.auditEngine) {
       this.auditEngine.logEvent(eventName, data);
     } else {
-      console.log(`Auth Event: ${eventName}`, data);
+ console.log(`Auth Event (AuditEngine not available): ${eventName}`, data);
     }
+    // Also log to telemetry for broader monitoring
+ logTelemetryEvent(`auth:${eventName.replace('auth:', '')}`, { metadata: data });
   }
 
   logLoginSuccess(userId: string): void {
-    this.log('auth:login_success', { userId, timestamp: Date.now() });
+    const data = { userId, timestamp: Date.now() };
+ this.log('auth:login_success', data);
   }
 
   logLoginFailed(reason: string, details?: any): void {
-    this.log('auth:login_failed', { reason, details, timestamp: Date.now() });
+    const data = { reason, details, timestamp: Date.now() };
+ this.log('auth:login_failed', data);
   }
 
   logConfigMissing(missingField: string): void {
-    this.log('auth:config_missing', { missingField, timestamp: Date.now() });
+    const data = { missingField, timestamp: Date.now() };
+ this.log('auth:config_missing', data);
   }
 }
 

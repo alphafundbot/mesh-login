@@ -1,7 +1,10 @@
 // src/audit/SuiteAnomalyPredictor.ts
 
 import { AuditOracle } from '../audit/AuditOracle'; // Assuming AuditOracle can be imported
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Import centralized telemetry logging
 import { SignalInsuranceEngine } from '../signal/SignalInsuranceEngine'; // Assuming SignalInsuranceEngine can be imported
+
+
 // Import other relevant monitoring modules as needed
 
 // Assume SuiteAnomalyPrediction type is defined elsewhere
@@ -69,7 +72,11 @@ export class SuiteAnomalyPredictor {
         }
     }
 
-
+    // Log the predicted anomaly
+ logTelemetryEvent('suite_anomaly_predictor:prediction', {
+ metadata: {
+ suiteName: suiteName,
+      prediction: {
     return {
       suiteName,
       anomalyType: predictedAnomalyType, // Corrected property name

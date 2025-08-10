@@ -6,6 +6,7 @@ import { RootIdentity } from '../strategist/RootIdentity'; // Assuming RootIdent
 // type StreamBinder = { bind: (streams: any[]) => any };
 // type FusionManifest = { logic: any };
 // type YieldAmplifier = { amplify: (fusedStream: any, logic: any) => FusedIncomeStream };
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
 
 // Assume these modules exist
 declare const StreamBinder: StreamBinder;
@@ -24,9 +25,17 @@ export class YieldFusionEngine {
    * @throws Error if the strategist is not the root.
    */
   mergeIncomeStreams(streams: any[], strategistId: string): FusedIncomeStream {
+    logTelemetryEvent('yield_fusion:merge_income_streams_start', {
+      metadata: { strategistId, numberOfStreams: streams.length },
+    });
+
     if (!RootIdentity.isRoot(strategistId)) {
+      logTelemetryEvent('yield_fusion:merge_income_streams_unauthorized', {
+        severity: 'error',
+        message: 'Unauthorized attempt to merge income streams.',
+        metadata: { strategistId },
+      });
       throw new Error("Sovereign override required: Only the root strategist can merge income streams.");
-    }
 
     // Encode fusion logic by interacting with StreamBinder, FusionManifest, and YieldAmplifier
     const boundStreams = StreamBinder.bind(streams);
@@ -34,5 +43,8 @@ export class YieldFusionEngine {
     const fusedStream = YieldAmplifier.amplify(boundStreams, fusionLogic);
 
     return fusedStream;
+    logTelemetryEvent('yield_fusion:merge_income_streams_complete', {
+      metadata: { strategistId, fusedStream },
+    });
   }
 }

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 // Assume these types and functions are defined elsewhere
 // interface BuildStatus { /* ... */ }
 // interface HydrationOrder { /* ... */ }
+import { logTelemetryEvent } from '../monitoring/LoginTelemetry'; // Centralized telemetry logging
 // interface StrategistInfluenceOverlay { /* ... */ }
 // interface CompilerAnomaly { /* ... */ }
 // declare function useDevServerPulse(): any; // Hook to get dev server data
@@ -27,12 +28,23 @@ const SignalCompiler: React.FC = () => {
       const mockBuildStatus = { stages: ['Parsing', 'Compiling', 'Bundling', 'Hydrating'] };
       const mockHydrationOrder = ['ModuleA', 'ModuleB', 'ModuleC'];
       setBuildStatus(mockBuildStatus);
+      logTelemetryEvent('signal_compiler:build_status_updated', { metadata: { buildStatus: mockBuildStatus } });
       setHydrationOrder(mockHydrationOrder);
+      logTelemetryEvent('signal_compiler:hydration_order_updated', { metadata: { hydrationOrder: mockHydrationOrder } });
 
       // Simulate anomaly detection
       // const detectedAnomalies = detectCompilerAnomalies(mockBuildStatus, mockHydrationOrder);
       // setAnomalies(detectedAnomalies);
+      // if (detectedAnomalies.length > 0) {
+      //   logTelemetryEvent('signal_compiler:anomalies_detected', { metadata: { anomalies: detectedAnomalies } });
+      // }
     };
+
+    // Initial log when component mounts
+    logTelemetryEvent('signal_compiler:component_mounted', {});
+
+    // Log when dependencies change (simulating data updates)
+    // logTelemetryEvent('signal_compiler:dependency_update', { metadata: { devServer: !!devServerData, auditTrail: !!auditTrailData, hydrationMap: !!hydrationMapData } });
 
     simulateBuildData();
 
