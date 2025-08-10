@@ -1,3 +1,44 @@
+import React, { useEffect, useRef } from 'react';
+
+interface RevenueStreamData {
+  id: string;
+  source: string;
+  amount: number;
+  frequency: string; // e.g., "hourly", "daily", "epochal"
+  // Add other relevant data like strategist association, archetype influence, etc.
+}
+
+interface VizConfig {
+  // Define visualization parameters based on ROI, frequency, etc.
+  // Example: color scales, pulse rates, size mappings
+  roiColorScale: (roi: number) => string;
+  pulseRateScale: (frequency: string) => number;
+  sizeScale: (amount: number) => number;
+}
+
+interface RevenuePulseVisualizerProps {
+  revenueStreams: RevenueStreamData[];
+  vizConfig: VizConfig; // Configuration for visualization
+  // Assume props for integrating with TranscendentalViz, e.g., canvas context, coordinate mapping
+  // ... other integration props for rendering in a specific context (canvas, WebGL)
+}
+
+const RevenuePulseVisualizer: React.FC<RevenuePulseVisualizerProps> = ({ revenueStreams, vizConfig }) => {
+  // This component focuses on receiving data and config.
+  // The actual rendering logic (using a canvas or 3D library like Three.js)
+  // would typically be handled by a parent visualization component (like TranscendentalViz)
+  // that passes a rendering context or hooks into a rendering loop.
+
+  // This effect would be used to trigger rendering updates in the parent visualization
+  useEffect(() => {
+    // Example: Call a rendering function provided by the parent visualization context
+    // renderRevenueStreams(revenueStreams, vizConfig);
+  }, [revenueStreams, vizConfig]); // Re-run when streams or config change
+
+  return <div className="revenue-pulse-visualizer-container">{/* Visualization handled by parent */}</div>;
+};
+
+export default RevenuePulseVisualizer;
 import React from 'react';
 
 interface RevenueStreamData {

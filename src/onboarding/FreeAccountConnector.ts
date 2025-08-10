@@ -5,8 +5,6 @@
 // import AccountManager from './AccountManager'; // Hypothetical account manager
 import { AuditEngine } from '../audit/AuditEngine'; // Assuming AuditEngine is needed here for logging
 // import { BiometricVerifier } from './BiometricVerifier'; // Import BiometricVerifier
-// import { SignalRouter } from '../network/SignalRouter'; // Import SignalRouter
-
 // Assume existence of OnboardingRitual, UserYieldTracker, and AccessPulse
 import { OnboardingRitual } from './OnboardingRitual';
 import { UserYieldTracker } from './UserYieldTracker';
@@ -16,15 +14,15 @@ export class FreeAccountConnector {
   // private signalProvisioner: SignalProvisioner; // Hypothetical signal provisioner instance
   // private accountManager: AccountManager; // Hypothetical account manager instance
   private auditEngine: AuditEngine; // Assuming AuditEngine is needed for logging within onboarding
-  // private biometricVerifier: BiometricVerifier; // Instance of BiometricVerifier
-  private biometricVerifier: BiometricVerifier; // Instance of BiometricVerifier
-  private signalRouter: SignalRouter; // Instance of SignalRouter
+  private onboardingRitual: OnboardingRitual;
+  private userYieldTracker: UserYieldTracker;
+  private accessPulse: typeof AccessPulse; // Correctly type AccessPulse as a class/type reference
 
-  constructor(auditEngine: AuditEngine, biometricVerifier: BiometricVerifier, signalRouter: SignalRouter /* other dependencies like signalProvisioner, accountManager */) {
+
+  constructor(auditEngine: AuditEngine/* other dependencies like signalProvisioner, accountManager, biometricVerifier, signalRouter */) {
     // Initialize dependencies
     this.auditEngine = auditEngine;
-    this.biometricVerifier = biometricVerifier;
-    this.signalRouter = signalRouter;
+
 
     // Initialize new dependencies
     this.onboardingRitual = new OnboardingRitual(); // Assuming instantiation here
@@ -59,12 +57,12 @@ export class FreeAccountConnector {
 
       // Trigger visualization update for AccessPulse
       // This is a conceptual interaction. In a real React app, you'd use context, Redux, or a similar pattern.
-      if (this.accessPulse && typeof this.accessPulse.updateVisualization === 'function') {
+      // Assuming AccessPulse has a static or singleton method to update, or you pass an instance
+      if (this.accessPulse && typeof (this.accessPulse as any).updateVisualization === 'function') { // Use 'as any' for conceptual interaction
          // Assuming AccessPulse has a static or singleton method to update
-         this.accessPulse.updateVisualization(userId, accessTier);
+         (this.accessPulse as any).updateVisualization(userId, accessTier);
          console.log(`FreeAccountConnector: AccessPulse visualization updated for ${userId}`);
       } else {
-          console.warn("FreeAccountConnector: AccessPulse visualization update mechanism not available.");
       }
 
       // This assumes hypothetical modules/methods for these steps.
@@ -74,8 +72,8 @@ export class FreeAccountConnector {
       // if (this.signalProvisioner) {
       //   await this.signalProvisioner.setupSignal(userId, userContext, accessTier);
       // }
-
-      //   this.auditEngine.logEvent('onboarding:sim_based_complete', { userId: userId, status: 'success' });
+      // Log the successful onboarding in the AuditEngine
+      this.auditEngine.logEvent('onboarding:sim_based_complete', { userId: userId, status: 'success', accessTier: accessTier });
       // }
 
       console.log(`FreeAccountConnector: SIM-based onboarding process initiated for ${userId}.`);
