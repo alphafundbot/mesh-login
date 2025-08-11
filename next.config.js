@@ -1,5 +1,4 @@
 const nextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -15,6 +14,9 @@ const nextConfig = {
       },
     ],
   },
+  allowedDevOrigins: [
+    '3000-firebase-thin-wallet-1754708969246.cluster-aj77uug3sjd4iut4ev6a4jbtf2.cloudworkstations.dev'
+  ],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.alias = {
