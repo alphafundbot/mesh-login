@@ -1,34 +1,29 @@
 {
-  "name": "your-mesh-project",
+  "name": "soveregn-mesh-login",
   "version": "0.1.0",
-  "description": "Sovereign Mesh Project",
+  "description": "Planetary-scale strategist login flow with telemetry, overlays, and blockchain-bound identity.",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
+    "clean": "rm -rf dist",
     "start": "node dist/index.js",
     "start:dev": "ts-node src/index.ts",
-    "clean": "rm -rf dist",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "ping-result": "node dist/process_ping_result_script.js"
   },
   "keywords": [
     "mesh",
     "sovereign",
     "telemetry",
-    "blockchain"
+    "blockchain",
+    "login-flow",
+    "strategist",
+    "overlay",
+    "audit"
   ],
   "author": "Strategist Nehemie",
   "license": "UNLICENSED",
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "eslint": "^8.0.0",
-    "eslint-plugin-react": "^7.0.0",
-    "ts-node": "^10.0.0",
-    "typescript": "^5.0.0"
-  },
   "directories": {
     "doc": "docs"
   },
@@ -36,5 +31,19 @@
     "next": "^15.4.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-react": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@tailwindcss/postcss": "^4.1.11",
+    "tailwindcss": "^3.4.3",
+    "postcss": "^8.4.31",
+    "autoprefixer": "^10.4.16",
+    "postcss-loader": "^7.0.2"
   }
 }
