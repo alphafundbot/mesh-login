@@ -1,5 +1,6 @@
-# /home/user/studio/dev.nix
-let pkgs = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-23.05.tar.gz") {}; in
+let
+  pkgs = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-23.05.tar.gz") {};
+in
 
 pkgs.mkShell {
   buildInputs = [
@@ -7,10 +8,16 @@ pkgs.mkShell {
     pkgs.curl
     pkgs.nodejs
     pkgs.openssl
+    pkgs.nano
+    (pkgs.callPackage ./wallet-auth.nix {})
+    (pkgs.callPackage ./overlay.nix {})
+    (pkgs.callPackage ./mesh-dashboard.nix {})
   ];
 
   shellHook = ''
-    echo "✅ Thin Wallet shell activated"
-    echo "🔐 Wallet auth and overlay scaffolding ready"
+    wallet-auth-init
+    overlay-preload
+    mesh-dashboard-init
+    echo "🚀 Strategist shell fully activated"
   '';
 }
