@@ -1,4 +1,3 @@
-# ~/studio/dev.nix
 { pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-23.05.tar.gz") {} }:
 
 pkgs.mkShell {
@@ -7,10 +6,12 @@ pkgs.mkShell {
     pkgs.curl
     pkgs.nodejs
     pkgs.openssl
+    pkgs.tree
   ];
 
   shellHook = ''
-    echo "✅ Thin Wallet shell activated"
-    echo "🔐 Wallet auth and overlay scaffolding ready"
+    export WALLET_SEED=$(openssl rand -hex 32)
+    echo "🧬 Wallet seed generated: ${WALLET_SEED}"
+    echo "✅ Strategist identity bound: $STRATEGIST_ID"
   '';
 }

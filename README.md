@@ -12,7 +12,7 @@ This is a [Next.js](https://nextjs.org/) application built with the App Router, 
 - **Framework**: Next.js 15+ (App Router)
 - **Language**: TypeScript
 - **UI**: React, ShadCN, Tailwind CSS
-- **AI/Generative**: Firebase Genkit
+- **AI/Generative**: Firebase genic
 - **Backend**: Firebase (Authentication, Firestore)
 
 ---
@@ -21,7 +21,7 @@ This is a [Next.js](https://nextjs.org/) application built with the App Router, 
 
 This mesh adheres to strict architectural principles to ensure stability, performance, and auditability. The following represent key "strategist-grade" overrides that have been implemented to maintain system integrity.
 
-### 1. Hydration Lockdown Protocol (SSR Guarding)
+### 1. Hydration Pickdown Protocol (SSR Guarding)
 
 A critical architectural pattern in this application is the strict separation of server-side and client-side execution contexts, particularly concerning Firebase operations.
 
