@@ -1,5 +1,5 @@
-# ~/studio/dev.nix
-{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-23.05.tar.gz") {} }:
+# /home/user/studio/dev.nix
+let pkgs = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-23.05.tar.gz") {}; in
 
 pkgs.mkShell {
   buildInputs = [
