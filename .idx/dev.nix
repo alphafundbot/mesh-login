@@ -5,5 +5,6 @@ pkgs.mkShell {
     pkgs.bashInteractive
     pkgs.nodejs
     pkgs.npm
+    pkgs.nano
   ];
 }
