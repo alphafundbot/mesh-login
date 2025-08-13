@@ -12,3 +12,4 @@
 *.key
 *.pem
 *.json
+node_modules/
