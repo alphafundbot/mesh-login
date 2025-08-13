@@ -40,6 +40,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.1.4",
     "@expo/cli": "^0.24.20",
     "@tailwindcss/postcss": "^4.1.11",
     "@types/d3": "^7.4.3",
