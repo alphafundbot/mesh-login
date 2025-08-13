@@ -1,0 +1,35 @@
+pipeline:
+  name: strategist-signal-orchestrator
+  description: Full-mesh override synthesis + deployment
+  steps:
+    - name: fetchFirebaseConfig
+      tool: firebase_get_sdk_config
+      params:
+        platform: web
+      output: firebaseConfig.json
+
+    - name: fetchSignals
+      tool: firestore_query_collection
+      params:
+        path: strategist/signals
+      output: signals.json
+
+    - name: synthesizeOverrides
+      tool: vertex_pipeline
+      model: override-synthesizer
+      input: signals.json
+      output: overrides.json
+
+    - name: deployOverrides
+      tool: firebase_init
+      params:
+        features: firestore,storage,auth
+
+    - name: validateRules
+      tool: firestore_validate_rules
+      params:
+        sourceFile: firestore.rules
+
+    - name: confirmEnvironment
+      tool: firebase_get_environment
+      output: envStatus.json

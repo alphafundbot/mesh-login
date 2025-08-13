@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  mesh-core:
+    build: .
+    ports:
+      - "9002:9002"
+      - "8080:8080"
+    volumes:
+      - ./keys:/mesh/keys
+      - ./iam:/mesh/iam
+      - ./frontend:/mesh/frontend
+      - ./mcp-server:/mesh/mcp-server
+    env_file:
+      - .env.local

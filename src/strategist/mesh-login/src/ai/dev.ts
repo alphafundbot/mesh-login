@@ -1,0 +1,20 @@
+'use server';
+/**
+ * @fileOverview A development server for Genkit, loading all defined flows.
+ */
+
+import '@/ai/flows/audit-trail-ai.ts';
+import '@/ai/flows/config-validator-flow.ts';
+import '@/ai/flows/signal-intelligence-flow.ts';
+import '@/ai/flows/cross-domain-intelligence-flow.ts';
+import '@/ai/flows/rationale-tagging-flow.ts';
+import '@/ai/flows/suppression-forecast-flow.ts';
+import '@/ai/flows/snapshot-diff-flow.ts';
+import '@/ai/flows/rationale-forecast-flow.ts';
+import '@/ai/flows/replay-commentary-flow.ts';
+import '@/ai/flows/health-check-flow.ts';
+import '@/ai/flows/volatility-anomaly-flow.ts';
+import '@/ai/flows/currency-volatility-flow.ts';
+import '@/ai/flows/predictive-override-flow.ts';
+import '@/ai/flows/code-intelligence-flow.ts';
+import '@/ai/flows/api-discovery-flow.ts';

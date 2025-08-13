@@ -1,0 +1,10 @@
+LOG_PATH="$HOME/studio/orchestrator_log.json"
+TMP_PATH="$HOME/studio/orchestrator_log.tmp"
+
+jq '. += [{
+  "timestamp": "'"$(date -Iseconds)"'",
+  "node": "'"$(node -v)"'",
+  "npm": "'"$(npm -v)"'",
+  "prefix": "'"${NPM_CONFIG_PREFIX:-<unset}"'",
+  "status": "validated"
+}]' "$LOG_PATH" > "$TMP_PATH" && mv "$TMP_PATH" "$LOG_PATH"

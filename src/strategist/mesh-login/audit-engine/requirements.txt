@@ -1,0 +1,4 @@
+# Add actual dependencies for the audit engine here
+# Example dependencies:
+# psycopg2-binary==2.9.3
+# pandas==1.4.2

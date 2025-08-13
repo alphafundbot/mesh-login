@@ -1,0 +1,9 @@
+# grafana/provisioning/dashboards/strategist.yaml
+apiVersion: 1
+providers:
+  - name: 'strategist-dashboards'
+    folder: 'Mesh'
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards
+      allowUiUpdates: true

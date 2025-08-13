@@ -1,0 +1,14 @@
+notifiers:
+  - name: "Sovereign Signal Watchdog"
+    type: webhook
+    uid: "twilio-signal-watchdog"
+    org_id: 1
+    is_default: false
+    settings:
+      url: "http://localhost:3000/grafana-alert"
+      httpMethod: "POST"
+      autoResolve: true
+      uploadImage: false
+    secureSettings: {}
+    frequency: "60s"
+    disableResolveMessage: false

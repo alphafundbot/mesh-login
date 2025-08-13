@@ -1,0 +1,46 @@
+# Use an official Node.js runtime as a parent image
+FROM node:20-alpine
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy package.json and package-lock.json (if it exists)
+COPY package.json package-lock.json* ./
+
+# Install production dependencies
+RUN npm install --production=false
+
+# Copy the rest of the application code
+COPY . .
+
+# Build the Next.js application for production
+RUN npm run build
+
+# Expose the port the app runs on
+EXPOSE 3000
+
+# Command to run the production server
+CMD ["npm", "start"]
+# Use an official Node.js runtime as a parent image
+FROM node:20-alpine
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy package.json and package-lock.json (if it exists)
+COPY package.json package-lock.json* ./
+
+# Install production dependencies
+RUN npm install --production=false
+
+# Copy the rest of the application code
+COPY . .
+
+# Build the Next.js application for production
+RUN npm run build
+
+# Expose the port the app runs on
+EXPOSE 3000
+
+# Command to run the production server
+CMD ["npm", "start"]

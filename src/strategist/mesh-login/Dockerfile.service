@@ -1,0 +1,11 @@
+# Use an official Node.js runtime as a parent image
+FROM node:20-alpine
+
+# Set the working directory in the container
+WORKDIR /service
+COPY package*.json ./
+
+RUN npm install
+COPY . ./
+EXPOSE 3001
+CMD ["node", "index.js"]

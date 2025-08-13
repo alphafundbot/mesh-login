@@ -1,0 +1,15 @@
+# Ignore build output directory
+/.next/
+
+# Ignore Node.js modules
+/node_modules/
+
+# Ignore environment files
+.env
+.env.local
+
+# Ignore sensitive files that may contain credentials (e.g., service account keys)
+*.key
+*.pem
+*.json
+node_modules/
