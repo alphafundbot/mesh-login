@@ -1,4 +1,4 @@
-import SessionTracePanel from '../../strategist/SessionTracePanel.jsx';
+import SessionTracePanel from '../../SessionTracePanel.jsx';
 
 export default function SessionRoute() {
   return <SessionTracePanel />;

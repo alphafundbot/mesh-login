@@ -1,13 +1,14 @@
 {
-  "name": "soveregn-mesh-login",
+  "name": "sovereign-mesh-login",
   "version": "0.1.0",
   "description": "Planetary-scale strategist login flow with telemetry, overlays, and blockchain-bound identity.",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "clean": "rm -rf dist",
-    "start": "node dist/index.js",
-    "start:dev": "ts-node src/index.ts",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "ping-result": "node dist/process_ping_result_script.js"
