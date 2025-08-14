@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telnyx-fallback
+  namespace: telecom
+  labels:
+    strategist-mutation: v2
+    component: sim-provisioning-fallback
+data:
+  README: |
+    Telnyx SIM provisioning fallback manifest.
+    Use this manifest for Nephio/GKE retry logic if initial provisioning fails.
+    Mutation lineage and audit trace are mandatory.
