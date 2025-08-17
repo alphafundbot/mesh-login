@@ -139,7 +139,6 @@ export interface ActionLog {
 
 import { logTelemetryEvent } from '../monitoring/LoginTelemetry';
 // 🔐 Strategist Authentication Schemas
-export const StrategistUserSchema = z.object({
   uid: z.string(),
   email: z.string().email(),
   displayName: z.string().optional(),
@@ -367,7 +366,6 @@ export const parseDetails = (details: string): ParsedDetails => {
   return { isOverride, rationale, action, severity, domains };
 };
 
-export const StrategistUserSchema = z.object({
   uid: z.string(),
   email: z.string().email(),
   displayName: z.string().optional(),
