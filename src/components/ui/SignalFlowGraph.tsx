@@ -1,1 +1,2 @@
-export const SignalFlowGraph = () => SignalFlowGraph;
+export const SignalFlowGraph = () => null;
+export default SignalFlowGraph;

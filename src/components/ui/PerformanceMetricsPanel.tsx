@@ -1,2 +1,2 @@
-exportMetricsPanel = () => null;
+export const PerformanceMetricsPanel = () => null;
 export default PerformanceMetricsPanel;

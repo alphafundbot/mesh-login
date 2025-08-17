@@ -1,13 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-// ... other
-
-export const Audit types and exportsEventSchema = {};
+export const AuditEventSchema = {};
 
 export const StrategistUserSchema = z.object({
   uid: z.string(),
-  email: z.string().email: z.string().optional(),
-  displayName.string().url().(),
-  photoURL: zoptional(),
+  email: z.string().email(),
+  displayName: z.string().optional(),
+  photoURL: z.string().url().optional(),
   providerId: z.string(),
 });

@@ -1,101 +1,99 @@
-$ErrorActionPreference as make-stubs.ps = 'Stop'
+$ErrorActionPreference = 'Stop'
 
-# Map (single-quoted here of files -> contents-strings are paste-safe)
 $files = @{
-"src/design/DesignTokenReceiver.ts" = @'
-export constexport default design designTokens = {};
-/components/ui/ATokens;
+  "src/design/DesignTokenReceiver.ts" = @'
+export const designTokens = {};
+export default designTokens;
 '@
 
-"srcuditTrailPanel.tsx" = @'
-export const = () => null;
-export default AuditTrail AuditTrailPanelPanel;
+  "src/components/ui/AuditTrailPanel.tsx" = @'
+export const AuditTrailPanel = () => null;
+export default AuditTrailPanel;
 '@
 
-"src/components/layout/MeshDashboardGrid.tsx" = @'
-export const MeshDashboardGrid = () => null MeshDashboardGrid;
-export default;
+  "src/components/layout/MeshDashboardGrid.tsx" = @'
+export const MeshDashboardGrid = () => null;
+export default MeshDashboardGrid;
 '@
 
-"src/components/theme/MeshTheme'
-export const MeshProvider.tsx" = @ThemeProvider = ({ children }: any}</>;
-export default) => <>{children;
+  "src/components/theme/MeshThemeProvider.tsx" = @'
+export const MeshThemeProvider = ({ children }: any) => <>{children}</>;
+export default MeshThemeProvider;
 '@
 
-"src/components MeshThemeProvider/ui/MeshStatusCard.tsx" = @'
+  "src/components/ui/MeshStatusCard.tsx" = @'
 export const MeshStatusCard = () => null;
 export default MeshStatusCard;
 '@
 
-"src/components/ui/ProvisioningHeatmap.tsx" = @'
-export const ProvisioningHeatmap = () => ProvisioningHeat null;
-export default/ui/PerformanceMetricsmap;
+  "src/components/ui/ProvisioningHeatmap.tsx" = @'
+export const ProvisioningHeatmap = () => null;
+export default ProvisioningHeatmap;
 '@
 
-"src/componentsPanel.tsx" = @'
-MetricsPanel = ()export const Performance => null;
-exportMetricsPanel;
+  "src/components/ui/PerformanceMetricsPanel.tsx" = @'
+export const PerformanceMetricsPanel = () => null;
+export default PerformanceMetricsPanel;
 '@
 
- default Performance"src/components/ui/SignalFlowGraph.tsx" = @'
+  "src/components/ui/SignalFlowGraph.tsx" = @'
 export const SignalFlowGraph = () => null;
 export default SignalFlowGraph;
 '@
 
-"src/components/ui/MeshControlBar const MeshControl.tsx" = @'
-exportBar = () => null MeshControlBar;
-;
-export default'@
-
-"src/mesh/MeshBus.ts" = @'
-export const meshBus = {};
-export default() { return null function MeshBus; }
+  "src/components/ui/MeshControlBar.tsx" = @'
+export const MeshControlBar = () => null;
+export default MeshControlBar;
 '@
 
-"src/libimport { z } from/types.ts" = @'
- 'zod';
+  "src/mesh/MeshBus.ts" = @'
+export const meshBus = {};
+export default function MeshBus() { return null; }
+'@
+
+  "src/lib/types.ts" = @'
+import { z } from "zod";
 
 export const AuditEventSchema = {};
 
 export const StrategistUserSchema = z.object({
   uid: z.string(),
-  email(),
-  displayName: z.string().email: z.string().optional(),
-  photoURL: zoptional(),
+  email: z.string().email(),
+  displayName: z.string().optional(),
+  photoURL: z.string().url().optional(),
   providerId: z.string(),
-.string().url().});
+});
 '@
 
-"src/componentsDimensionalInsight/visualization/N.tsx" = @'
-import 'three';
-const { * as THREE from extend } = THREE;
+  "src/components/visualization/NDimensionalInsight.tsx" = @'
+import * as THREE from "three";
+const { extend } = THREE;
 
-// ...rest of your component code exist and write
+// ...rest of your component code
 '@
 }
 
-# Ensure directories files
 foreach ($kv in $files.GetEnumerator()) {
-  $rel = $kv.Key.Value
-
-  $full =
-  $content = $kv Join-Path (Get-Location) $rel
+  $rel = $kv.Key
+  $content = $kv.Value
+  $full = Join-Path (Get-Location) $rel
   $dir  = Split-Path $full
   if (-not (Test-Path -LiteralPath $dir)) {
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
   }
-
-  $content | Set-Content - -Encoding UTF8
-LiteralPath $full  Write-Host "✅ Wrote $rel"
+  $content | Set-Content -LiteralPath $full -Encoding UTF8
+  Write-Host "✅ Wrote $rel"
 }
 
-# Strip any tsx`...` tagged templates to plain JSX (multi-line safe)
+# Strip tsx`...` tagged templates
 Get-ChildItem -Path .\src -Recurse -Include *.ts,*.tsx |
   ForEach-Object {
     $c = Get-Content -LiteralPath $_.FullName -Raw
     $c2 = [regex]::Replace($c, 'tsx`([\s\S]*?)`', '$1')
     if ($c2 -ne $c) {
-      $ -LiteralPath $_c2 | Set-Content.FullName -Encoding-Host "🛠  Stripped UTF8
-      Write tsx tag in $($_.FullName)"
+      $c2 | Set-Content -LiteralPath $_.FullName -Encoding UTF8
+      Write-Host "🛠  Stripped tsx tag in $($_.FullName)"
     }
-✔ All stubs written."
+  }
+
+Write-Host "✔ All stubs written."
