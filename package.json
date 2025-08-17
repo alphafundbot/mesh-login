@@ -29,7 +29,10 @@
     "doc": "docs"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
+    "@react-three/drei": "^10.7.2",
     "@svgdotjs/svg.js": "^3.2.4",
+    "class-variance-authority": "^0.7.1",
     "d3": "^7.9.0",
     "expo": "^53.0.20",
     "firebase": "^12.1.0",
@@ -37,7 +40,8 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "svgdom": "^0.1.22",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "three": "^0.179.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.1.4",

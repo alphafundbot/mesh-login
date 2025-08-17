@@ -1,19 +1,10 @@
-import { useState } from 'react';
-import './App.css';
+import StrategistDashboard from './strategist/StrategistDashboard';
 
-function App() {
-  const [count, setCount] = useState(1);
-
+export default function App() {
   return (
-    <div className="cockpit">
-      <h1>Welcome, Strategist Nehemie</h1>
-      <p>Your cockpit is live and sovereign.</p>
-      <p>Mutation lineage is active.</p>
-      <button onClick={() => setCount(count + 1)}>
-        Mutation count: {count}
-      </button>
+    <div className="cockpit-ui">
+      <h1>🧠 Strategist Cockpit</h1>
+      <StrategistDashboard />
     </div>
   );
 }
-
-export default App;
