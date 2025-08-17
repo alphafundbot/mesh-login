@@ -3,16 +3,8 @@
   "version": "0.1.0",
   "description": "Planetary-scale strategist login flow with telemetry, overlays, and blockchain-bound identity.",
   "main": "dist/index.js",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
-    "ping-result": "node dist/process_ping_result_script.js"
-  },
+  "author": "Strategist Nehemie",
+  "license": "UNLICENSED",
   "keywords": [
     "mesh",
     "sovereign",
@@ -23,10 +15,18 @@
     "overlay",
     "audit"
   ],
-  "author": "Strategist Nehemie",
-  "license": "UNLICENSED",
   "directories": {
     "doc": "docs"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
+    "ping-result": "node dist/process_ping_result_script.js"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
@@ -42,7 +42,8 @@
     "svgdom": "^0.1.22",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
-    "three": "^0.179.1"
+    "three": "^0.179.1",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.1.4",

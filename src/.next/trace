@@ -4,3 +4,5 @@
 [{"name":"compile-path","duration":5451516,"timestamp":18349042045,"id":8,"tags":{"trigger":"/_error"},"startTime":1755087349089,"traceId":"67b87f1883d48061"}]
 [{"name":"handle-request","duration":25846598,"timestamp":18329082129,"id":4,"tags":{"url":"/"},"startTime":1755087329129,"traceId":"67b87f1883d48061"},{"name":"memory-usage","duration":20,"timestamp":18354929131,"id":9,"parentId":4,"tags":{"url":"/","memory.rss":"809058304","memory.heapUsed":"82996368","memory.heapTotal":"97800192"},"startTime":1755087354976,"traceId":"67b87f1883d48061"},{"name":"compile-path","duration":1001465,"timestamp":18355910343,"id":12,"tags":{"trigger":"/favicon.ico"},"startTime":1755087355957,"traceId":"67b87f1883d48061"}]
 [{"name":"next-dev","duration":185712826,"timestamp":18301138271,"id":1,"tags":{},"startTime":1755087301185,"traceId":"67b87f1883d48061"}]
+[{"name":"next-dev","duration":12503661,"timestamp":123186672766,"id":1,"tags":{},"startTime":1755461793091,"traceId":"a823525611d8d6d7"}]
+[{"name":"next-dev","duration":16758702,"timestamp":123842103576,"id":1,"tags":{},"startTime":1755462448527,"traceId":"d6f5d8120812f96a"}]
