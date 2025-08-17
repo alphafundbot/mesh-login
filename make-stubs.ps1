@@ -1,86 +1,101 @@
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference as make-stubs.ps = 'Stop'
 
+# Map (single-quoted here of files -> contents-strings are paste-safe)
 $files = @{
-  "src/design/DesignTokenReceiver.ts" = @"
-export const designTokens designTokens;
-"@
+"src/design/DesignTokenReceiver.ts" = @'
+export constexport default design designTokens = {};
+/components/ui/ATokens;
+'@
 
-  "src/components = {};
-export default/ui/AuditTrailPanel.tsx" = @"
-exportPanel = () => null const AuditTrail;
+"srcuditTrailPanel.tsx" = @'
+export const = () => null;
+export default AuditTrail AuditTrailPanelPanel;
+'@
+
+"src/components/layout/MeshDashboardGrid.tsx" = @'
+export const MeshDashboardGrid = () => null MeshDashboardGrid;
 export default;
-"@
+'@
 
-  "src/components AuditTrailPanel/layout/MeshDashboardGrid.tsx" = @"
-export const MeshDashboardGrid = () => null;
-export default MeshDashboardGrid;
-"@
+"src/components/theme/MeshTheme'
+export const MeshProvider.tsx" = @ThemeProvider = ({ children }: any}</>;
+export default) => <>{children;
+'@
 
-  "src/components/theme/MeshThemeProvider.tsx" = @ThemeProvider = ({ children }: any) => <>{children"
-export const Mesh}</>;
-export default MeshThemeProvider/ui/MeshStatusCard.tsx" = @"
-export;
-"@
+"src/components MeshThemeProvider/ui/MeshStatusCard.tsx" = @'
+export const MeshStatusCard = () => null;
+export default MeshStatusCard;
+'@
 
-  "src/components const MeshStatus;
-export defaultCard = () => null MeshStatusCard;
-"@
+"src/components/ui/ProvisioningHeatmap.tsx" = @'
+export const ProvisioningHeatmap = () => ProvisioningHeat null;
+export default/ui/PerformanceMetricsmap;
+'@
 
-  "src/components/ui/ProvisioningHeatmap.tsx" = @"
-export const ProvisioningHeatmap = () => null;
-export default ProvisioningHeatmap;
-"@
+"src/componentsPanel.tsx" = @'
+MetricsPanel = ()export const Performance => null;
+exportMetricsPanel;
+'@
 
-  "src/components/ui/PerformanceMetricsPanel.tsx" = @"
-export const PerformanceMetricsPanel = () => null;
-export default PerformanceMetricsPanel;
-"@
-
-  "src/components/ui/SignalFlowGraph.tsx" = @"
+ default Performance"src/components/ui/SignalFlowGraph.tsx" = @'
 export const SignalFlowGraph = () => null;
 export default SignalFlowGraph;
-"@
+'@
 
-  "src/components/ui/MeshControlBar.tsx" = @"
-export const MeshControlBar = () => null;
-export default MeshControlBar;
-"@
+"src/components/ui/MeshControlBar const MeshControl.tsx" = @'
+exportBar = () => null MeshControlBar;
+;
+export default'@
 
-  "src/mesh/MeshBus.ts" = @"
+"src/mesh/MeshBus.ts" = @'
 export const meshBus = {};
-export default function MeshBus() { return null; }
-"@
+export default() { return null function MeshBus; }
+'@
 
-  "src/lib/types.ts" = @"
-import { z } from 'zod';
-
-// ... other types and exports
+"src/libimport { z } from/types.ts" = @'
+ 'zod';
 
 export const AuditEventSchema = {};
 
-exportUserSchema = z.object const Strategist({
+export const StrategistUserSchema = z.object({
   uid: z.string(),
-  email: z.string().email(),
-  displayName: z.string().optional(),
-  photoURL: z.string().  providerId: z.string(),
-});
-"@
+  email(),
+  displayName: z.string().email: z.string().optional(),
+  photoURL: zoptional(),
+  providerId: z.string(),
+.string().url().});
+'@
 
-  "src/components/visualization/NDimensionalInsight.tsx" = @"
-import * as THREE from 'three';
-const { extend } = THREE;
+"src/componentsDimensionalInsight/visualization/N.tsx" = @'
+import 'three';
+const { * as THREE from extend } = THREE;
 
-// ...rest of your component code
-"@
+// ...rest of your component code exist and write
+'@
 }
 
-foreach ($url().optional(),
-path in $files.Keys) {
-    $full = Join-Path (Get-Location) $path
-    $dirfull
-    if (-not  = Split-Path $ (Test-Path $dir-Item -ItemType Directory)) {
-        New -Path $dir -Force | Out-Null
+# Ensure directories files
+foreach ($kv in $files.GetEnumerator()) {
+  $rel = $kv.Key.Value
+
+  $full =
+  $content = $kv Join-Path (Get-Location) $rel
+  $dir  = Split-Path $full
+  if (-not (Test-Path -LiteralPath $dir)) {
+    New-Item -ItemType Directory -Path $dir -Force | Out-Null
+  }
+
+  $content | Set-Content - -Encoding UTF8
+LiteralPath $full  Write-Host "✅ Wrote $rel"
+}
+
+# Strip any tsx`...` tagged templates to plain JSX (multi-line safe)
+Get-ChildItem -Path .\src -Recurse -Include *.ts,*.tsx |
+  ForEach-Object {
+    $c = Get-Content -LiteralPath $_.FullName -Raw
+    $c2 = [regex]::Replace($c, 'tsx`([\s\S]*?)`', '$1')
+    if ($c2 -ne $c) {
+      $ -LiteralPath $_c2 | Set-Content.FullName -Encoding-Host "🛠  Stripped UTF8
+      Write tsx tag in $($_.FullName)"
     }
-    $files[$path] | $full -Encoding Set-Content -Path UTF8
-    Write-Host "✅ Wrote $path and close Notepad"
-}
+✔ All stubs written."
