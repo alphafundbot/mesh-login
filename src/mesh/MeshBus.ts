@@ -1,3 +1,1 @@
-export default function MeshBus() {
-  return null;
-}
+export const default function MeshBus() { return null; }
